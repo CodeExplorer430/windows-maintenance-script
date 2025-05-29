@@ -22,7 +22,7 @@ param(
     [switch]$SkipBackup = $false,
     
     [Parameter(Mandatory=$false)]
-    [switch]$Verbose = $false
+    [switch]$EnableVerbose = $false
 )
 
 # =========================================================================
@@ -104,7 +104,7 @@ function Write-MaintenanceLog {
             "ERROR" { Write-Host $LogMessage -ForegroundColor Red }
             "WARNING" { Write-Host $LogMessage -ForegroundColor Yellow }
             "SUCCESS" { Write-Host $LogMessage -ForegroundColor Green }
-            "DEBUG" { if ($Verbose) { Write-Host $LogMessage -ForegroundColor Cyan } }
+            "DEBUG" { if ($EnableVerbose) { Write-Host $LogMessage -ForegroundColor Cyan } }
             default { Write-Host $LogMessage }
         }
     }
