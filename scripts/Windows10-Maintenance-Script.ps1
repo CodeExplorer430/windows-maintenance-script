@@ -139,7 +139,8 @@ function Invoke-SafeCommand {
         [string]$SuccessMessage = "Completed successfully",
         
         [Parameter(Mandatory=$false)]
-        [string]$ErrorAction = "Continue"
+        [ValidateSet("Continue", "Stop")]
+        [string]$OnErrorAction = "Continue"
     )
     
     $StartTime = Get-Date
@@ -167,7 +168,7 @@ function Invoke-SafeCommand {
         Write-MaintenanceLog "Error in ${TaskName}: $ErrorMessage" "ERROR"
         Add-Content -Path $ErrorLog -Value "[$TaskName] $ErrorMessage" -ErrorAction SilentlyContinue
         
-        if ($ErrorAction -eq "Stop") {
+        if ($OnErrorAction -eq "Stop") {
             throw
         }
         return $false
