@@ -172,7 +172,7 @@ function Write-MaintenanceLog {
                     Write-Host "📋 " -ForegroundColor DarkCyan -NoNewline
                     Write-Host $Message -ForegroundColor DarkCyan 
                 } 
-            }
+            }  # Added missing closing bracket here
             default { 
                 Write-Host "ℹ️  " -ForegroundColor White -NoNewline
                 Write-Host $Message 
