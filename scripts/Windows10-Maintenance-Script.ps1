@@ -1431,35 +1431,35 @@ function Invoke-CommandWithRealTimeOutput {
         
         # Event handlers for real-time output
         $OutputDataReceived = {
-            param($sender, $e)
-            if ($e.Data) {
+            param($EventSender, $EventArguments)
+            if ($EventArguments.Data) {
                 # Display in real-time if enabled
                 if ($ShowRealTimeOutput) {
-                    Write-Host "  $($e.Data)" -ForegroundColor White
+                    Write-Host "  $($EventArguments.Data)" -ForegroundColor White
                 }
-                [void]$OutputBuilder.AppendLine($e.Data)
+                [void]$OutputBuilder.AppendLine($EventArgs.Data)
             }
         }
-        
+
         $ErrorDataReceived = {
-            param($sender, $e)
-            if ($e.Data) {
+            param($EventSender, $EventArguments)
+            if ($EventArguments.Data) {
                 # Display errors in real-time with color coding
                 if ($ShowRealTimeOutput) {
-                    if ($e.Data -match "error|failed|exception") {
-                        Write-Host "  $($e.Data)" -ForegroundColor Red
+                    if ($EventArguments.Data -match "error|failed|exception") {
+                        Write-Host "  $($EventArguments.Data)" -ForegroundColor Red
                     }
-                    elseif ($e.Data -match "warning|warn") {
-                        Write-Host "  $($e.Data)" -ForegroundColor Yellow
+                    elseif ($EventArguments.Data -match "warning|warn") {
+                        Write-Host "  $($EventArguments.Data)" -ForegroundColor Yellow
                     }
                     else {
-                        Write-Host "  $($e.Data)" -ForegroundColor Gray
+                        Write-Host "  $($EventArguments.Data)" -ForegroundColor Gray
                     }
                 }
-                [void]$ErrorBuilder.AppendLine($e.Data)
+                [void]$ErrorBuilder.AppendLine($EventArguments.Data)
             }
         }
-        
+                
         # Register event handlers
         Register-ObjectEvent -InputObject $Process -EventName OutputDataReceived -Action $OutputDataReceived | Out-Null
         Register-ObjectEvent -InputObject $Process -EventName ErrorDataReceived -Action $ErrorDataReceived | Out-Null
@@ -5811,7 +5811,7 @@ Would you like to view the detailed CHKDSK log?
         }
         
         # Generate comprehensive health report
-        $HealthReport = Generate-SystemHealthReport -Results $HealthResults
+        $HealthReport = New-SystemHealthReport -Results $HealthResults
         Write-MaintenanceLog -Message "System health report saved: $HealthReport" -Level SUCCESS
         
         Write-ProgressBar -Activity 'System Health Check' -PercentComplete 100 -Status 'Health diagnostics completed'
@@ -6203,57 +6203,76 @@ function Invoke-SFCOperation {
 function Test-DiskHealth {
     [CmdletBinding()]
     param()
-    
+   
     $Result = @{
         ScheduleRequired = $false
         Drive = $env:SystemDrive
         IssuesDetected = $false
         CHKDSKScheduled = $false
+        FreeSpaceGB = 0
+        TotalSizeGB = 0
+        FreeSpacePercent = 0
     }
-    
+   
     try {
         if ($WhatIf) {
             Write-MaintenanceLog -Message "[WHATIF] Would check disk health for $($env:SystemDrive)" -Level INFO
             return $Result
         }
-        
+       
         # Check if CHKDSK is already scheduled
         $CHKDSKScheduled = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "BootExecute" -ErrorAction SilentlyContinue).BootExecute -match "autocheck autochk"
-        
+       
         if ($CHKDSKScheduled) {
             Write-MaintenanceLog -Message "CHKDSK is already scheduled for next boot" -Level INFO
             $Result.CHKDSKScheduled = $true
             return $Result
         }
-        
-        # Use WMIC to check for disk errors (non-invasive)
+       
+        # Get disk information for additional health checks
         Write-MaintenanceLog -Message "Checking disk health status for $($env:SystemDrive)..." -Level INFO
-        
-        $DiskStatus = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$($env:SystemDrive)'" -ErrorAction Stop
-        
+       
+        $DiskStatus = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='$($env:SystemDrive)'" -ErrorAction Stop
+       
+        # Calculate and log disk space information
+        $Result.TotalSizeGB = [math]::Round($DiskStatus.Size / 1GB, 2)
+        $Result.FreeSpaceGB = [math]::Round($DiskStatus.FreeSpace / 1GB, 2)
+        $Result.FreeSpacePercent = [math]::Round(($DiskStatus.FreeSpace / $DiskStatus.Size) * 100, 2)
+       
+        Write-MaintenanceLog -Message "Disk Space: $($Result.FreeSpaceGB) GB free of $($Result.TotalSizeGB) GB ($($Result.FreeSpacePercent)%)" -Level INFO
+       
+        # Warn if disk space is critically low
+        if ($Result.FreeSpacePercent -lt 10) {
+            Write-MaintenanceLog -Message "WARNING: Low disk space detected ($($Result.FreeSpacePercent)% free) - this may affect system performance" -Level WARNING
+            $Result.IssuesDetected = $true
+        }
+        elseif ($Result.FreeSpacePercent -lt 20) {
+            Write-MaintenanceLog -Message "Disk space is running low ($($Result.FreeSpacePercent)% free) - consider cleanup" -Level WARNING
+        }
+       
         # Check volume dirty bit using fsutil
         $FsutilOutput = & fsutil dirty query $env:SystemDrive 2>&1
-        
+       
         if ($FsutilOutput -match "is dirty" -or $FsutilOutput -match "is set") {
             Write-MaintenanceLog -Message "Disk dirty bit is set - errors detected on $($env:SystemDrive)" -Level WARNING
             $Result.IssuesDetected = $true
             $Result.ScheduleRequired = $true
-            
+           
             # Schedule CHKDSK for next boot
             Write-MaintenanceLog -Message "Scheduling CHKDSK for next system restart..." -Level INFO
-            
+           
             try {
                 # Schedule CHKDSK using chkdsk command
                 $CHKDSKProcess = Start-Process -FilePath "chkdsk.exe" -ArgumentList "$($env:SystemDrive) /F /R /X" -PassThru -NoNewWindow -Wait -ErrorAction Stop
-                
+               
                 if ($CHKDSKProcess.ExitCode -eq 0) {
                     Write-MaintenanceLog -Message "CHKDSK successfully scheduled for next restart" -Level SUCCESS
                     $Result.CHKDSKScheduled = $true
                 }
                 else {
                     # Fallback: Use echo Y to auto-confirm CHKDSK scheduling
-                    $ScheduleResult = echo Y | chkdsk $env:SystemDrive /F /R 2>&1
-                    
+                    $ScheduleResult = Write-Output Y | chkdsk $env:SystemDrive /F /R 2>&1
+                   
                     if ($ScheduleResult -match "scheduled") {
                         Write-MaintenanceLog -Message "CHKDSK successfully scheduled for next restart (fallback method)" -Level SUCCESS
                         $Result.CHKDSKScheduled = $true
@@ -6270,7 +6289,7 @@ function Test-DiskHealth {
         else {
             Write-MaintenanceLog -Message "Disk health check passed - no issues detected on $($env:SystemDrive)" -Level SUCCESS
         }
-        
+       
         return $Result
     }
     catch {
@@ -6369,7 +6388,7 @@ function Invoke-CommandWithRealTimeOutput {
         $ErrorBuilder = New-Object System.Text.StringBuilder
         
         $OutputHandler = {
-            if ($EventArgs.Data -ne $null) {
+            if ($null -ne $EventArgs.Data) {
                 $line = $EventArgs.Data
                 [void]$OutputBuilder.AppendLine($line)
                 
@@ -6395,7 +6414,7 @@ function Invoke-CommandWithRealTimeOutput {
         }
         
         $ErrorHandler = {
-            if ($EventArgs.Data -ne $null) {
+            if ($null -ne $EventArgs.Data) {
                 $line = $EventArgs.Data
                 [void]$ErrorBuilder.AppendLine($line)
                 
@@ -6508,13 +6527,13 @@ function Show-SectionHeader {
     [string] Path to generated health report file
 
 .EXAMPLE
-    $ReportPath = Generate-SystemHealthReport -Results $HealthResults
+    $ReportPath = New-SystemHealthReport -Results $HealthResults
 
 .NOTES
     Format: Generates both human-readable text and structured data
     Location: Saves to maintenance reports directory
 #>
-function Generate-SystemHealthReport {
+function New-SystemHealthReport {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -7266,18 +7285,51 @@ function Invoke-DeveloperMaintenance {
         # .NET SDK detection
         $DotNetFound = $false
         $DotNetVersion = $null
-        
+
         if (Get-Command dotnet -ErrorAction SilentlyContinue) {
             $DotNetFound = $true
             try {
                 $DotNetVersion = dotnet --version 2>$null
                 $DotNetInfo = dotnet --info 2>$null
+                
                 Write-DetailedOperation -Operation '.NET Detection' -Details ".NET SDK detected: $DotNetVersion" -Result 'Available'
+                
+                # Parse and display additional .NET info
+                if ($DotNetInfo) {
+                    # Extract runtime information
+                    $RuntimeInfo = $DotNetInfo | Select-String -Pattern "Microsoft\.NETCore\.App (\d+\.\d+\.\d+)" | Select-Object -First 1
+                    if ($RuntimeInfo) {
+                        $RuntimeVersion = $RuntimeInfo.Matches.Groups[1].Value
+                        Write-DetailedOperation -Operation '.NET Runtime' -Details "Runtime version: $RuntimeVersion" -Result 'Detected'
+                    }
+                    
+                    # Extract base path
+                    $BasePath = $DotNetInfo | Select-String -Pattern "Base Path:\s+(.+)" | Select-Object -First 1
+                    if ($BasePath) {
+                        $DotNetBasePath = $BasePath.Matches.Groups[1].Value.Trim()
+                        Write-DetailedOperation -Operation '.NET Installation' -Details "Installation path: $DotNetBasePath" -Result 'Located'
+                    }
+                    
+                    # Extract RID (Runtime Identifier)
+                    $RID = $DotNetInfo | Select-String -Pattern "RID:\s+(.+)" | Select-Object -First 1
+                    if ($RID) {
+                        $RuntimeID = $RID.Matches.Groups[1].Value.Trim()
+                        Write-DetailedOperation -Operation '.NET Platform' -Details "Runtime ID: $RuntimeID" -Result 'Identified'
+                    }
+                }
                 
                 # List installed SDKs
                 $InstalledSDKs = dotnet --list-sdks 2>$null
                 if ($InstalledSDKs) {
-                    Write-DetailedOperation -Operation '.NET SDKs' -Details "Installed SDKs: $($InstalledSDKs.Count) versions found" -Result 'Listed'
+                    $SDKCount = ($InstalledSDKs | Measure-Object).Count
+                    Write-DetailedOperation -Operation '.NET SDKs' -Details "Installed SDKs: $SDKCount versions found" -Result 'Listed'
+                    
+                    # Show SDK versions if verbose
+                    if ($VerbosePreference -eq 'Continue') {
+                        $InstalledSDKs | ForEach-Object {
+                            Write-DetailedOperation -Operation '.NET SDK Details' -Details $_ -Result 'Info'
+                        }
+                    }
                 }
             }
             catch {
@@ -8115,6 +8167,7 @@ function Invoke-DeveloperMaintenance {
         
         foreach ($IDE in $JetBrainsIDEs) {
             $IDEFound = $false
+            $CleanedThisIDE = $false
             
             # Check for cache directories
             $CacheDirs = Get-ChildItem -Path (Split-Path $IDE.CachePath -Parent) -Directory -Filter (Split-Path $IDE.CachePath -Leaf) -ErrorAction SilentlyContinue
@@ -8136,11 +8189,11 @@ function Invoke-DeveloperMaintenance {
                         if (Test-Path $CleanupPath) {
                             try {
                                 $OldFiles = Get-ChildItem -Path $CleanupPath -Recurse -File -ErrorAction SilentlyContinue | 
-                                           Where-Object { 
-                                               $_ -and 
-                                               $_.PSObject.Properties['LastWriteTime'] -and 
-                                               $_.LastWriteTime -lt (Get-Date).AddDays(-7) 
-                                           }
+                                        Where-Object { 
+                                            $_ -and 
+                                            $_.PSObject.Properties['LastWriteTime'] -and 
+                                            $_.LastWriteTime -lt (Get-Date).AddDays(-7) 
+                                        }
                                 
                                 if ($OldFiles -and $OldFiles.Count -gt 0) {
                                     $SizeResult = Get-SafeTotalFileSize -Files $OldFiles
@@ -8154,6 +8207,7 @@ function Invoke-DeveloperMaintenance {
                                         
                                         $TotalCleaned += $SizeCleaned
                                         $TotalFiles += $FileCount
+                                        $CleanedThisIDE = $true  # Track that we cleaned something
                                         
                                         $CleanupDetails = "$($IDE.Name): Cleaned $FileCount files ($([math]::Round($SizeCleaned / 1MB, 2))MB) from cache"
                                         Write-DetailedOperation -Operation 'JetBrains Cache Cleanup' -Details $CleanupDetails -Result 'Cleaned'
@@ -8166,20 +8220,16 @@ function Invoke-DeveloperMaintenance {
                         }
                     }
                 }
-                
-                $JetBrainsResults += @{
-                    IDE = $IDE.Name
-                    Found = $true
-                    Cleaned = $true
-                }
             }
             else {
                 Write-DetailedOperation -Operation 'JetBrains IDE Detection' -Details "$($IDE.Name) not found" -Result 'Not Found'
-                $JetBrainsResults += @{
-                    IDE = $IDE.Name
-                    Found = $false
-                    Cleaned = $false
-                }
+            }
+            
+            # Use the variables to build results - clearer and more maintainable
+            $JetBrainsResults += @{
+                IDE = $IDE.Name
+                Found = $IDEFound
+                Cleaned = $CleanedThisIDE
             }
         }
         

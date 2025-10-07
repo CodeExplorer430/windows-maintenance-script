@@ -31,7 +31,7 @@ $Global:TestResults = @{
 .SYNOPSIS
     Records test results with detailed information.
 #>
-function Record-TestResult {
+function Write-TestResult {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -141,79 +141,79 @@ function Test-Configuration {
     # Test 1: Script file exists
     $ScriptPath = "$PSScriptRoot\..\scripts\Windows10-Maintenance-Script.ps1"
     if (Test-Path $ScriptPath) {
-        Record-TestResult -TestName "Script file exists" -Result "Pass" -Details "Found at: $ScriptPath"
+        Write-TestResult -TestName "Script file exists" -Result "Pass" -Details "Found at: $ScriptPath"
     }
     else {
-        Record-TestResult -TestName "Script file exists" -Result "Fail" -ErrorMessage "Script not found at: $ScriptPath"
+        Write-TestResult -TestName "Script file exists" -Result "Fail" -ErrorMessage "Script not found at: $ScriptPath"
         return
     }
     
     # Test 2: Script syntax validation
     try {
         $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $ScriptPath -Raw), [ref]$null)
-        Record-TestResult -TestName "Script syntax validation" -Result "Pass" -Details "No syntax errors detected"
+        Write-TestResult -TestName "Script syntax validation" -Result "Pass" -Details "No syntax errors detected"
     }
     catch {
-        Record-TestResult -TestName "Script syntax validation" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "Script syntax validation" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 3: SystemHealthRepair module in EnabledModules
     $ScriptContent = Get-Content $ScriptPath -Raw
     if ($ScriptContent -match '"SystemHealthRepair"' -or $ScriptContent -match "'SystemHealthRepair'") {
-        Record-TestResult -TestName "SystemHealthRepair module registered" -Result "Pass"
+        Write-TestResult -TestName "SystemHealthRepair module registered" -Result "Pass"
     }
     else {
-        Record-TestResult -TestName "SystemHealthRepair module registered" -Result "Fail" -ErrorMessage "Module not found in EnabledModules configuration"
+        Write-TestResult -TestName "SystemHealthRepair module registered" -Result "Fail" -ErrorMessage "Module not found in EnabledModules configuration"
     }
     
     # Test 4: SystemHealthRepair region exists
     if ($ScriptContent -match '#region SYSTEM_HEALTH_REPAIR') {
-        Record-TestResult -TestName "SystemHealthRepair region exists" -Result "Pass"
+        Write-TestResult -TestName "SystemHealthRepair region exists" -Result "Pass"
     }
     else {
-        Record-TestResult -TestName "SystemHealthRepair region exists" -Result "Fail" -ErrorMessage "Region not found in script"
+        Write-TestResult -TestName "SystemHealthRepair region exists" -Result "Fail" -ErrorMessage "Region not found in script"
     }
     
     # Test 5: Enhanced disk cleanup functions exist
     if ($ScriptContent -match 'function Invoke-WindowsDiskCleanup') {
-        Record-TestResult -TestName "Enhanced disk cleanup functions exist" -Result "Pass"
+        Write-TestResult -TestName "Enhanced disk cleanup functions exist" -Result "Pass"
     }
     else {
-        Record-TestResult -TestName "Enhanced disk cleanup functions exist" -Result "Fail" -ErrorMessage "Invoke-WindowsDiskCleanup function not found"
+        Write-TestResult -TestName "Enhanced disk cleanup functions exist" -Result "Fail" -ErrorMessage "Invoke-WindowsDiskCleanup function not found"
     }
     
     # Test 6: Configuration file exists
     $ConfigPath = "$PSScriptRoot\..\maintenance-config.json"
     if (Test-Path $ConfigPath) {
-        Record-TestResult -TestName "Configuration file exists" -Result "Pass" -Details "Found at: $ConfigPath"
+        Write-TestResult -TestName "Configuration file exists" -Result "Pass" -Details "Found at: $ConfigPath"
         
         # Test 7: Configuration file is valid JSON
         try {
             $Config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
-            Record-TestResult -TestName "Configuration JSON is valid" -Result "Pass"
+            Write-TestResult -TestName "Configuration JSON is valid" -Result "Pass"
             
             # Test 8: SystemHealthRepair configuration exists
             if ($Config.PSObject.Properties['SystemHealthRepair']) {
-                Record-TestResult -TestName "SystemHealthRepair configuration exists" -Result "Pass"
+                Write-TestResult -TestName "SystemHealthRepair configuration exists" -Result "Pass"
             }
             else {
-                Record-TestResult -TestName "SystemHealthRepair configuration exists" -Result "Warning" -Details "Using default configuration"
+                Write-TestResult -TestName "SystemHealthRepair configuration exists" -Result "Warning" -Details "Using default configuration"
             }
             
             # Test 9: EnhancedDiskCleanup configuration exists
             if ($Config.PSObject.Properties['EnhancedDiskCleanup']) {
-                Record-TestResult -TestName "EnhancedDiskCleanup configuration exists" -Result "Pass"
+                Write-TestResult -TestName "EnhancedDiskCleanup configuration exists" -Result "Pass"
             }
             else {
-                Record-TestResult -TestName "EnhancedDiskCleanup configuration exists" -Result "Warning" -Details "Using default configuration"
+                Write-TestResult -TestName "EnhancedDiskCleanup configuration exists" -Result "Warning" -Details "Using default configuration"
             }
         }
         catch {
-            Record-TestResult -TestName "Configuration JSON is valid" -Result "Fail" -ErrorMessage $_.Exception.Message
+            Write-TestResult -TestName "Configuration JSON is valid" -Result "Fail" -ErrorMessage $_.Exception.Message
         }
     }
     else {
-        Record-TestResult -TestName "Configuration file exists" -Result "Warning" -Details "Will use default configuration"
+        Write-TestResult -TestName "Configuration file exists" -Result "Warning" -Details "Will use default configuration"
     }
 }
 
@@ -231,82 +231,82 @@ function Test-SystemRequirements {
     # Test 1: Administrator privileges
     $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     if ($IsAdmin) {
-        Record-TestResult -TestName "Administrator privileges" -Result "Pass"
+        Write-TestResult -TestName "Administrator privileges" -Result "Pass"
     }
     else {
-        Record-TestResult -TestName "Administrator privileges" -Result "Fail" -ErrorMessage "Script must be run as Administrator"
+        Write-TestResult -TestName "Administrator privileges" -Result "Fail" -ErrorMessage "Script must be run as Administrator"
     }
     
     # Test 2: PowerShell version
     $PSVersion = $PSVersionTable.PSVersion
     if ($PSVersion.Major -ge 5) {
-        Record-TestResult -TestName "PowerShell version" -Result "Pass" -Details "Version: $($PSVersion.ToString())"
+        Write-TestResult -TestName "PowerShell version" -Result "Pass" -Details "Version: $($PSVersion.ToString())"
     }
     else {
-        Record-TestResult -TestName "PowerShell version" -Result "Fail" -ErrorMessage "PowerShell 5.1+ required (Current: $($PSVersion.ToString()))"
+        Write-TestResult -TestName "PowerShell version" -Result "Fail" -ErrorMessage "PowerShell 5.1+ required (Current: $($PSVersion.ToString()))"
     }
     
     # Test 3: DISM availability
     $DISMPath = "$env:SystemRoot\System32\dism.exe"
     if (Test-Path $DISMPath) {
-        Record-TestResult -TestName "DISM.exe availability" -Result "Pass" -Details "Found at: $DISMPath"
+        Write-TestResult -TestName "DISM.exe availability" -Result "Pass" -Details "Found at: $DISMPath"
     }
     else {
-        Record-TestResult -TestName "DISM.exe availability" -Result "Fail" -ErrorMessage "DISM.exe not found"
+        Write-TestResult -TestName "DISM.exe availability" -Result "Fail" -ErrorMessage "DISM.exe not found"
     }
     
     # Test 4: SFC availability
     $SFCPath = "$env:SystemRoot\System32\sfc.exe"
     if (Test-Path $SFCPath) {
-        Record-TestResult -TestName "SFC.exe availability" -Result "Pass" -Details "Found at: $SFCPath"
+        Write-TestResult -TestName "SFC.exe availability" -Result "Pass" -Details "Found at: $SFCPath"
     }
     else {
-        Record-TestResult -TestName "SFC.exe availability" -Result "Fail" -ErrorMessage "SFC.exe not found"
+        Write-TestResult -TestName "SFC.exe availability" -Result "Fail" -ErrorMessage "SFC.exe not found"
     }
     
     # Test 5: CleanMgr availability
     $CleanMgrPath = "$env:SystemRoot\System32\cleanmgr.exe"
     if (Test-Path $CleanMgrPath) {
-        Record-TestResult -TestName "CleanMgr.exe availability" -Result "Pass" -Details "Found at: $CleanMgrPath"
+        Write-TestResult -TestName "CleanMgr.exe availability" -Result "Pass" -Details "Found at: $CleanMgrPath"
     }
     else {
-        Record-TestResult -TestName "CleanMgr.exe availability" -Result "Fail" -ErrorMessage "CleanMgr.exe not found"
+        Write-TestResult -TestName "CleanMgr.exe availability" -Result "Fail" -ErrorMessage "CleanMgr.exe not found"
     }
     
     # Test 6: Disk space availability
     $SystemDrive = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$env:SystemDrive'"
     $FreeSpaceGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 2)
     if ($FreeSpaceGB -ge 10) {
-        Record-TestResult -TestName "Disk space availability" -Result "Pass" -Details "Free space: ${FreeSpaceGB}GB"
+        Write-TestResult -TestName "Disk space availability" -Result "Pass" -Details "Free space: ${FreeSpaceGB}GB"
     }
     elseif ($FreeSpaceGB -ge 5) {
-        Record-TestResult -TestName "Disk space availability" -Result "Warning" -Details "Low disk space: ${FreeSpaceGB}GB"
+        Write-TestResult -TestName "Disk space availability" -Result "Warning" -Details "Low disk space: ${FreeSpaceGB}GB"
     }
     else {
-        Record-TestResult -TestName "Disk space availability" -Result "Fail" -ErrorMessage "Critical low disk space: ${FreeSpaceGB}GB"
+        Write-TestResult -TestName "Disk space availability" -Result "Fail" -ErrorMessage "Critical low disk space: ${FreeSpaceGB}GB"
     }
     
     # Test 7: VSS service status (for restore points)
     try {
         $VSSService = Get-Service -Name "VSS" -ErrorAction Stop
         if ($VSSService.Status -eq "Running") {
-            Record-TestResult -TestName "VSS service status" -Result "Pass" -Details "Service is running"
+            Write-TestResult -TestName "VSS service status" -Result "Pass" -Details "Service is running"
         }
         else {
-            Record-TestResult -TestName "VSS service status" -Result "Warning" -Details "Service is not running (Status: $($VSSService.Status))"
+            Write-TestResult -TestName "VSS service status" -Result "Warning" -Details "Service is not running (Status: $($VSSService.Status))"
         }
     }
     catch {
-        Record-TestResult -TestName "VSS service status" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "VSS service status" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 8: Windows Update service
     try {
         $WUService = Get-Service -Name "wuauserv" -ErrorAction Stop
-        Record-TestResult -TestName "Windows Update service exists" -Result "Pass" -Details "Status: $($WUService.Status)"
+        Write-TestResult -TestName "Windows Update service exists" -Result "Pass" -Details "Status: $($WUService.Status)"
     }
     catch {
-        Record-TestResult -TestName "Windows Update service exists" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "Windows Update service exists" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
 }
 
@@ -327,11 +327,11 @@ function Test-CoreFunctionality {
         $DISMProcess = Start-Process -FilePath "DISM.exe" -ArgumentList "/Online /Cleanup-Image /CheckHealth" -PassThru -Wait -NoNewWindow -RedirectStandardOutput "$env:TEMP\dism_test.txt" -RedirectStandardError "$env:TEMP\dism_error.txt"
         
         if ($DISMProcess.ExitCode -eq 0) {
-            Record-TestResult -TestName "DISM CheckHealth execution" -Result "Pass" -Details "Exit code: 0"
+            Write-TestResult -TestName "DISM CheckHealth execution" -Result "Pass" -Details "Exit code: 0"
         }
         else {
             $ErrorContent = Get-Content "$env:TEMP\dism_error.txt" -Raw -ErrorAction SilentlyContinue
-            Record-TestResult -TestName "DISM CheckHealth execution" -Result "Warning" -Details "Exit code: $($DISMProcess.ExitCode) - $ErrorContent"
+            Write-TestResult -TestName "DISM CheckHealth execution" -Result "Warning" -Details "Exit code: $($DISMProcess.ExitCode) - $ErrorContent"
         }
         
         # Cleanup test files
@@ -339,14 +339,14 @@ function Test-CoreFunctionality {
         Remove-Item "$env:TEMP\dism_error.txt" -ErrorAction SilentlyContinue
     }
     catch {
-        Record-TestResult -TestName "DISM CheckHealth execution" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "DISM CheckHealth execution" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 2: Registry access for StateFlags
     try {
         $TestPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
         if (Test-Path $TestPath) {
-            Record-TestResult -TestName "Registry access for StateFlags" -Result "Pass" -Details "Path accessible"
+            Write-TestResult -TestName "Registry access for StateFlags" -Result "Pass" -Details "Path accessible"
             
             # Test write access
             $TestCategory = Get-ChildItem $TestPath | Select-Object -First 1
@@ -355,19 +355,19 @@ function Test-CoreFunctionality {
                     $TestValue = Get-Random -Minimum 9000 -Maximum 9999
                     New-ItemProperty -Path $TestCategory.PSPath -Name "StateFlags$TestValue" -PropertyType DWord -Value 2 -Force -ErrorAction Stop | Out-Null
                     Remove-ItemProperty -Path $TestCategory.PSPath -Name "StateFlags$TestValue" -Force -ErrorAction Stop
-                    Record-TestResult -TestName "Registry write access for StateFlags" -Result "Pass"
+                    Write-TestResult -TestName "Registry write access for StateFlags" -Result "Pass"
                 }
                 catch {
-                    Record-TestResult -TestName "Registry write access for StateFlags" -Result "Fail" -ErrorMessage $_.Exception.Message
+                    Write-TestResult -TestName "Registry write access for StateFlags" -Result "Fail" -ErrorMessage $_.Exception.Message
                 }
             }
         }
         else {
-            Record-TestResult -TestName "Registry access for StateFlags" -Result "Fail" -ErrorMessage "Registry path not found"
+            Write-TestResult -TestName "Registry access for StateFlags" -Result "Fail" -ErrorMessage "Registry path not found"
         }
     }
     catch {
-        Record-TestResult -TestName "Registry access for StateFlags" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "Registry access for StateFlags" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 3: CleanMgr sage command test
@@ -378,14 +378,14 @@ function Test-CoreFunctionality {
         $CleanMgrProcess = Start-Process -FilePath "cleanmgr.exe" -ArgumentList "/verylowdisk" -PassThru -Wait -NoNewWindow -ErrorAction Stop
         
         if ($CleanMgrProcess.ExitCode -eq 0) {
-            Record-TestResult -TestName "CleanMgr execution capability" -Result "Pass"
+            Write-TestResult -TestName "CleanMgr execution capability" -Result "Pass"
         }
         else {
-            Record-TestResult -TestName "CleanMgr execution capability" -Result "Warning" -Details "Exit code: $($CleanMgrProcess.ExitCode)"
+            Write-TestResult -TestName "CleanMgr execution capability" -Result "Warning" -Details "Exit code: $($CleanMgrProcess.ExitCode)"
         }
     }
     catch {
-        Record-TestResult -TestName "CleanMgr execution capability" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "CleanMgr execution capability" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 4: Process management capability
@@ -394,15 +394,15 @@ function Test-CoreFunctionality {
         $Completed = $TestProcess.WaitForExit(5000)  # 5 second timeout
         
         if ($Completed) {
-            Record-TestResult -TestName "Process management and timeout" -Result "Pass"
+            Write-TestResult -TestName "Process management and timeout" -Result "Pass"
         }
         else {
             $TestProcess.Kill()
-            Record-TestResult -TestName "Process management and timeout" -Result "Warning" -Details "Timeout mechanism working"
+            Write-TestResult -TestName "Process management and timeout" -Result "Warning" -Details "Timeout mechanism working"
         }
     }
     catch {
-        Record-TestResult -TestName "Process management and timeout" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "Process management and timeout" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 5: File system write access for reports
@@ -417,28 +417,28 @@ function Test-CoreFunctionality {
         
         if (Test-Path $TestFile) {
             Remove-Item $TestFile -Force
-            Record-TestResult -TestName "Report directory write access" -Result "Pass" -Details "Path: $ReportPath"
+            Write-TestResult -TestName "Report directory write access" -Result "Pass" -Details "Path: $ReportPath"
         }
         else {
-            Record-TestResult -TestName "Report directory write access" -Result "Fail" -ErrorMessage "Cannot write to report directory"
+            Write-TestResult -TestName "Report directory write access" -Result "Fail" -ErrorMessage "Cannot write to report directory"
         }
     }
     catch {
-        Record-TestResult -TestName "Report directory write access" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "Report directory write access" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 6: WMI access for disk information
     try {
         $DiskInfo = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$env:SystemDrive'"
         if ($DiskInfo) {
-            Record-TestResult -TestName "WMI disk information access" -Result "Pass" -Details "Drive: $($DiskInfo.DeviceID)"
+            Write-TestResult -TestName "WMI disk information access" -Result "Pass" -Details "Drive: $($DiskInfo.DeviceID)"
         }
         else {
-            Record-TestResult -TestName "WMI disk information access" -Result "Fail" -ErrorMessage "Cannot retrieve disk information"
+            Write-TestResult -TestName "WMI disk information access" -Result "Fail" -ErrorMessage "Cannot retrieve disk information"
         }
     }
     catch {
-        Record-TestResult -TestName "WMI disk information access" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "WMI disk information access" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
 }
 
@@ -459,7 +459,7 @@ function Test-Integration {
         $ScriptPath = "$PSScriptRoot\..\scripts\Windows10-Maintenance-Script.ps1"
         
         if (-not (Test-Path $ScriptPath)) {
-            Record-TestResult -TestName "WhatIf mode execution" -Result "Fail" -ErrorMessage "Script file not found"
+            Write-TestResult -TestName "WhatIf mode execution" -Result "Fail" -ErrorMessage "Script file not found"
             return
         }
         
@@ -478,27 +478,27 @@ function Test-Integration {
             
             # Check if SystemHealthRepair module was mentioned
             if ($Output -match "System Health" -or $Output -match "DISM" -or $Output -match "SystemHealthRepair") {
-                Record-TestResult -TestName "WhatIf mode - SystemHealthRepair integration" -Result "Pass" -Details "Module detected in WhatIf output"
+                Write-TestResult -TestName "WhatIf mode - SystemHealthRepair integration" -Result "Pass" -Details "Module detected in WhatIf output"
             }
             else {
-                Record-TestResult -TestName "WhatIf mode - SystemHealthRepair integration" -Result "Warning" -Details "Module not clearly indicated in output"
+                Write-TestResult -TestName "WhatIf mode - SystemHealthRepair integration" -Result "Warning" -Details "Module not clearly indicated in output"
             }
             
             # Check for errors
             if ($Output -match "ERROR|Exception|Failed to load") {
-                Record-TestResult -TestName "WhatIf mode - No critical errors" -Result "Fail" -ErrorMessage "Errors detected in WhatIf execution"
+                Write-TestResult -TestName "WhatIf mode - No critical errors" -Result "Fail" -ErrorMessage "Errors detected in WhatIf execution"
             }
             else {
-                Record-TestResult -TestName "WhatIf mode - No critical errors" -Result "Pass"
+                Write-TestResult -TestName "WhatIf mode - No critical errors" -Result "Pass"
             }
         }
         else {
             Remove-Job -Job $Job -Force
-            Record-TestResult -TestName "WhatIf mode execution" -Result "Fail" -ErrorMessage "WhatIf execution timed out (>2 minutes)"
+            Write-TestResult -TestName "WhatIf mode execution" -Result "Fail" -ErrorMessage "WhatIf execution timed out (>2 minutes)"
         }
     }
     catch {
-        Record-TestResult -TestName "WhatIf mode execution" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "WhatIf mode execution" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
     
     # Test 2: Logging functionality
@@ -513,14 +513,14 @@ function Test-Integration {
         
         if (Test-Path $TestLog) {
             Remove-Item $TestLog -Force
-            Record-TestResult -TestName "Logging directory access" -Result "Pass"
+            Write-TestResult -TestName "Logging directory access" -Result "Pass"
         }
         else {
-            Record-TestResult -TestName "Logging directory access" -Result "Fail" -ErrorMessage "Cannot write to log directory"
+            Write-TestResult -TestName "Logging directory access" -Result "Fail" -ErrorMessage "Cannot write to log directory"
         }
     }
     catch {
-        Record-TestResult -TestName "Logging directory access" -Result "Fail" -ErrorMessage $_.Exception.Message
+        Write-TestResult -TestName "Logging directory access" -Result "Fail" -ErrorMessage $_.Exception.Message
     }
 }
 
