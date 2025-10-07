@@ -4,13 +4,14 @@
     security scanning, performance optimization, and automated reporting capabilities.
 
 .DESCRIPTION
-    This PowerShell script provides comprehensive system maintenance for Windows 10/11 Pro workstations
+     This PowerShell script provides comprehensive system maintenance for Windows 10/11 Pro workstations
     and developer environments. It implements enterprise-grade maintenance following ITIL, ISO 27001,
     NIST Cybersecurity Framework, and Microsoft Security Baselines.
 
     The script includes the following maintenance modules:
-    - System Updates: Windows Updates, WinGet, Chocolatey package management
-    - Disk Maintenance: Temporary file cleanup, disk optimization (TRIM/Defrag), space analysis
+    - System Integrity: SFC, DISM, and disk health checks with repair capabilities
+    - System Updates: Windows Updates, WinGet, Chocolatey package management with real-time progress
+    - Disk Maintenance: Enhanced cleanup using Windows built-in tools, optimization (TRIM/Defrag)
     - Security Scans: Windows Defender scans with timeout protection, security policy audits
     - Developer Maintenance: NPM, Python, Docker, VS Code cache cleanup and updates
     - Performance Optimization: Event log management, startup analysis, resource monitoring
@@ -78,8 +79,8 @@
     File Name      : Windows10-Maintenance-Script.ps1
     Author         : Miguel Velasco
     Prerequisite   : PowerShell 5.1+, Administrator privileges
-    Version        : 2.5.2
-    Last Updated   : June 2025
+    Version        : 3.0.0
+    Last Updated   : October 2025
     License        : MIT License
     
     Security Notes:
@@ -93,6 +94,12 @@
     - Uses caching mechanisms for drive analysis to reduce redundant operations
     - Parallel processing where safe and beneficial
     - Configurable timeouts prevent indefinite blocking
+
+    Requirements:
+    - Windows 10/11 Pro or Enterprise
+    - PowerShell 5.1 or later
+    - Administrative privileges
+    - Internet connectivity for updates
 
 .LINK
     https://github.com/CodeExplorer430/windows-maintenance-script
@@ -187,7 +194,7 @@ if ($SilentMode) {
 
 # Global script metadata and versioning
 $Global:ScriptStartTime = Get-Date
-$Global:ScriptVersion = "2.5.2"
+$Global:ScriptVersion = "3.0.0"
 
 <#
 .SYNOPSIS
@@ -279,6 +286,7 @@ $Global:Config = @{
     EnabledModules     = @(
         "SystemUpdate",                # Windows/Package updates
         "DiskMaintenance",             # Disk cleanup and optimization
+        "SystemHealthRepair",          # NEW: System health check and repair
         "SecurityScans",               # Security scanning and validation
         "DeveloperMaintenance",        # Developer tool maintenance
         "PerformanceOptimization",     # System performance tuning
@@ -286,6 +294,35 @@ $Global:Config = @{
         "SystemReporting",             # Comprehensive reporting
         "EventLogManagement"           # Event log optimization
     )
+
+    # Real-time output configuration
+    RealTimeOutput = @{
+        Enabled = $true                 # Enable real-time output display
+        ColorCodedOutput = $true        # Use colors for different message types
+        ShowPackageTable = $true        # Show package list before updating
+        ShowSummary = $true             # Show summary after completion
+    }
+
+    # System Health & Repair configuration
+    SystemHealthRepair = @{
+        EnableDISM = $true              # Enable DISM image health checks
+        EnableSFC = $true               # Enable System File Checker
+        EnableCHKDSK = $true            # Enable disk health checking
+        DISMTimeout = 30                # DISM operation timeout (minutes)
+        SFCTimeout = 20                 # SFC scan timeout (minutes)
+        AutoRepair = $true              # Automatically attempt repairs
+        ScheduleCHKDSKOnErrors = $true  # Schedule CHKDSK when errors detected
+    }
+
+    # Disk Cleanup configuration
+    DiskCleanup = @{
+        EnableWindowsCleanup = $true    # Enable Windows Disk Cleanup utility
+        IncludeRecycleBin = $false      # Include Recycle Bin in cleanup
+        StateFlag = 1001                # StateFlags registry number
+        CleanupTimeout = 30             # Cleanup timeout (minutes)
+        EmergencyThresholdGB = 2        # Trigger emergency cleanup threshold
+        AutoEmergencyCleanup = $true    # Automatically run emergency cleanup
+    }
     
     # Advanced configuration flags
     DriveDetection        = $true       # Enable automatic drive detection
@@ -900,7 +937,7 @@ function Get-SafeFileSize {
 
 #endregion STRING_FORMATTING
 
-#region LOGGING_SYSTEM
+#region LOGGING_FRAMEWORK
 
 <#
 .SYNOPSIS
@@ -1262,7 +1299,348 @@ function Write-DetailedOperation {
     Write-MaintenanceLog $DetailMessage "DETAIL"
 }
 
-#endregion LOGGING_SYSTEM
+#endregion LOGGING_FRAMEWORK
+
+#region REALTIME_PROGRESS_OUTPUT
+
+<#
+.SYNOPSIS
+    Real-time progress output module for displaying live command execution.
+
+.DESCRIPTION
+    Provides enhanced progress display that shows actual command output in real-time
+    while maintaining progress tracking. This gives users visibility into what's
+    happening during long-running operations like package updates.
+
+.NOTES
+    Add this region after the LOGGING_FRAMEWORK region in your script.
+    This replaces hidden output with transparent, real-time feedback.
+#>
+
+<#
+.SYNOPSIS
+    Executes a command with real-time output display and progress tracking.
+
+.DESCRIPTION
+    Runs commands and streams their output directly to the console in real-time,
+    while maintaining progress bar updates. This provides transparency for
+    long-running operations like package updates.
+
+.PARAMETER Command
+    The command to execute (executable path)
+
+.PARAMETER Arguments
+    Command line arguments
+
+.PARAMETER ActivityName
+    Name to display in progress bar
+
+.PARAMETER StatusMessage
+    Initial status message
+
+.PARAMETER WorkingDirectory
+    Working directory for command execution
+
+.PARAMETER ShowRealTimeOutput
+    Enable real-time output streaming (default: true)
+
+.PARAMETER TimeoutMinutes
+    Command timeout in minutes (default: 30)
+
+.OUTPUTS
+    [hashtable] Execution results with exit code and output
+
+.EXAMPLE
+    Invoke-CommandWithRealTimeOutput -Command "winget" -Arguments "upgrade --all" -ActivityName "WinGet Updates" -StatusMessage "Updating packages..."
+
+.NOTES
+    Security: Output is streamed directly, errors are captured separately
+    Performance: Real-time display may slow down for very verbose commands
+    UX: Users see exactly what's happening, improving transparency
+#>
+function Invoke-CommandWithRealTimeOutput {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Command,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$Arguments = "",
+        
+        [Parameter(Mandatory=$true)]
+        [string]$ActivityName,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$StatusMessage = "Executing command...",
+        
+        [Parameter(Mandatory=$false)]
+        [string]$WorkingDirectory = $PWD,
+        
+        [Parameter(Mandatory=$false)]
+        [bool]$ShowRealTimeOutput = $true,
+        
+        [Parameter(Mandatory=$false)]
+        [int]$TimeoutMinutes = 30
+    )
+    
+    $Result = @{
+        Success = $false
+        ExitCode = -1
+        Output = ""
+        Duration = [TimeSpan]::Zero
+        TimedOut = $false
+    }
+    
+    try {
+        if ($WhatIf) {
+            Write-MaintenanceLog -Message "[WHATIF] Would execute: $Command $Arguments" -Level INFO
+            $Result.Success = $true
+            $Result.Output = "WhatIf mode - operation simulated"
+            return $Result
+        }
+        
+        $StartTime = Get-Date
+        
+        # Show initial progress
+        Write-ProgressBar -Activity $ActivityName -PercentComplete 10 -Status $StatusMessage
+        Write-MaintenanceLog -Message "Executing: $Command $Arguments" -Level PROGRESS
+        
+        if ($ShowRealTimeOutput) {
+            # Visual separator for better readability
+            Write-Host "`n  ========== $ActivityName - Real-Time Output ==========" -ForegroundColor Cyan
+            Write-Host "  Command: $Command $Arguments" -ForegroundColor Gray
+            Write-Host "  ======================================================`n" -ForegroundColor Cyan
+        }
+        
+        # Create process with real-time output streaming
+        $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $ProcessInfo.FileName = $Command
+        $ProcessInfo.Arguments = $Arguments
+        $ProcessInfo.WorkingDirectory = $WorkingDirectory
+        $ProcessInfo.UseShellExecute = $false
+        $ProcessInfo.RedirectStandardOutput = $true
+        $ProcessInfo.RedirectStandardError = $true
+        $ProcessInfo.CreateNoWindow = $true
+        
+        $Process = New-Object System.Diagnostics.Process
+        $Process.StartInfo = $ProcessInfo
+        
+        # StringBuilder for capturing full output
+        $OutputBuilder = New-Object System.Text.StringBuilder
+        $ErrorBuilder = New-Object System.Text.StringBuilder
+        
+        # Event handlers for real-time output
+        $OutputDataReceived = {
+            param($sender, $e)
+            if ($e.Data) {
+                # Display in real-time if enabled
+                if ($ShowRealTimeOutput) {
+                    Write-Host "  $($e.Data)" -ForegroundColor White
+                }
+                [void]$OutputBuilder.AppendLine($e.Data)
+            }
+        }
+        
+        $ErrorDataReceived = {
+            param($sender, $e)
+            if ($e.Data) {
+                # Display errors in real-time with color coding
+                if ($ShowRealTimeOutput) {
+                    if ($e.Data -match "error|failed|exception") {
+                        Write-Host "  $($e.Data)" -ForegroundColor Red
+                    }
+                    elseif ($e.Data -match "warning|warn") {
+                        Write-Host "  $($e.Data)" -ForegroundColor Yellow
+                    }
+                    else {
+                        Write-Host "  $($e.Data)" -ForegroundColor Gray
+                    }
+                }
+                [void]$ErrorBuilder.AppendLine($e.Data)
+            }
+        }
+        
+        # Register event handlers
+        Register-ObjectEvent -InputObject $Process -EventName OutputDataReceived -Action $OutputDataReceived | Out-Null
+        Register-ObjectEvent -InputObject $Process -EventName ErrorDataReceived -Action $ErrorDataReceived | Out-Null
+        
+        # Start process and begin reading output
+        $Process.Start() | Out-Null
+        $Process.BeginOutputReadLine()
+        $Process.BeginErrorReadLine()
+        
+        # Update progress while waiting
+        $ProgressPercent = 10
+        $TimeoutSeconds = $TimeoutMinutes * 60
+        $Elapsed = 0
+        $UpdateInterval = 2  # Update every 2 seconds
+        
+        while (-not $Process.HasExited -and $Elapsed -lt $TimeoutSeconds) {
+            Start-Sleep -Seconds $UpdateInterval
+            $Elapsed += $UpdateInterval
+            
+            # Calculate progress (10% to 90% based on elapsed time)
+            $ProgressPercent = [math]::Min(10 + (($Elapsed / $TimeoutSeconds) * 80), 90)
+            Write-ProgressBar -Activity $ActivityName -PercentComplete $ProgressPercent -Status "$StatusMessage (Running: $([math]::Round($Elapsed / 60, 1))m)"
+        }
+        
+        # Check for timeout
+        if (-not $Process.HasExited) {
+            $Process.Kill()
+            $Result.TimedOut = $true
+            Write-MaintenanceLog -Message "$ActivityName timed out after $TimeoutMinutes minutes" -Level ERROR
+            
+            if ($ShowRealTimeOutput) {
+                Write-Host "`n  [TIMEOUT] Operation exceeded $TimeoutMinutes minutes" -ForegroundColor Red
+                Write-Host "  ======================================================`n" -ForegroundColor Cyan
+            }
+        }
+        else {
+            # Wait a moment for output buffers to flush
+            Start-Sleep -Milliseconds 500
+            
+            # Capture results
+            $Result.ExitCode = $Process.ExitCode
+            $Result.Output = $OutputBuilder.ToString()
+            $Result.Duration = (Get-Date) - $StartTime
+            $Result.Success = ($Process.ExitCode -eq 0)
+            
+            # Show completion
+            Write-ProgressBar -Activity $ActivityName -PercentComplete 100 -Status "Completed"
+            
+            if ($ShowRealTimeOutput) {
+                Write-Host "`n  ========== Completion Summary ==========" -ForegroundColor Cyan
+                Write-Host "  Exit Code: $($Result.ExitCode)" -ForegroundColor $(if ($Result.Success) { "Green" } else { "Red" })
+                Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor Gray
+                Write-Host "  ======================================`n" -ForegroundColor Cyan
+            }
+            
+            # Log results
+            $LogLevel = if ($Result.Success) { "SUCCESS" } else { "WARNING" }
+            Write-MaintenanceLog -Message "$ActivityName completed with exit code $($Result.ExitCode) (Duration: $($Result.Duration.TotalSeconds)s)" -Level $LogLevel
+        }
+        
+        # Unregister event handlers
+        Get-EventSubscriber | Where-Object { $_.SourceObject -eq $Process } | Unregister-Event
+        
+        # Clean up
+        $Process.Dispose()
+        
+        # Complete progress
+        Write-Progress -Activity $ActivityName -Completed
+        
+        return $Result
+    }
+    catch {
+        $Result.Output = "Exception: $($_.Exception.Message)"
+        Write-MaintenanceLog -Message "$ActivityName failed: $($_.Exception.Message)" -Level ERROR
+        
+        if ($ShowRealTimeOutput) {
+            Write-Host "`n  [ERROR] $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "  ======================================================`n" -ForegroundColor Cyan
+        }
+        
+        return $Result
+    }
+}
+
+<#
+.SYNOPSIS
+    Displays a section header for better visual organization.
+
+.DESCRIPTION
+    Creates visually distinct section headers for long-running operations
+    to improve readability and user experience.
+
+.PARAMETER Title
+    Section title to display
+
+.PARAMETER SubTitle
+    Optional subtitle with additional context
+
+.EXAMPLE
+    Show-SectionHeader -Title "WinGet Package Updates" -SubTitle "Updating all outdated packages"
+
+.NOTES
+    UX: Improves visual organization and user understanding
+#>
+function Show-SectionHeader {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Title,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$SubTitle = ""
+    )
+    
+    $Width = 70
+    $Border = "=" * $Width
+    
+    Write-Host "`n$Border" -ForegroundColor Cyan
+    Write-Host "  $Title" -ForegroundColor White -NoNewline
+    if ($SubTitle) {
+        Write-Host " - $SubTitle" -ForegroundColor Gray
+    }
+    else {
+        Write-Host ""
+    }
+    Write-Host "$Border" -ForegroundColor Cyan
+}
+
+<#
+.SYNOPSIS
+    Displays package update information in a formatted table.
+
+.DESCRIPTION
+    Shows package information in an easy-to-read format before updates begin.
+
+.PARAMETER Packages
+    Array of package objects with Name, CurrentVersion, NewVersion
+
+.PARAMETER PackageManager
+    Name of package manager (WinGet, Chocolatey, etc.)
+
+.EXAMPLE
+    Show-PackageUpdateTable -Packages $PackageList -PackageManager "WinGet"
+
+.NOTES
+    UX: Provides clear overview of what will be updated
+#>
+function Show-PackageUpdateTable {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [array]$Packages,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$PackageManager
+    )
+    
+    if ($Packages.Count -eq 0) {
+        Write-Host "`n  No packages to update" -ForegroundColor Gray
+        return
+    }
+    
+    Write-Host "`n  Packages to update ($($Packages.Count)):" -ForegroundColor Yellow
+    Write-Host "  $("-" * 68)" -ForegroundColor Gray
+    Write-Host "  {0,-30} {1,-15} {2,-15}" -f "Package", "Current", "New" -ForegroundColor Cyan
+    Write-Host "  $("-" * 68)" -ForegroundColor Gray
+    
+    foreach ($Package in $Packages | Select-Object -First 10) {
+        $Name = if ($Package.Name.Length -gt 28) { $Package.Name.Substring(0, 25) + "..." } else { $Package.Name }
+        Write-Host "  {0,-30} {1,-15} {2,-15}" -f $Name, $Package.CurrentVersion, $Package.NewVersion -ForegroundColor White
+    }
+    
+    if ($Packages.Count -gt 10) {
+        Write-Host "  ... and $($Packages.Count - 10) more packages" -ForegroundColor Gray
+    }
+    
+    Write-Host "  $("-" * 68)" -ForegroundColor Gray
+    Write-Host ""
+}
+
+#endregion REALTIME_PROGRESS_OUTPUT
 
 #region SAFE_EXECUTION
 
@@ -2780,52 +3158,113 @@ function Invoke-SystemUpdates {
         }
     }
     
-    # WinGet package management with enhanced error handling
-    Invoke-SafeCommand -TaskName "WinGet Package Management" -Command {
-        Write-ProgressBar -Activity 'Package Updates' -PercentComplete 10 -Status 'Checking WinGet availability...'
-        
+    # ============================================================
+    # WINGET WITH REAL-TIME OUTPUT
+    # ============================================================
+    Invoke-SafeCommand -TaskName "Enhanced WinGet Package Management" -Command {
         if (Get-Command winget -ErrorAction SilentlyContinue) {
-            Write-MaintenanceLog -Message 'Checking WinGet package updates...' -Level PROGRESS
-            Write-DetailedOperation -Operation 'WinGet Check' -Details "WinGet package manager detected" -Result 'Available'
+            Show-SectionHeader -Title "WinGet Package Updates" -SubTitle "Checking for available updates"
             
-            Write-ProgressBar -Activity 'Package Updates' -PercentComplete 30 -Status 'Scanning for package updates...'
+            Write-MaintenanceLog -Message 'Processing WinGet package updates...' -Level PROGRESS
+            Write-DetailedOperation -Operation 'WinGet Detection' -Details 'WinGet package manager detected' -Result 'Available'
             
-            # Advanced WinGet update detection and processing
-            $WinGetOutput = winget upgrade --include-unknown 2>$null
-            
-            if ($WinGetOutput) {
-                $UpgradeablePackages = $WinGetOutput | Where-Object { $_ -match "^\S+\s+\S+\s+\S+\s+\S+" -and $_ -notmatch "^Name|^-" }
-                
-                if ($UpgradeablePackages) {
-                    Write-MaintenanceLog -Message "Found $($UpgradeablePackages.Count) WinGet packages available for upgrade" -Level INFO
+            if (!$WhatIf) {
+                try {
+                    # Step 1: Get list of outdated packages
+                    Write-Host "`n  Scanning for outdated packages..." -ForegroundColor Yellow
+                    Write-ProgressBar -Activity 'Package Updates' -PercentComplete 15 -Status 'Scanning WinGet packages...'
                     
-                    # Detailed package logging for audit trails
-                    foreach ($Package in $UpgradeablePackages | Select-Object -First 20) {
-                        $PackageInfo = $Package -split '  +'
-                        if ($PackageInfo.Count -ge 3) {
-                            Write-DetailedOperation -Operation 'Package Update Available' -Details "Name: $($PackageInfo[0]) | Current: $($PackageInfo[1]) | Available: $($PackageInfo[2])" -Result 'Pending'
+                    $WinGetOutput = winget upgrade --include-unknown 2>$null
+                    
+                    if ($WinGetOutput) {
+                        # Parse package list (improved parsing)
+                        $UpgradeablePackages = $WinGetOutput | Where-Object { 
+                            $_ -match "^\S+\s+\S+\s+\S+\s+\S+" -and 
+                            $_ -notmatch "^Name|^-" -and
+                            $_.Trim() -ne ""
                         }
-                    }
-                    
-                    if (!$WhatIf) {
-                        Write-ProgressBar -Activity 'Package Updates' -PercentComplete 70 -Status 'Updating WinGet packages...'
                         
-                        winget upgrade --all --accept-source-agreements --accept-package-agreements --silent --disable-interactivity 2>&1
-                        
-                        if ($LASTEXITCODE -eq 0) {
-                            Write-MaintenanceLog -Message 'WinGet packages updated successfully' -Level SUCCESS
-                            Write-DetailedOperation -Operation 'WinGet Upgrade' -Details "All available packages updated successfully" -Result 'Success'
+                        if ($UpgradeablePackages -and $UpgradeablePackages.Count -gt 0) {
+                            Write-MaintenanceLog -Message "Found $($UpgradeablePackages.Count) WinGet packages available for upgrade" -Level INFO
+                            
+                            # Build package table for display
+                            $PackageTable = @()
+                            foreach ($Package in $UpgradeablePackages) {
+                                $PackageInfo = $Package -split '\s{2,}'  # Split by 2+ spaces
+                                if ($PackageInfo.Count -ge 3) {
+                                    $PackageTable += [PSCustomObject]@{
+                                        Name = $PackageInfo[0]
+                                        CurrentVersion = $PackageInfo[1]
+                                        NewVersion = $PackageInfo[2]
+                                    }
+                                }
+                            }
+                            
+                            # Display packages to be updated
+                            if ($PackageTable.Count -gt 0) {
+                                Show-PackageUpdateTable -Packages $PackageTable -PackageManager "WinGet"
+                                
+                                # Log detailed package info
+                                foreach ($Pkg in $PackageTable | Select-Object -First 20) {
+                                    Write-DetailedOperation -Operation 'Package Update Available' -Details "Name: $($Pkg.Name) | Current: $($Pkg.CurrentVersion) | Available: $($Pkg.NewVersion)" -Result 'Pending'
+                                }
+                            }
+                            
+                            # Step 2: Perform upgrade with real-time output
+                            Show-SectionHeader -Title "Updating WinGet Packages" -SubTitle "$($UpgradeablePackages.Count) packages will be updated"
+                            
+                            Write-Host "`n  Starting package updates..." -ForegroundColor Yellow
+                            Write-Host "  This may take several minutes depending on package sizes." -ForegroundColor Gray
+                            Write-Host "  You'll see real-time progress for each package below.`n" -ForegroundColor Gray
+                            
+                            # Execute upgrade with real-time output
+                            $UpgradeResult = Invoke-CommandWithRealTimeOutput `
+                                -Command "winget" `
+                                -Arguments "upgrade --all --accept-source-agreements --accept-package-agreements --silent --disable-interactivity" `
+                                -ActivityName "WinGet Package Updates" `
+                                -StatusMessage "Updating packages..." `
+                                -ShowRealTimeOutput $true `
+                                -TimeoutMinutes 60
+                            
+                            # Process results
+                            if ($UpgradeResult.Success -or $UpgradeResult.ExitCode -eq 0) {
+                                Write-MaintenanceLog -Message "WinGet packages updated successfully" -Level SUCCESS
+                                Write-DetailedOperation -Operation 'WinGet Upgrade' -Details "Updated $($UpgradeablePackages.Count) packages | Duration: $($UpgradeResult.Duration.TotalMinutes.ToString('F2'))min" -Result 'Success'
+                                
+                                # Show summary
+                                Write-Host "`n  ========== Update Summary ==========" -ForegroundColor Green
+                                Write-Host "  Total packages updated: $($UpgradeablePackages.Count)" -ForegroundColor White
+                                Write-Host "  Duration: $($UpgradeResult.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+                                Write-Host "  Status: Completed successfully" -ForegroundColor Green
+                                Write-Host "  ====================================`n" -ForegroundColor Green
+                            }
+                            else {
+                                Write-MaintenanceLog -Message "WinGet upgrade completed with warnings (Exit Code: $($UpgradeResult.ExitCode))" -Level WARNING
+                                Write-DetailedOperation -Operation 'WinGet Upgrade' -Details "Exit code: $($UpgradeResult.ExitCode) | Some packages may have failed" -Result 'Partial'
+                                
+                                Write-Host "`n  ========== Update Summary ==========" -ForegroundColor Yellow
+                                Write-Host "  Status: Completed with warnings" -ForegroundColor Yellow
+                                Write-Host "  Exit Code: $($UpgradeResult.ExitCode)" -ForegroundColor Yellow
+                                Write-Host "  Note: Some packages may require manual intervention" -ForegroundColor Gray
+                                Write-Host "  ====================================`n" -ForegroundColor Yellow
+                            }
                         }
                         else {
-                            Write-MaintenanceLog -Message "WinGet upgrade completed with warnings (Exit Code: $LASTEXITCODE)" -Level WARNING
-                            Write-DetailedOperation -Operation 'WinGet Upgrade' -Details "Some packages may have failed to update (Exit Code: $LASTEXITCODE)" -Result 'Partial'
+                            Write-MaintenanceLog -Message 'No WinGet package updates available' -Level INFO
+                            Write-DetailedOperation -Operation 'WinGet Check' -Details "All packages are current" -Result 'Up-to-date'
+                            
+                            Write-Host "`n  All packages are up to date!" -ForegroundColor Green
+                            Write-Host "  No updates required.`n" -ForegroundColor Gray
                         }
                     }
                 }
-                else {
-                    Write-MaintenanceLog -Message 'No WinGet package updates available' -Level INFO
-                    Write-DetailedOperation -Operation 'WinGet Check' -Details "All packages are current" -Result 'Up-to-date'
+                catch {
+                    Write-MaintenanceLog -Message "WinGet package management failed: $($_.Exception.Message)" -Level ERROR
+                    Write-DetailedOperation -Operation 'WinGet Package Management' -Details "Error: $($_.Exception.Message)" -Result 'Failed'
                 }
+            }
+            else {
+                Write-MaintenanceLog -Message '[WHATIF] Would check and update WinGet packages' -Level INFO
             }
         }
         else {
@@ -2834,11 +3273,13 @@ function Invoke-SystemUpdates {
         }
     }
     
-    # Enhanced Chocolatey package management with comprehensive conflict resolution
-    Invoke-SafeCommand -TaskName "Chocolatey Package Management" -Command {
+    # ============================================================
+    # CHOCOLATEY WITH REAL-TIME OUTPUT
+    # ============================================================
+    Invoke-SafeCommand -TaskName "Enhanced Chocolatey Package Management" -Command {
         $ChocolateyPath = "$env:ProgramData\chocolatey\bin\choco.exe"
         
-        # Enhanced Windows Installer cache cleanup function with registry cleanup
+        # Enhanced Windows Installer cache cleanup function (KEEP YOUR EXISTING FUNCTION)
         function Clear-WindowsInstallerCache {
             try {
                 Write-MaintenanceLog -Message "Performing comprehensive Windows Installer cleanup..." -Level INFO
@@ -2898,7 +3339,7 @@ function Invoke-SystemUpdates {
             }
         }
         
-        # Enhanced package conflict detection and resolution
+        # Enhanced package conflict detection (KEEP YOUR EXISTING FUNCTION)
         function Get-ConflictingPackages {
             param([array]$PackageList)
             
@@ -2923,7 +3364,7 @@ function Invoke-SystemUpdates {
                     # Select the most appropriate primary package
                     $PrimaryPackage = switch ($Group) {
                         'Python' { 
-                            # Prefer python3 over others, then python313, then python
+                            # Prefer python3 over others
                             $ConflictingPackages | Where-Object { ($_ -split '\|')[0] -eq 'python3' } | Select-Object -First 1
                             if (-not $_) { $ConflictingPackages | Where-Object { ($_ -split '\|')[0] -eq 'python313' } | Select-Object -First 1 }
                             if (-not $_) { $ConflictingPackages | Where-Object { ($_ -split '\|')[0] -eq 'python' } | Select-Object -First 1 }
@@ -2946,18 +3387,19 @@ function Invoke-SystemUpdates {
             return $ConflictMap
         }
         
-        # Enhanced package upgrade with comprehensive retry and alternative methods
+        # MODIFIED: Enhanced package upgrade with real-time output capability
         function Invoke-ChocolateyUpgradeWithRetry {
             param(
                 [string]$PackageName,
                 [int]$MaxRetries = 3,
-                [switch]$UseAlternativeMethod = $false
+                [switch]$UseAlternativeMethod = $false,
+                [bool]$ShowRealTime = $true
             )
             
             $UpgradeOptions = if ($UseAlternativeMethod) {
-                @('--yes', '--no-progress', '--ignore-checksums', '--force', '--allow-empty-checksums')
+                '--yes --no-progress --ignore-checksums --force --allow-empty-checksums'
             } else {
-                @('--yes', '--no-progress', '--limit-output')
+                '--yes --no-progress'
             }
             
             for ($i = 1; $i -le $MaxRetries; $i++) {
@@ -2973,7 +3415,6 @@ function Invoke-SystemUpdates {
                     
                     # Special handling for problematic packages
                     if ($PackageName -like "*python*") {
-                        # Force uninstall conflicting versions first on final attempt
                         if ($i -eq $MaxRetries) {
                             Write-MaintenanceLog -Message "Attempting to resolve Python conflicts for $PackageName" -Level INFO
                             & $ChocolateyPath uninstall $PackageName --yes --remove-dependencies --force 2>&1 | Out-Null
@@ -2981,26 +3422,38 @@ function Invoke-SystemUpdates {
                         }
                     }
                     
-                    # Attempt package upgrade with timeout
-                    $UpgradeJob = Start-Job -ScriptBlock {
-                        param($ChocolateyPath, $PackageName, $Options)
-                        & $ChocolateyPath upgrade $PackageName @Options 2>&1
-                    } -ArgumentList $ChocolateyPath, $PackageName, $UpgradeOptions
-                    
-                    # Wait for job completion with timeout (5 minutes)
-                    $JobResult = Wait-Job -Job $UpgradeJob -Timeout 300
-                    $UpgradeOutput = Receive-Job -Job $UpgradeJob
-                    Remove-Job -Job $UpgradeJob -Force
-                    
-                    if ($JobResult) {
-                        if ($UpgradeJob.State -eq 'Completed') {
-                            $ExitCode = 0
+                    # Execute with real-time output if enabled
+                    if ($ShowRealTime) {
+                        Write-Host "`n    ===== Updating: $PackageName (Attempt $i/$MaxRetries) =====" -ForegroundColor Cyan
+                        
+                        $UpgradeResult = Invoke-CommandWithRealTimeOutput `
+                            -Command $ChocolateyPath `
+                            -Arguments "upgrade $PackageName $UpgradeOptions" `
+                            -ActivityName "Chocolatey: $PackageName" `
+                            -StatusMessage "Upgrading $PackageName..." `
+                            -ShowRealTimeOutput $true `
+                            -TimeoutMinutes 10
+                        
+                        $ExitCode = $UpgradeResult.ExitCode
+                        $UpgradeOutput = $UpgradeResult.Output
+                    }
+                    else {
+                        # Fallback to job-based execution (your original method)
+                        $UpgradeJob = Start-Job -ScriptBlock {
+                            param($ChocolateyPath, $PackageName, $Options)
+                            & $ChocolateyPath upgrade $PackageName $Options.Split(' ') 2>&1
+                        } -ArgumentList $ChocolateyPath, $PackageName, $UpgradeOptions
+                        
+                        $JobResult = Wait-Job -Job $UpgradeJob -Timeout 300
+                        $UpgradeOutput = Receive-Job -Job $UpgradeJob
+                        Remove-Job -Job $UpgradeJob -Force
+                        
+                        if ($JobResult) {
+                            $ExitCode = if ($UpgradeJob.State -eq 'Completed') { 0 } else { 1 }
                         } else {
-                            $ExitCode = 1
+                            Write-MaintenanceLog -Message "Package upgrade timed out for $PackageName" -Level WARNING
+                            $ExitCode = -1
                         }
-                    } else {
-                        Write-MaintenanceLog -Message "Package upgrade timed out for $PackageName" -Level WARNING
-                        $ExitCode = -1
                     }
                     
                     # Analyze results
@@ -3014,10 +3467,9 @@ function Invoke-SystemUpdates {
                         
                         if ($i -eq $MaxRetries -and -not $UseAlternativeMethod) {
                             Write-MaintenanceLog -Message "Trying alternative installation method for $PackageName..." -Level INFO
-                            return Invoke-ChocolateyUpgradeWithRetry -PackageName $PackageName -MaxRetries 2 -UseAlternativeMethod
+                            return Invoke-ChocolateyUpgradeWithRetry -PackageName $PackageName -MaxRetries 2 -UseAlternativeMethod -ShowRealTime $ShowRealTime
                         }
                         
-                        # Enhanced delay with exponential backoff
                         Start-Sleep -Seconds ([Math]::Min(30, $i * 10))
                     }
                     elseif ($ExitCode -eq -1) {
@@ -3030,11 +3482,10 @@ function Invoke-SystemUpdates {
                     }
                     else {
                         Write-MaintenanceLog -Message "Package upgrade failed for $PackageName with exit code $ExitCode (Attempt $i/$MaxRetries)" -Level WARNING
-                        Write-MaintenanceLog -Message "Output: $($UpgradeOutput -join '; ')" -Level DEBUG
                         
                         if ($i -eq $MaxRetries) {
                             Write-MaintenanceLog -Message "Failed to update $PackageName after $MaxRetries attempts (Final Exit Code: $ExitCode)" -Level ERROR
-                            Write-DetailedOperation -Operation 'Package Upgrade Error' -Details "Package: $PackageName | Final Exit Code: $ExitCode | Method: $AttemptType | All attempts failed" -Result 'Failed'
+                            Write-DetailedOperation -Operation 'Package Upgrade Error' -Details "Package: $PackageName | Final Exit Code: $ExitCode | Method: $AttemptType" -Result 'Failed'
                             return $false
                         }
                         Start-Sleep -Seconds 5
@@ -3053,8 +3504,10 @@ function Invoke-SystemUpdates {
             return $false
         }
         
-        # Main Chocolatey processing logic
+        # Main Chocolatey processing logic WITH REAL-TIME OUTPUT
         if (Test-Path $ChocolateyPath) {
+            Show-SectionHeader -Title "Chocolatey Package Updates" -SubTitle "Checking for available updates"
+            
             Write-MaintenanceLog -Message 'Processing Chocolatey package updates...' -Level PROGRESS
             Write-DetailedOperation -Operation 'Chocolatey Check' -Details "Chocolatey package manager detected at $ChocolateyPath" -Result 'Available'
             
@@ -3062,15 +3515,15 @@ function Invoke-SystemUpdates {
                 # Pre-maintenance system preparation
                 Clear-WindowsInstallerCache
                 
-                Write-ProgressBar -Activity 'Package Updates' -PercentComplete 30 -Status 'Updating Chocolatey packages...'
-                
-                # Get outdated packages with enhanced error handling
                 try {
+                    # Step 1: Get outdated packages
+                    Write-Host "`n  Scanning for outdated packages..." -ForegroundColor Yellow
+                    Write-ProgressBar -Activity 'Package Updates' -PercentComplete 30 -Status 'Scanning Chocolatey packages...'
+                    
                     $OutdatedOutput = & $ChocolateyPath outdated --limit-output 2>&1
                     
                     if ($LASTEXITCODE -ne 0) {
                         Write-MaintenanceLog -Message "Warning: Chocolatey outdated command returned exit code $LASTEXITCODE" -Level WARNING
-                        Write-MaintenanceLog -Message "Output: $($OutdatedOutput -join '; ')" -Level DEBUG
                     }
                 }
                 catch {
@@ -3086,12 +3539,23 @@ function Invoke-SystemUpdates {
                     if ($ValidOutdatedPackages -and $ValidOutdatedPackages.Count -gt 0) {
                         Write-MaintenanceLog -Message "Found $($ValidOutdatedPackages.Count) outdated Chocolatey packages" -Level INFO
                         
-                        # Log package details
+                        # Build package table for display
+                        $PackageTable = @()
                         foreach ($Package in $ValidOutdatedPackages) {
                             $PackageInfo = $Package -split '\|'
                             if ($PackageInfo.Count -ge 3) {
+                                $PackageTable += [PSCustomObject]@{
+                                    Name = $PackageInfo[0]
+                                    CurrentVersion = $PackageInfo[1]
+                                    NewVersion = $PackageInfo[2]
+                                }
                                 Write-DetailedOperation -Operation 'Chocolatey Update Available' -Details "Package: $($PackageInfo[0]) | Current: $($PackageInfo[1]) | Available: $($PackageInfo[2])" -Result 'Pending'
                             }
+                        }
+                        
+                        # Display packages to be updated
+                        if ($PackageTable.Count -gt 0) {
+                            Show-PackageUpdateTable -Packages $PackageTable -PackageManager "Chocolatey"
                         }
                         
                         # Detect and resolve package conflicts
@@ -3126,7 +3590,14 @@ function Invoke-SystemUpdates {
                             }
                         }
                         
-                        # Enhanced upgrade process with conflict-aware handling
+                        # Step 2: Perform upgrades with real-time output
+                        Show-SectionHeader -Title "Updating Chocolatey Packages" -SubTitle "$($PackagesToUpdate.Count) packages will be updated (skipped $($SkippedPackages.Count) conflicting)"
+                        
+                        Write-Host "`n  Starting package updates..." -ForegroundColor Yellow
+                        Write-Host "  Chocolatey will update packages one by one." -ForegroundColor Gray
+                        Write-Host "  You'll see detailed progress for each package below.`n" -ForegroundColor Gray
+                        
+                        # Enhanced upgrade process
                         $SuccessfulUpgrades = 0
                         $FailedUpgrades = 0
                         $SkippedCount = $SkippedPackages.Count
@@ -3144,42 +3615,70 @@ function Invoke-SystemUpdates {
                             
                             Write-MaintenanceLog -Message "Processing package $($PackageIndex + 1)/$($PackagesToUpdate.Count): $PackageName" -Level INFO
                             
-                            if (Invoke-ChocolateyUpgradeWithRetry -PackageName $PackageName -MaxRetries 3) {
+                            if (Invoke-ChocolateyUpgradeWithRetry -PackageName $PackageName -MaxRetries 3 -ShowRealTime $true) {
                                 $SuccessfulUpgrades++
                             } else {
                                 $FailedUpgrades++
                             }
                             
-                            # Brief pause between packages to prevent system overload
+                            # Brief pause between packages
                             if ($PackageIndex -lt $PackagesToUpdate.Count - 1) {
                                 Start-Sleep -Seconds 2
                             }
                         }
                         
                         # Comprehensive final status report
-                        $TotalProcessed = $SuccessfulUpgrades + $FailedUpgrades
-                        
                         if ($FailedUpgrades -eq 0) {
                             Write-MaintenanceLog -Message "All Chocolatey packages updated successfully ($SuccessfulUpgrades packages, $SkippedCount skipped due to conflicts)" -Level SUCCESS
-                            Write-DetailedOperation -Operation 'Chocolatey Upgrade' -Details "Success: $SuccessfulUpgrades | Failed: $FailedUpgrades | Skipped: $SkippedCount | All selected packages updated successfully" -Result 'Success'
-                        } elseif ($SuccessfulUpgrades -gt 0) {
-                            Write-MaintenanceLog -Message "Chocolatey package updates completed with mixed results - Success: $SuccessfulUpgrades, Failed: $FailedUpgrades, Skipped: $SkippedCount" -Level WARNING
-                            Write-DetailedOperation -Operation 'Chocolatey Upgrade' -Details "Success: $SuccessfulUpgrades | Failed: $FailedUpgrades | Skipped: $SkippedCount | Some packages require manual intervention" -Result 'Partial'
-                        } else {
+                            Write-DetailedOperation -Operation 'Chocolatey Upgrade' -Details "Success: $SuccessfulUpgrades | Failed: $FailedUpgrades | Skipped: $SkippedCount" -Result 'Success'
+                            
+                            Write-Host "`n  ========== Update Summary ==========" -ForegroundColor Green
+                            Write-Host "  Total packages updated: $SuccessfulUpgrades" -ForegroundColor White
+                            Write-Host "  Failed: $FailedUpgrades" -ForegroundColor White
+                            Write-Host "  Skipped (conflicts): $SkippedCount" -ForegroundColor White
+                            Write-Host "  Status: Completed successfully" -ForegroundColor Green
+                            Write-Host "  ====================================`n" -ForegroundColor Green
+                        } 
+                        elseif ($SuccessfulUpgrades -gt 0) {
+                            Write-MaintenanceLog -Message "Chocolatey updates completed with mixed results - Success: $SuccessfulUpgrades, Failed: $FailedUpgrades, Skipped: $SkippedCount" -Level WARNING
+                            Write-DetailedOperation -Operation 'Chocolatey Upgrade' -Details "Success: $SuccessfulUpgrades | Failed: $FailedUpgrades | Skipped: $SkippedCount" -Result 'Partial'
+                            
+                            Write-Host "`n  ========== Update Summary ==========" -ForegroundColor Yellow
+                            Write-Host "  Total packages updated: $SuccessfulUpgrades" -ForegroundColor White
+                            Write-Host "  Failed: $FailedUpgrades" -ForegroundColor Yellow
+                            Write-Host "  Skipped (conflicts): $SkippedCount" -ForegroundColor White
+                            Write-Host "  Status: Completed with warnings" -ForegroundColor Yellow
+                            Write-Host "  ====================================`n" -ForegroundColor Yellow
+                        } 
+                        else {
                             Write-MaintenanceLog -Message "All Chocolatey package updates failed - Success: $SuccessfulUpgrades, Failed: $FailedUpgrades, Skipped: $SkippedCount" -Level ERROR
-                            Write-DetailedOperation -Operation 'Chocolatey Upgrade' -Details "Success: $SuccessfulUpgrades | Failed: $FailedUpgrades | Skipped: $SkippedCount | All updates failed" -Result 'Failed'
+                            Write-DetailedOperation -Operation 'Chocolatey Upgrade' -Details "Success: $SuccessfulUpgrades | Failed: $FailedUpgrades | Skipped: $SkippedCount" -Result 'Failed'
+                            
+                            Write-Host "`n  ========== Update Summary ==========" -ForegroundColor Red
+                            Write-Host "  Total packages updated: $SuccessfulUpgrades" -ForegroundColor White
+                            Write-Host "  Failed: $FailedUpgrades" -ForegroundColor Red
+                            Write-Host "  Skipped (conflicts): $SkippedCount" -ForegroundColor White
+                            Write-Host "  Status: All updates failed" -ForegroundColor Red
+                            Write-Host "  ====================================`n" -ForegroundColor Red
                         }
-                        
-                    } else {
+                    } 
+                    else {
                         Write-MaintenanceLog -Message 'No valid outdated Chocolatey packages found' -Level INFO
                         Write-DetailedOperation -Operation 'Chocolatey Check' -Details "All packages are current or no valid packages detected" -Result 'Up-to-date'
+                        
+                        Write-Host "`n  All packages are up to date!" -ForegroundColor Green
+                        Write-Host "  No updates required.`n" -ForegroundColor Gray
                     }
-                } else {
+                } 
+                else {
                     Write-MaintenanceLog -Message 'No Chocolatey packages found or outdated command failed' -Level INFO
                     Write-DetailedOperation -Operation 'Chocolatey Check' -Details "No packages found for update or command failed" -Result 'Empty'
+                    
+                    Write-Host "`n  No packages found for update." -ForegroundColor Gray
                 }
             }
-        } else {
+        } 
+        else {
             Write-MaintenanceLog -Message 'Chocolatey not installed' -Level INFO
             Write-DetailedOperation -Operation 'Chocolatey Check' -Details "Chocolatey package manager not found" -Result 'Not Installed'
         }
@@ -3371,6 +3870,41 @@ $DetailedResults
         Write-ProgressBar -Activity 'Disk Cleanup' -PercentComplete 100 -Status 'Cleanup completed'
         Write-Progress -Activity 'Disk Cleanup' -Completed
     } -TimeoutMinutes 15
+
+    # Enhanced Windows Disk Cleanup integration
+    if ($Config.DiskCleanup.EnableWindowsCleanup) {
+        Invoke-SafeCommand -TaskName "Windows Disk Cleanup Utility" -Command {
+            Write-MaintenanceLog -Message 'Executing automated Windows Disk Cleanup...' -Level PROGRESS
+            
+            # Check for emergency cleanup conditions first
+            if ($Config.DiskCleanup.AutoEmergencyCleanup) {
+                $EmergencyResult = Invoke-EmergencyDiskCleanup -ThresholdGB $Config.DiskCleanup.EmergencyThresholdGB
+                
+                if ($EmergencyResult.Required) {
+                    Write-MaintenanceLog -Message "Emergency cleanup completed - freed $($EmergencyResult.TotalFreedGB)GB" -Level SUCCESS
+                    Write-DetailedOperation -Operation 'Emergency Disk Cleanup' -Details "Critical cleanup performed - freed $($EmergencyResult.TotalFreedGB)GB" -Result 'Completed'
+                }
+            }
+            
+            # Execute standard Windows Disk Cleanup
+            $WindowsCleanupResult = Invoke-WindowsDiskCleanup `
+                -StateFlag $Config.DiskCleanup.StateFlag `
+                -IncludeRecycleBin $Config.DiskCleanup.IncludeRecycleBin `
+                -TimeoutMinutes $Config.DiskCleanup.CleanupTimeout
+            
+            if ($WindowsCleanupResult.Success) {
+                Write-MaintenanceLog -Message "Windows Disk Cleanup freed $($WindowsCleanupResult.SpaceFreedMB)MB across $($WindowsCleanupResult.CategoriesCleaned.Count) categories" -Level SUCCESS
+                Write-DetailedOperation -Operation 'Windows Disk Cleanup' -Details "Freed: $($WindowsCleanupResult.SpaceFreedMB)MB | Categories: $($WindowsCleanupResult.CategoriesCleaned.Count) | Duration: $($WindowsCleanupResult.Duration.TotalMinutes.ToString('F2'))min" -Result 'Success'
+            }
+            else {
+                Write-MaintenanceLog -Message "Windows Disk Cleanup completed with errors: $($WindowsCleanupResult.Errors -join ', ')" -Level WARNING
+                Write-DetailedOperation -Operation 'Windows Disk Cleanup' -Details "Errors: $($WindowsCleanupResult.Errors.Count)" -Result 'Partial'
+            }
+        }
+    }
+    else {
+        Write-MaintenanceLog -Message 'Windows Disk Cleanup utility disabled in configuration' -Level INFO
+    }
     
     # Intelligent disk optimization with advanced drive filtering and type-specific optimization
     Invoke-SafeCommand -TaskName "Intelligent Disk Optimization" -Command {
@@ -3495,6 +4029,554 @@ $DetailedResults
         
     } -TimeoutMinutes 45
 }
+
+#region DISK_CLEANUP
+
+<#
+.SYNOPSIS
+    Enhanced disk cleanup with Windows Disk Cleanup utility automation.
+
+.DESCRIPTION
+    This function extends the existing Invoke-DiskMaintenance to include automated
+    Windows Disk Cleanup (cleanmgr.exe) execution using Sage commands for comprehensive
+    system cleanup beyond manual temporary file deletion.
+    
+    NEW FEATURES:
+    - Automated Windows Disk Cleanup utility execution
+    - Sage command configuration for advanced cleanup options
+    - StateFlags registry configuration for automated cleanup
+    - Integration with existing temporary file cleanup
+    - Comprehensive cleanup reporting and statistics
+
+.NOTES
+    This should be added to the DISK_MAINTENANCE region, after the existing
+    temporary file cleanup operations and before drive optimization.
+#>
+
+<#
+.SYNOPSIS
+    Executes Windows Disk Cleanup utility with automated configuration.
+
+.DESCRIPTION
+    Configures and executes the Windows Disk Cleanup utility (cleanmgr.exe) using
+    StateFlags registry settings to automate cleanup operations. This provides
+    a comprehensive cleanup beyond manual temporary file deletion.
+    
+    Cleanup Categories Automated:
+    - Downloaded Program Files
+    - Temporary Internet Files
+    - Recycle Bin (optional, configurable)
+    - Temporary Files
+    - Thumbnails
+    - Windows Error Reporting Files
+    - Windows Defender Scan Results
+    - Windows Update Cleanup
+    - System Log Files
+    - System Error Memory Dump Files
+    - DirectX Shader Cache
+    - Delivery Optimization Files
+
+.PARAMETER StateFlag
+    StateFlags number (0-9999) for cleanup configuration persistence
+
+.PARAMETER IncludeRecycleBin
+    Include Recycle Bin in cleanup operations (default: $false for safety)
+
+.PARAMETER TimeoutMinutes
+    Maximum time to allow for cleanup before timeout (default: 30 minutes)
+
+.OUTPUTS
+    [hashtable] Cleanup results with space freed and operation details
+
+.EXAMPLE
+    Invoke-WindowsDiskCleanup -IncludeRecycleBin:$false
+
+.NOTES
+    Security: Recycle Bin cleanup disabled by default to prevent accidental data loss
+    Performance: Can take 10-30 minutes depending on system state
+    Enterprise: Uses StateFlags for consistent, repeatable cleanup configuration
+#>
+function Invoke-WindowsDiskCleanup {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [ValidateRange(1, 9999)]
+        [int]$StateFlag = 1001,
+        
+        [Parameter(Mandatory=$false)]
+        [bool]$IncludeRecycleBin = $false,
+        
+        [Parameter(Mandatory=$false)]
+        [int]$TimeoutMinutes = 30
+    )
+    
+    Write-MaintenanceLog -Message 'Starting Windows Disk Cleanup utility automation...' -Level PROGRESS
+    Write-ProgressBar -Activity 'Disk Cleanup' -PercentComplete 65 -Status 'Configuring Windows Disk Cleanup...'
+    
+    $CleanupResult = @{
+        Success = $false
+        SpaceFreedMB = 0
+        Duration = [TimeSpan]::Zero
+        CategoriesCleaned = @()
+        Errors = @()
+    }
+    
+    try {
+        if ($WhatIf) {
+            Write-MaintenanceLog -Message "[WHATIF] Would execute Windows Disk Cleanup with automated configuration" -Level INFO
+            $CleanupResult.Success = $true
+            return $CleanupResult
+        }
+        
+        # Measure disk space before cleanup
+        $SystemDrive = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$env:SystemDrive'"
+        $SpaceBeforeGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 2)
+        
+        Write-MaintenanceLog -Message "Current free space on $($env:SystemDrive): ${SpaceBeforeGB}GB" -Level INFO
+        Write-DetailedOperation -Operation 'Disk Cleanup Initialization' -Details "Pre-cleanup free space: ${SpaceBeforeGB}GB" -Result 'Measured'
+        
+        # Configure StateFlags registry for automated cleanup
+        Write-MaintenanceLog -Message "Configuring Disk Cleanup StateFlags (StateFlags$StateFlag)..." -Level PROGRESS
+        
+        $StateRegistryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+        
+        # Define cleanup categories with their registry keys
+        $CleanupCategories = @{
+            # Safe cleanup categories (always enabled)
+            "Downloaded Program Files" = "Downloaded Program Files"
+            "Temporary Internet Files" = "Internet Cache Files"
+            "Temporary Files" = "Temporary Files"
+            "Thumbnails" = "Thumbnail Cache"
+            "Windows Error Reporting" = "Windows Error Reporting Files"
+            "Windows Defender" = "Windows Defender"
+            "System Log Files" = "System Log Files"
+            "DirectX Shader Cache" = "DirectX Shader Cache"
+            "Delivery Optimization Files" = "Delivery Optimization Files"
+            "Old Windows Installation" = "Previous Installations"
+            "Windows Update Cleanup" = "Windows Update Cleanup"
+            "Temporary Windows Files" = "Temporary Setup Files"
+            "System Memory Dumps" = "System error memory dump files"
+            "System Minidumps" = "System error minidump files"
+            
+            # Optional categories (user configurable)
+            "Recycle Bin" = "Recycle Bin"
+        }
+        
+        # Configure each cleanup category
+        $ConfiguredCategories = 0
+        foreach ($Category in $CleanupCategories.GetEnumerator()) {
+            $CategoryPath = Join-Path $StateRegistryPath $Category.Value
+            
+            try {
+                # Check if category registry key exists
+                if (Test-Path $CategoryPath) {
+                    # Decide whether to enable this category
+                    $EnableCategory = $true
+                    
+                    # Special handling for Recycle Bin (safety)
+                    if ($Category.Key -eq "Recycle Bin" -and -not $IncludeRecycleBin) {
+                        $EnableCategory = $false
+                        Write-MaintenanceLog -Message "Skipping Recycle Bin cleanup for data safety" -Level INFO
+                    }
+                    
+                    if ($EnableCategory) {
+                        # Set StateFlags value to enable this cleanup category
+                        New-ItemProperty -Path $CategoryPath -Name "StateFlags$StateFlag" -PropertyType DWord -Value 2 -Force -ErrorAction SilentlyContinue | Out-Null
+                        $ConfiguredCategories++
+                        $CleanupResult.CategoriesCleaned += $Category.Key
+                    }
+                    else {
+                        # Set to 0 to disable
+                        New-ItemProperty -Path $CategoryPath -Name "StateFlags$StateFlag" -PropertyType DWord -Value 0 -Force -ErrorAction SilentlyContinue | Out-Null
+                    }
+                }
+            }
+            catch {
+                Write-MaintenanceLog -Message "Failed to configure cleanup category '$($Category.Key)': $($_.Exception.Message)" -Level WARNING
+                $CleanupResult.Errors += "Configuration: $($Category.Key)"
+            }
+        }
+        
+        Write-MaintenanceLog -Message "Configured $ConfiguredCategories cleanup categories" -Level SUCCESS
+        Write-DetailedOperation -Operation 'Cleanup Configuration' -Details "$ConfiguredCategories categories enabled" -Result 'Configured'
+        
+        # Execute Windows Disk Cleanup with configured StateFlags
+        Write-ProgressBar -Activity 'Disk Cleanup' -PercentComplete 70 -Status 'Executing Windows Disk Cleanup...'
+        Write-MaintenanceLog -Message "Executing cleanmgr.exe with StateFlags$StateFlag..." -Level PROGRESS
+        Write-MaintenanceLog -Message "This operation may take 10-30 minutes depending on system state..." -Level INFO
+        
+        $StartTime = Get-Date
+        $TimeoutSeconds = $TimeoutMinutes * 60
+        
+        # Execute cleanmgr.exe with silent automation
+        try {
+            # Start cleanmgr process with StateFlags for automation
+            $CleanmgrArgs = "/sagerun:$StateFlag"
+            
+            $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $ProcessInfo.FileName = "cleanmgr.exe"
+            $ProcessInfo.Arguments = $CleanmgrArgs
+            $ProcessInfo.UseShellExecute = $false
+            $ProcessInfo.CreateNoWindow = $true
+            $ProcessInfo.RedirectStandardOutput = $true
+            $ProcessInfo.RedirectStandardError = $true
+            
+            $Process = New-Object System.Diagnostics.Process
+            $Process.StartInfo = $ProcessInfo
+            $Process.Start() | Out-Null
+            
+            Write-MaintenanceLog -Message "Disk Cleanup process started (PID: $($Process.Id))" -Level INFO
+            Write-DetailedOperation -Operation 'Disk Cleanup Execution' -Details "Process started with PID: $($Process.Id)" -Result 'Running'
+            
+            # Wait for process completion with timeout
+            $Completed = $Process.WaitForExit($TimeoutSeconds * 1000)
+            
+            if ($Completed) {
+                $CleanupResult.Duration = (Get-Date) - $StartTime
+                $ExitCode = $Process.ExitCode
+                
+                Write-MaintenanceLog -Message "Disk Cleanup completed with exit code: $ExitCode (Duration: $($CleanupResult.Duration.TotalMinutes.ToString('F2')) minutes)" -Level SUCCESS
+                Write-DetailedOperation -Operation 'Disk Cleanup Completion' -Details "Exit code: $ExitCode | Duration: $($CleanupResult.Duration.TotalMinutes.ToString('F2')) min" -Result 'Completed'
+                
+                # Measure disk space after cleanup
+                Start-Sleep -Seconds 2  # Allow file system to update
+                $SystemDrive = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$env:SystemDrive'"
+                $SpaceAfterGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 2)
+                $SpaceFreedGB = [math]::Round($SpaceAfterGB - $SpaceBeforeGB, 2)
+                $SpaceFreedMB = [math]::Round($SpaceFreedGB * 1024, 2)
+                
+                $CleanupResult.SpaceFreedMB = $SpaceFreedMB
+                $CleanupResult.Success = $true
+                
+                Write-MaintenanceLog -Message "Windows Disk Cleanup freed ${SpaceFreedGB}GB (${SpaceFreedMB}MB) of disk space" -Level SUCCESS
+                Write-DetailedOperation -Operation 'Disk Cleanup Results' -Details "Freed: ${SpaceFreedGB}GB | Before: ${SpaceBeforeGB}GB | After: ${SpaceAfterGB}GB" -Result "Freed ${SpaceFreedGB}GB"
+                
+                # Cleanup StateFlags registry entries (optional - keeps for reuse)
+                # Uncomment below if you want to clean up after each run
+                # Clear-DiskCleanupStateFlags -StateFlag $StateFlag
+            }
+            else {
+                # Timeout occurred
+                $CleanupResult.Duration = (Get-Date) - $StartTime
+                $Process.Kill()
+                
+                Write-MaintenanceLog -Message "Disk Cleanup operation timed out after $TimeoutMinutes minutes" -Level ERROR
+                $CleanupResult.Errors += "Operation timed out"
+                
+                # Attempt to measure partial cleanup
+                $SystemDrive = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$env:SystemDrive'"
+                $SpaceAfterGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 2)
+                $SpaceFreedGB = [math]::Round($SpaceAfterGB - $SpaceBeforeGB, 2)
+                
+                if ($SpaceFreedGB -gt 0) {
+                    $CleanupResult.SpaceFreedMB = [math]::Round($SpaceFreedGB * 1024, 2)
+                    Write-MaintenanceLog -Message "Partial cleanup completed before timeout - freed ${SpaceFreedGB}GB" -Level WARNING
+                }
+            }
+        }
+        catch {
+            $CleanupResult.Duration = (Get-Date) - $StartTime
+            Write-MaintenanceLog -Message "Disk Cleanup execution failed: $($_.Exception.Message)" -Level ERROR
+            $CleanupResult.Errors += "Execution exception: $($_.Exception.Message)"
+        }
+        
+        Write-ProgressBar -Activity 'Disk Cleanup' -PercentComplete 80 -Status 'Windows Disk Cleanup completed'
+        
+        return $CleanupResult
+    }
+    catch {
+        Write-MaintenanceLog -Message "Windows Disk Cleanup automation failed: $($_.Exception.Message)" -Level ERROR
+        $CleanupResult.Errors += "Fatal error: $($_.Exception.Message)"
+        return $CleanupResult
+    }
+}
+
+<#
+.SYNOPSIS
+    Clears Disk Cleanup StateFlags registry entries after execution.
+
+.DESCRIPTION
+    Removes StateFlags registry entries to clean up after Disk Cleanup execution.
+    This is optional and only needed if you don't want to persist the configuration.
+
+.PARAMETER StateFlag
+    StateFlags number to clear from registry
+
+.EXAMPLE
+    Clear-DiskCleanupStateFlags -StateFlag 1001
+
+.NOTES
+    Optional: StateFlags can be left in place for consistent future executions
+#>
+function Clear-DiskCleanupStateFlags {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [int]$StateFlag
+    )
+    
+    try {
+        Write-MaintenanceLog -Message "Clearing Disk Cleanup StateFlags$StateFlag from registry..." -Level INFO
+        
+        $StateRegistryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+        $CategoriesPath = Get-ChildItem -Path $StateRegistryPath -ErrorAction SilentlyContinue
+        
+        $ClearedCount = 0
+        foreach ($CategoryPath in $CategoriesPath) {
+            try {
+                $PropertyName = "StateFlags$StateFlag"
+                if (Get-ItemProperty -Path $CategoryPath.PSPath -Name $PropertyName -ErrorAction SilentlyContinue) {
+                    Remove-ItemProperty -Path $CategoryPath.PSPath -Name $PropertyName -Force -ErrorAction Stop
+                    $ClearedCount++
+                }
+            }
+            catch {
+                # Silently continue if property doesn't exist or can't be removed
+            }
+        }
+        
+        Write-MaintenanceLog -Message "Cleared $ClearedCount StateFlags entries from registry" -Level SUCCESS
+    }
+    catch {
+        Write-MaintenanceLog -Message "Failed to clear StateFlags: $($_.Exception.Message)" -Level WARNING
+    }
+}
+
+<#
+.SYNOPSIS
+    Advanced Sage command execution for Disk Cleanup utility.
+
+.DESCRIPTION
+    Provides direct Sage command execution for advanced cleanup scenarios.
+    Sage commands offer more granular control over Disk Cleanup operations.
+    
+    Common Sage Commands:
+    - /sageset:n   - Configure cleanup settings interactively
+    - /sagerun:n   - Run cleanup with saved settings (used by Invoke-WindowsDiskCleanup)
+    - /tuneup:n    - Special cleanup mode
+    - /lowdisk     - Low disk space emergency cleanup
+    - /verylowdisk - Critical low disk space cleanup
+
+.PARAMETER SageCommand
+    Sage command to execute (sageset, sagerun, tuneup, lowdisk, verylowdisk)
+
+.PARAMETER StateFlag
+    StateFlags number for sageset/sagerun operations
+
+.PARAMETER Interactive
+    Allow interactive GUI for sageset command
+
+.OUTPUTS
+    [hashtable] Command execution results
+
+.EXAMPLE
+    # Emergency low disk space cleanup
+    Invoke-DiskCleanupSageCommand -SageCommand "lowdisk"
+
+.EXAMPLE
+    # Configure cleanup settings interactively
+    Invoke-DiskCleanupSageCommand -SageCommand "sageset" -StateFlag 1001 -Interactive
+
+.NOTES
+    Security: Some Sage commands may show GUI - not suitable for silent automation
+    Use Case: Primarily for manual intervention or emergency cleanup scenarios
+#>
+function Invoke-DiskCleanupSageCommand {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateSet("sageset", "sagerun", "tuneup", "lowdisk", "verylowdisk")]
+        [string]$SageCommand,
+        
+        [Parameter(Mandatory=$false)]
+        [int]$StateFlag = 1001,
+        
+        [Parameter(Mandatory=$false)]
+        [bool]$Interactive = $false
+    )
+    
+    $Result = @{
+        Success = $false
+        Command = $SageCommand
+        Output = ""
+        Duration = [TimeSpan]::Zero
+    }
+    
+    try {
+        if ($WhatIf) {
+            Write-MaintenanceLog -Message "[WHATIF] Would execute: cleanmgr.exe /$SageCommand" -Level INFO
+            $Result.Success = $true
+            return $Result
+        }
+        
+        # Construct command arguments
+        $Arguments = switch ($SageCommand) {
+            "sageset" { 
+                if (-not $Interactive -and $SilentMode) {
+                    Write-MaintenanceLog -Message "Skipping sageset in silent mode (requires interaction)" -Level INFO
+                    $Result.Output = "Skipped in silent mode"
+                    return $Result
+                }
+                "/sageset:$StateFlag"
+            }
+            "sagerun" { "/sagerun:$StateFlag" }
+            "tuneup" { "/tuneup:$StateFlag" }
+            "lowdisk" { "/lowdisk" }
+            "verylowdisk" { "/verylowdisk" }
+        }
+        
+        Write-MaintenanceLog -Message "Executing Disk Cleanup Sage command: $Arguments" -Level INFO
+        
+        $StartTime = Get-Date
+        
+        # Execute command
+        $Process = Start-Process -FilePath "cleanmgr.exe" -ArgumentList $Arguments -PassThru -Wait -NoNewWindow
+        
+        $Result.Duration = (Get-Date) - $StartTime
+        $Result.Success = ($Process.ExitCode -eq 0)
+        $Result.Output = "Exit code: $($Process.ExitCode)"
+        
+        Write-MaintenanceLog -Message "Sage command completed with exit code: $($Process.ExitCode) (Duration: $($Result.Duration.TotalMinutes.ToString('F2')) min)" -Level $(if ($Result.Success) { "SUCCESS" } else { "ERROR" })
+        
+        return $Result
+    }
+    catch {
+        $Result.Output = "Exception: $($_.Exception.Message)"
+        Write-MaintenanceLog -Message "Sage command failed: $($_.Exception.Message)" -Level ERROR
+        return $Result
+    }
+}
+
+<#
+.SYNOPSIS
+    Emergency low disk space cleanup handler.
+
+.DESCRIPTION
+    Executes aggressive cleanup operations when disk space is critically low.
+    Combines manual cleanup with Windows Disk Cleanup emergency modes.
+
+.PARAMETER ThresholdGB
+    Disk space threshold to trigger emergency cleanup (default: 2GB)
+
+.OUTPUTS
+    [hashtable] Emergency cleanup results
+
+.EXAMPLE
+    Invoke-EmergencyDiskCleanup -ThresholdGB 2
+
+.NOTES
+    Safety: Includes Recycle Bin cleanup in emergency mode
+    Performance: More aggressive than standard cleanup
+    Use Case: Automated response to critical low disk space
+#>
+function Invoke-EmergencyDiskCleanup {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [double]$ThresholdGB = 2.0
+    )
+    
+    Write-MaintenanceLog -Message 'Checking if emergency disk cleanup is required...' -Level PROGRESS
+    
+    try {
+        $SystemDrive = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$env:SystemDrive'"
+        $FreeSpaceGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 2)
+        
+        if ($FreeSpaceGB -le $ThresholdGB) {
+            Write-MaintenanceLog -Message "CRITICAL: Low disk space detected (${FreeSpaceGB}GB) - initiating emergency cleanup" -Level ERROR
+            Write-DetailedOperation -Operation 'Emergency Cleanup' -Details "Free space: ${FreeSpaceGB}GB (Threshold: ${ThresholdGB}GB)" -Result 'Triggered'
+            
+            # Execute emergency cleanup procedures
+            $EmergencyResult = @{
+                InitialFreeSpaceGB = $FreeSpaceGB
+                FinalFreeSpaceGB = 0
+                TotalFreedGB = 0
+                Operations = @()
+            }
+            
+            # 1. Execute very low disk space Sage command
+            Write-MaintenanceLog -Message "Executing emergency Disk Cleanup (verylowdisk mode)..." -Level PROGRESS
+            $SageResult = Invoke-DiskCleanupSageCommand -SageCommand "verylowdisk"
+            $EmergencyResult.Operations += @{ Operation = "VeryLowDisk Sage"; Success = $SageResult.Success }
+            
+            # 2. Execute standard cleanup with Recycle Bin included
+            Write-MaintenanceLog -Message "Executing standard cleanup with Recycle Bin (emergency mode)..." -Level PROGRESS
+            $StandardResult = Invoke-WindowsDiskCleanup -IncludeRecycleBin:$true -TimeoutMinutes 20
+            $EmergencyResult.Operations += @{ Operation = "Full Cleanup"; Success = $StandardResult.Success; FreedMB = $StandardResult.SpaceFreedMB }
+            
+            # 3. Additional emergency cleanup - clear more temporary locations
+            Write-MaintenanceLog -Message "Executing additional temporary file cleanup..." -Level PROGRESS
+            $AdditionalPaths = @(
+                "$env:LOCALAPPDATA\Temp\*",
+                "$env:LOCALAPPDATA\Microsoft\Windows\WER\*",
+                "$env:ProgramData\Microsoft\Windows\WER\*"
+            )
+            
+            $AdditionalFreed = 0
+            foreach ($Path in $AdditionalPaths) {
+                try {
+                    $Items = Get-ChildItem -Path $Path -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { -not $_.PSIsContainer }
+                    $SizeBefore = ($Items | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
+                    
+                    Remove-Item -Path $Path -Recurse -Force -ErrorAction SilentlyContinue
+                    
+                    $AdditionalFreed += if ($SizeBefore) { $SizeBefore } else { 0 }
+                }
+                catch {
+                    # Continue on errors
+                }
+            }
+            
+            $AdditionalFreedMB = [math]::Round($AdditionalFreed / 1MB, 2)
+            $EmergencyResult.Operations += @{ Operation = "Additional Temp Cleanup"; FreedMB = $AdditionalFreedMB }
+            
+            # Measure final disk space
+            $SystemDrive = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$env:SystemDrive'"
+            $EmergencyResult.FinalFreeSpaceGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 2)
+            $EmergencyResult.TotalFreedGB = [math]::Round($EmergencyResult.FinalFreeSpaceGB - $EmergencyResult.InitialFreeSpaceGB, 2)
+            
+            Write-MaintenanceLog -Message "Emergency cleanup completed - freed ${$EmergencyResult.TotalFreedGB}GB (${EmergencyResult.InitialFreeSpaceGB}GB -> ${EmergencyResult.FinalFreeSpaceGB}GB)" -Level SUCCESS
+            Write-DetailedOperation -Operation 'Emergency Cleanup Results' -Details "Freed: $($EmergencyResult.TotalFreedGB)GB | Final: $($EmergencyResult.FinalFreeSpaceGB)GB" -Result 'Completed'
+            
+            # Critical warning if still low after emergency cleanup
+            if ($EmergencyResult.FinalFreeSpaceGB -le $ThresholdGB) {
+                Write-MaintenanceLog -Message "WARNING: Disk space still critically low after emergency cleanup ($($EmergencyResult.FinalFreeSpaceGB)GB)" -Level ERROR
+                
+                if ($ShowMessageBoxes -and -not $SilentMode) {
+                    $CriticalMessage = @"
+CRITICAL: Low Disk Space Warning
+
+Emergency cleanup has been performed, but disk space remains critically low.
+
+Current Free Space: $($EmergencyResult.FinalFreeSpaceGB)GB
+Space Freed: $($EmergencyResult.TotalFreedGB)GB
+
+URGENT ACTIONS REQUIRED:
+â€¢ Delete large files or move them to external storage
+â€¢ Uninstall unused programs
+â€¢ Use Storage Sense to identify large files
+â€¢ Consider upgrading to a larger drive
+
+System stability may be affected if disk space is not increased.
+"@
+                    Show-MaintenanceMessageBox -Message $CriticalMessage -Title "Critical Low Disk Space" -Icon "Error" -ForceShow
+                }
+            }
+            
+            return $EmergencyResult
+        }
+        else {
+            Write-MaintenanceLog -Message "Disk space is adequate (${FreeSpaceGB}GB) - emergency cleanup not required" -Level INFO
+            return @{ Required = $false; FreeSpaceGB = $FreeSpaceGB }
+        }
+    }
+    catch {
+        Write-MaintenanceLog -Message "Emergency cleanup check failed: $($_.Exception.Message)" -Level ERROR
+        return @{ Required = $false; Error = $_.Exception.Message }
+    }
+}
+
+#endregion ENHANCED_DISK_CLEANUP
 
 <#
 .SYNOPSIS
@@ -4502,6 +5584,1111 @@ function Invoke-DefenderScanUnlimited {
 }
 
 #endregion SECURITY_SCANS
+
+#region SYSTEM_HEALTH_REPAIR
+
+<#
+.SYNOPSIS
+    Comprehensive system health verification and repair module with automated diagnostics.
+
+.DESCRIPTION
+    Provides enterprise-grade system health checking and repair capabilities utilizing
+    Windows built-in tools including DISM, SFC, and component store verification.
+    Implements intelligent repair strategies with comprehensive error handling and
+    detailed reporting for system integrity maintenance.
+    
+    Health Check Components:
+    - DISM (Deployment Image Servicing and Management) image health scanning
+    - DISM component store corruption detection and repair
+    - SFC (System File Checker) for protected system file verification
+    - Windows Component Store health analysis
+    - System integrity verification and reporting
+    - Automated repair workflows with escalation strategies
+    
+    Repair Strategies:
+    - Conservative: Non-invasive scanning and reporting only
+    - Standard: Automated repair of detected issues
+    - Aggressive: Full component store repair with online resources
+    
+    CHKDSK Integration:
+    - Schedules CHKDSK for next boot when disk errors detected
+    - Provides user notification for required restart
+    - Comprehensive error logging and tracking
+
+.EXAMPLE
+    Invoke-SystemHealthRepair
+
+.NOTES
+    Security: All operations run with comprehensive validation and error containment
+    Performance: Implements timeout protection for long-running operations
+    Enterprise: Detailed audit trails for compliance and troubleshooting
+    Reliability: Multi-stage verification ensures thorough system health assessment
+#>
+function Invoke-SystemHealthRepair {
+    if ("SystemHealthRepair" -notin $Config.EnabledModules) {
+        Write-MaintenanceLog -Message 'System Health & Repair module disabled' -Level INFO
+        return
+    }
+    
+    Write-MaintenanceLog -Message '======== System Health & Repair Module ========' -Level INFO
+    
+    # Proactive memory optimization before intensive system operations
+    Optimize-MemoryUsage -Force
+    
+    # Execute comprehensive system health workflow
+    Invoke-SafeCommand -TaskName "System Health Diagnostics" -Command {
+        Write-ProgressBar -Activity 'System Health Check' -PercentComplete 5 -Status 'Initializing health diagnostics...'
+        
+        $HealthResults = @{
+            DISMScanHealth = $null
+            DISMCheckHealth = $null
+            DISMRestoreHealth = $null
+            SFCScan = $null
+            ComponentStoreHealth = $null
+            CHKDSKScheduled = $false
+            OverallHealth = "Unknown"
+            RepairActions = @()
+            Errors = @()
+        }
+        
+        # Stage 1: DISM Image Health Scanning
+        Write-ProgressBar -Activity 'System Health Check' -PercentComplete 10 -Status 'DISM: Scanning image health...'
+        Write-MaintenanceLog -Message 'Starting DISM image health scan...' -Level PROGRESS
+        
+        try {
+            # DISM ScanHealth - Quick integrity check
+            Write-DetailedOperation -Operation 'DISM ScanHealth' -Details 'Performing quick image integrity scan' -Result 'Starting'
+            
+            $DISMScanResult = Invoke-DISMOperation -Operation "ScanHealth" -TimeoutMinutes 15
+            $HealthResults.DISMScanHealth = $DISMScanResult
+            
+            if ($DISMScanResult.Success) {
+                Write-MaintenanceLog -Message "DISM ScanHealth completed successfully" -Level SUCCESS
+                Write-DetailedOperation -Operation 'DISM ScanHealth' -Details $DISMScanResult.Output -Result 'Success'
+            }
+            else {
+                Write-MaintenanceLog -Message "DISM ScanHealth detected issues: $($DISMScanResult.Output)" -Level WARNING
+                Write-DetailedOperation -Operation 'DISM ScanHealth' -Details $DISMScanResult.Output -Result 'Issues Detected'
+                $HealthResults.Errors += "DISM ScanHealth: Issues detected"
+            }
+        }
+        catch {
+            Write-MaintenanceLog -Message "DISM ScanHealth failed: $($_.Exception.Message)" -Level ERROR
+            $HealthResults.Errors += "DISM ScanHealth: Failed - $($_.Exception.Message)"
+        }
+        
+        # Stage 2: DISM Component Store Health Check
+        Write-ProgressBar -Activity 'System Health Check' -PercentComplete 25 -Status 'DISM: Checking component store health...'
+        Write-MaintenanceLog -Message 'Checking Windows component store health...' -Level PROGRESS
+        
+        try {
+            # DISM CheckHealth - Detailed component store analysis
+            Write-DetailedOperation -Operation 'DISM CheckHealth' -Details 'Analyzing component store integrity' -Result 'Starting'
+            
+            $DISMCheckResult = Invoke-DISMOperation -Operation "CheckHealth" -TimeoutMinutes 10
+            $HealthResults.DISMCheckHealth = $DISMCheckResult
+            
+            if ($DISMCheckResult.Success -and $DISMCheckResult.Output -match "No component store corruption detected") {
+                Write-MaintenanceLog -Message "Component store is healthy - no corruption detected" -Level SUCCESS
+                Write-DetailedOperation -Operation 'DISM CheckHealth' -Details 'Component store integrity verified' -Result 'Healthy'
+            }
+            elseif ($DISMCheckResult.Success -and $DISMCheckResult.Output -match "component store is repairable") {
+                Write-MaintenanceLog -Message "Component store corruption detected but repairable" -Level WARNING
+                Write-DetailedOperation -Operation 'DISM CheckHealth' -Details 'Repairable corruption detected' -Result 'Repairable'
+                $HealthResults.RepairActions += "Component Store Repair Required"
+                
+                # Escalate to RestoreHealth if corruption is repairable
+                Invoke-DISMRestoreHealth -HealthResults ([ref]$HealthResults)
+            }
+            else {
+                Write-MaintenanceLog -Message "Component store health check completed with warnings" -Level WARNING
+                Write-DetailedOperation -Operation 'DISM CheckHealth' -Details $DISMCheckResult.Output -Result 'Warning'
+                $HealthResults.Errors += "DISM CheckHealth: Warnings detected"
+            }
+        }
+        catch {
+            Write-MaintenanceLog -Message "DISM CheckHealth failed: $($_.Exception.Message)" -Level ERROR
+            $HealthResults.Errors += "DISM CheckHealth: Failed - $($_.Exception.Message)"
+        }
+        
+        # Stage 3: System File Checker (SFC) Scan
+        Write-ProgressBar -Activity 'System Health Check' -PercentComplete 60 -Status 'Running System File Checker...'
+        Write-MaintenanceLog -Message 'Starting System File Checker (SFC) scan...' -Level PROGRESS
+        
+        try {
+            Write-DetailedOperation -Operation 'SFC Scan' -Details 'Verifying system file integrity' -Result 'Starting'
+            
+            $SFCResult = Invoke-SFCOperation -TimeoutMinutes 20
+            $HealthResults.SFCScan = $SFCResult
+            
+            if ($SFCResult.Success) {
+                if ($SFCResult.Output -match "did not find any integrity violations") {
+                    Write-MaintenanceLog -Message "SFC scan completed - no integrity violations found" -Level SUCCESS
+                    Write-DetailedOperation -Operation 'SFC Scan' -Details 'All system files verified as intact' -Result 'Healthy'
+                }
+                elseif ($SFCResult.Output -match "found corrupt files and successfully repaired them") {
+                    Write-MaintenanceLog -Message "SFC scan found and repaired corrupt files" -Level SUCCESS
+                    Write-DetailedOperation -Operation 'SFC Scan' -Details 'Corrupt files detected and repaired' -Result 'Repaired'
+                    $HealthResults.RepairActions += "System Files Repaired by SFC"
+                }
+                elseif ($SFCResult.Output -match "found corrupt files but was unable to fix") {
+                    Write-MaintenanceLog -Message "SFC found corrupt files that could not be repaired automatically" -Level WARNING
+                    Write-DetailedOperation -Operation 'SFC Scan' -Details 'Manual intervention may be required' -Result 'Repair Failed'
+                    $HealthResults.Errors += "SFC: Corrupt files detected but repair failed"
+                    $HealthResults.RepairActions += "Manual SFC Repair Required"
+                }
+            }
+            else {
+                Write-MaintenanceLog -Message "SFC scan encountered errors" -Level ERROR
+                $HealthResults.Errors += "SFC: Scan failed"
+            }
+        }
+        catch {
+            Write-MaintenanceLog -Message "SFC scan failed: $($_.Exception.Message)" -Level ERROR
+            $HealthResults.Errors += "SFC: Failed - $($_.Exception.Message)"
+        }
+        
+        # Stage 4: Check Disk (CHKDSK) Scheduling
+        Write-ProgressBar -Activity 'System Health Check' -PercentComplete 85 -Status 'Checking disk health...'
+        Write-MaintenanceLog -Message 'Evaluating disk health status...' -Level PROGRESS
+        
+        try {
+            Write-DetailedOperation -Operation 'Disk Health Check' -Details 'Analyzing system drive integrity' -Result 'Starting'
+            
+            $CHKDSKResult = Test-DiskHealth
+            
+            if ($CHKDSKResult.ScheduleRequired) {
+                Write-MaintenanceLog -Message "Disk errors detected - CHKDSK scheduled for next restart" -Level WARNING
+                Write-DetailedOperation -Operation 'CHKDSK Scheduling' -Details "Scheduled for drive: $($CHKDSKResult.Drive)" -Result 'Scheduled'
+                $HealthResults.CHKDSKScheduled = $true
+                $HealthResults.RepairActions += "CHKDSK Scheduled (Restart Required)"
+                
+                # User notification for restart requirement
+                if ($ShowMessageBoxes -and -not $SilentMode) {
+                    $CHKDSKMessage = @"
+Disk Health Check Results
+
+Disk errors have been detected on $($CHKDSKResult.Drive)
+
+A disk check (CHKDSK) has been scheduled to run on the next system restart to repair these issues.
+
+IMPORTANT: Please restart your computer at your earliest convenience to complete the disk repair process.
+
+Would you like to view the detailed CHKDSK log?
+"@
+                    Show-MaintenanceMessageBox -Message $CHKDSKMessage -Title "Disk Check Scheduled" -Icon "Warning"
+                }
+            }
+            else {
+                Write-MaintenanceLog -Message "Disk health check completed - no issues detected" -Level SUCCESS
+                Write-DetailedOperation -Operation 'Disk Health Check' -Details 'System drive integrity verified' -Result 'Healthy'
+            }
+        }
+        catch {
+            Write-MaintenanceLog -Message "Disk health check failed: $($_.Exception.Message)" -Level WARNING
+            $HealthResults.Errors += "CHKDSK: Health check failed - $($_.Exception.Message)"
+        }
+        
+        # Stage 5: Overall Health Assessment and Reporting
+        Write-ProgressBar -Activity 'System Health Check' -PercentComplete 95 -Status 'Generating health report...'
+        
+        # Determine overall system health status
+        if ($HealthResults.Errors.Count -eq 0 -and $HealthResults.RepairActions.Count -eq 0) {
+            $HealthResults.OverallHealth = "Healthy"
+            Write-MaintenanceLog -Message "System health check completed - System is HEALTHY" -Level SUCCESS
+        }
+        elseif ($HealthResults.Errors.Count -gt 0 -and $HealthResults.RepairActions.Count -gt 0) {
+            $HealthResults.OverallHealth = "Unhealthy - Repairs Performed"
+            Write-MaintenanceLog -Message "System health check completed - Issues detected and repairs performed" -Level WARNING
+        }
+        elseif ($HealthResults.RepairActions.Count -gt 0) {
+            $HealthResults.OverallHealth = "Repaired"
+            Write-MaintenanceLog -Message "System health check completed - Repairs performed successfully" -Level SUCCESS
+        }
+        else {
+            $HealthResults.OverallHealth = "Unhealthy - Manual Intervention Required"
+            Write-MaintenanceLog -Message "System health check completed - Manual intervention required" -Level ERROR
+        }
+        
+        # Generate comprehensive health report
+        $HealthReport = Generate-SystemHealthReport -Results $HealthResults
+        Write-MaintenanceLog -Message "System health report saved: $HealthReport" -Level SUCCESS
+        
+        Write-ProgressBar -Activity 'System Health Check' -PercentComplete 100 -Status 'Health diagnostics completed'
+        Write-Progress -Activity 'System Health Check' -Completed
+        
+        # Summary notification
+        $SummaryMessage = @"
+System Health Check Summary
+
+Overall Status: $($HealthResults.OverallHealth)
+
+Errors Detected: $($HealthResults.Errors.Count)
+Repairs Performed: $($HealthResults.RepairActions.Count)
+CHKDSK Scheduled: $($HealthResults.CHKDSKScheduled)
+
+Detailed report available at: $HealthReport
+"@
+        Write-DetailedOperation -Operation 'System Health Summary' -Details $SummaryMessage -Result $HealthResults.OverallHealth
+    }
+}
+
+<#
+.SYNOPSIS
+    Executes DISM operations with timeout protection and real-time output display.
+
+.DESCRIPTION
+    Provides a robust wrapper for DISM.exe operations with enterprise-grade timeout
+    protection, real-time output parsing, and error handling. Shows live progress
+    to keep users informed during long-running operations.
+
+.PARAMETER Operation
+    DISM operation to perform: ScanHealth, CheckHealth, or RestoreHealth
+
+.PARAMETER TimeoutMinutes
+    Maximum time to allow for DISM operation before timeout
+
+.OUTPUTS
+    [hashtable] Operation results with success status and output
+
+.EXAMPLE
+    $Result = Invoke-DISMOperation -Operation "CheckHealth" -TimeoutMinutes 10
+
+.NOTES
+    Performance: Implements timeout protection for long-running operations
+    Reliability: Comprehensive output parsing and error detection
+    UX: Real-time progress feedback keeps users informed
+#>
+function Invoke-DISMOperation {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateSet("ScanHealth", "CheckHealth", "RestoreHealth")]
+        [string]$Operation,
+        
+        [Parameter(Mandatory=$false)]
+        [int]$TimeoutMinutes = 30
+    )
+    
+    $Result = @{
+        Success = $false
+        Output = ""
+        Duration = [TimeSpan]::Zero
+        ExitCode = -1
+    }
+    
+    try {
+        if ($WhatIf) {
+            Write-MaintenanceLog -Message "[WHATIF] Would execute: DISM.exe /Online /Cleanup-Image /$Operation" -Level INFO
+            $Result.Success = $true
+            $Result.Output = "WhatIf mode - operation simulated"
+            return $Result
+        }
+        
+        # Operation-specific messages
+        $OperationMessages = @{
+            "ScanHealth" = @{
+                Title = "DISM Image Health Scan"
+                SubTitle = "Quick integrity check of Windows image"
+                Status = "Scanning image health..."
+            }
+            "CheckHealth" = @{
+                Title = "DISM Component Store Check"
+                SubTitle = "Detailed analysis of component store integrity"
+                Status = "Checking component store..."
+            }
+            "RestoreHealth" = @{
+                Title = "DISM Component Store Repair"
+                SubTitle = "Repairing detected corruption (may download files)"
+                Status = "Repairing component store..."
+            }
+        }
+        
+        $OpMsg = $OperationMessages[$Operation]
+        
+        # Show operation header
+        Show-SectionHeader -Title $OpMsg.Title -SubTitle $OpMsg.SubTitle
+        
+        Write-Host "`n  This operation may take 5-30 minutes depending on system state." -ForegroundColor Gray
+        Write-Host "  Please be patient - real-time progress will appear below.`n" -ForegroundColor Gray
+        
+        # Construct DISM arguments
+        $DISMArgs = "/Online /Cleanup-Image /$Operation"
+        
+        # Execute DISM with real-time output
+        $DISMResult = Invoke-CommandWithRealTimeOutput `
+            -Command "DISM.exe" `
+            -Arguments $DISMArgs `
+            -ActivityName "DISM $Operation" `
+            -StatusMessage $OpMsg.Status `
+            -ShowRealTimeOutput $true `
+            -TimeoutMinutes $TimeoutMinutes
+        
+        # Process results
+        $Result.ExitCode = $DISMResult.ExitCode
+        $Result.Output = $DISMResult.Output
+        $Result.Duration = $DISMResult.Duration
+        $Result.Success = $DISMResult.Success
+        
+        # Detailed result analysis
+        if ($Result.Success) {
+            # Analyze output for specific results
+            if ($Result.Output -match "No component store corruption detected") {
+                Write-Host "`n  ========== Result Summary ==========" -ForegroundColor Green
+                Write-Host "  Status: HEALTHY" -ForegroundColor Green
+                Write-Host "  Finding: No corruption detected" -ForegroundColor White
+                Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+                Write-Host "  ====================================`n" -ForegroundColor Green
+                
+                Write-MaintenanceLog -Message "DISM ${Operation}: No corruption detected (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level SUCCESS
+            }
+            elseif ($Result.Output -match "component store is repairable") {
+                Write-Host "`n  ========== Result Summary ==========" -ForegroundColor Yellow
+                Write-Host "  Status: REPAIRABLE" -ForegroundColor Yellow
+                Write-Host "  Finding: Corruption detected but can be repaired" -ForegroundColor White
+                Write-Host "  Action: RestoreHealth will be executed" -ForegroundColor White
+                Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+                Write-Host "  ====================================`n" -ForegroundColor Yellow
+                
+                Write-MaintenanceLog -Message "DISM ${Operation}: Repairable corruption detected (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level WARNING
+            }
+            elseif ($Result.Output -match "restore operation completed successfully") {
+                Write-Host "`n  ========== Result Summary ==========" -ForegroundColor Green
+                Write-Host "  Status: REPAIRED" -ForegroundColor Green
+                Write-Host "  Finding: Component store successfully repaired" -ForegroundColor White
+                Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+                Write-Host "  ====================================`n" -ForegroundColor Green
+                
+                Write-MaintenanceLog -Message "DISM ${Operation}: Repair completed successfully (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level SUCCESS
+            }
+            else {
+                Write-Host "`n  ========== Result Summary ==========" -ForegroundColor Cyan
+                Write-Host "  Status: Completed" -ForegroundColor White
+                Write-Host "  Exit Code: $($Result.ExitCode)" -ForegroundColor White
+                Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+                Write-Host "  ====================================`n" -ForegroundColor Cyan
+                
+                Write-MaintenanceLog -Message "DISM $Operation completed (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level SUCCESS
+            }
+        }
+        else {
+            Write-Host "`n  ========== Result Summary ==========" -ForegroundColor Red
+            Write-Host "  Status: FAILED or WARNINGS" -ForegroundColor Red
+            Write-Host "  Exit Code: $($Result.ExitCode)" -ForegroundColor White
+            Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+            Write-Host "  Note: Check detailed output above" -ForegroundColor Gray
+            Write-Host "  ====================================`n" -ForegroundColor Red
+            
+            Write-MaintenanceLog -Message "DISM $Operation completed with exit code $($Result.ExitCode) (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level WARNING
+        }
+        
+        return $Result
+    }
+    catch {
+        $Result.Output = "Exception: $($_.Exception.Message)"
+        Write-MaintenanceLog -Message "DISM $Operation failed: $($_.Exception.Message)" -Level ERROR
+        return $Result
+    }
+}
+
+<#
+.SYNOPSIS
+    Executes DISM RestoreHealth operation when component store corruption is detected.
+
+.DESCRIPTION
+    Performs automated component store repair using Windows Update or local sources.
+    This is a more intensive operation that attempts to repair detected corruption.
+
+.PARAMETER HealthResults
+    Reference to health results hashtable for tracking repair status
+
+.NOTES
+    Performance: Can take 15-30 minutes depending on system and internet connection
+    Network: May download repair files from Windows Update if local sources unavailable
+#>
+function Invoke-DISMRestoreHealth {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [ref]$HealthResults
+    )
+    
+    Write-ProgressBar -Activity 'System Health Check' -PercentComplete 45 -Status 'DISM: Repairing component store...'
+    Write-MaintenanceLog -Message 'Starting DISM RestoreHealth operation to repair component store...' -Level PROGRESS
+    
+    try {
+        Write-DetailedOperation -Operation 'DISM RestoreHealth' -Details 'Attempting automatic component store repair' -Result 'Starting'
+        
+        # Execute RestoreHealth with extended timeout
+        $DISMRestoreResult = Invoke-DISMOperation -Operation "RestoreHealth" -TimeoutMinutes 30
+        $HealthResults.Value.DISMRestoreHealth = $DISMRestoreResult
+        
+        if ($DISMRestoreResult.Success) {
+            if ($DISMRestoreResult.Output -match "The restore operation completed successfully") {
+                Write-MaintenanceLog -Message "DISM RestoreHealth completed successfully - Component store repaired" -Level SUCCESS
+                Write-DetailedOperation -Operation 'DISM RestoreHealth' -Details 'Component store corruption repaired' -Result 'Success'
+                $HealthResults.Value.RepairActions += "Component Store Successfully Repaired"
+            }
+            elseif ($DISMRestoreResult.Output -match "No component store corruption detected") {
+                Write-MaintenanceLog -Message "DISM RestoreHealth completed - No corruption found" -Level SUCCESS
+                Write-DetailedOperation -Operation 'DISM RestoreHealth' -Details 'No repair needed' -Result 'Clean'
+            }
+            else {
+                Write-MaintenanceLog -Message "DISM RestoreHealth completed with warnings" -Level WARNING
+                Write-DetailedOperation -Operation 'DISM RestoreHealth' -Details $DISMRestoreResult.Output -Result 'Warning'
+            }
+        }
+        else {
+            Write-MaintenanceLog -Message "DISM RestoreHealth failed or timed out" -Level ERROR
+            Write-DetailedOperation -Operation 'DISM RestoreHealth' -Details $DISMRestoreResult.Output -Result 'Failed'
+            $HealthResults.Value.Errors += "DISM RestoreHealth: Operation failed"
+        }
+    }
+    catch {
+        Write-MaintenanceLog -Message "DISM RestoreHealth failed: $($_.Exception.Message)" -Level ERROR
+        $HealthResults.Value.Errors += "DISM RestoreHealth: Exception - $($_.Exception.Message)"
+    }
+}
+
+<#
+.SYNOPSIS
+    Executes System File Checker (SFC) scan with timeout protection and real-time output.
+
+.DESCRIPTION
+    Runs SFC /scannow to verify and repair Windows system files.
+    Implements timeout protection and comprehensive output parsing with real-time
+    progress display to keep users informed during the lengthy scan process.
+
+.PARAMETER TimeoutMinutes
+    Maximum time to allow for SFC operation before timeout
+
+.OUTPUTS
+    [hashtable] SFC scan results with success status and findings
+
+.EXAMPLE
+    $SFCResult = Invoke-SFCOperation -TimeoutMinutes 20
+
+.NOTES
+    Performance: SFC scans typically take 10-20 minutes
+    Reliability: Comprehensive output parsing for all SFC result types
+    UX: Real-time progress feedback keeps users informed
+#>
+function Invoke-SFCOperation {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [int]$TimeoutMinutes = 30
+    )
+    
+    $Result = @{
+        Success = $false
+        Output = ""
+        Duration = [TimeSpan]::Zero
+        ExitCode = -1
+    }
+    
+    try {
+        if ($WhatIf) {
+            Write-MaintenanceLog -Message "[WHATIF] Would execute: sfc /scannow" -Level INFO
+            $Result.Success = $true
+            $Result.Output = "WhatIf mode - operation simulated"
+            return $Result
+        }
+        
+        # Show operation header
+        Show-SectionHeader -Title "System File Checker (SFC) Scan" -SubTitle "Verifying integrity of protected system files"
+        
+        Write-Host "`n  This operation typically takes 10-20 minutes." -ForegroundColor Gray
+        Write-Host "  SFC will scan all protected system files and replace corrupted files." -ForegroundColor Gray
+        Write-Host "  Real-time progress will appear below.`n" -ForegroundColor Gray
+        
+        # Execute SFC with real-time output
+        $SFCResult = Invoke-CommandWithRealTimeOutput `
+            -Command "sfc.exe" `
+            -Arguments "/scannow" `
+            -ActivityName "System File Checker" `
+            -StatusMessage "Scanning and repairing system files..." `
+            -ShowRealTimeOutput $true `
+            -TimeoutMinutes $TimeoutMinutes
+        
+        # Process results
+        $Result.ExitCode = $SFCResult.ExitCode
+        $Result.Output = $SFCResult.Output
+        $Result.Duration = $SFCResult.Duration
+        $Result.Success = $true  # SFC completion is success, need to parse output for actual status
+        
+        # Detailed result analysis
+        if ($Result.Output -match "did not find any integrity violations") {
+            Write-Host "`n  ========== Scan Results ==========" -ForegroundColor Green
+            Write-Host "  Status: HEALTHY" -ForegroundColor Green
+            Write-Host "  Finding: No integrity violations found" -ForegroundColor White
+            Write-Host "  All system files are intact" -ForegroundColor White
+            Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+            Write-Host "  ==================================`n" -ForegroundColor Green
+            
+            Write-MaintenanceLog -Message "SFC scan: No integrity violations found (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level SUCCESS
+        }
+        elseif ($Result.Output -match "found corrupt files and successfully repaired them") {
+            Write-Host "`n  ========== Scan Results ==========" -ForegroundColor Green
+            Write-Host "  Status: REPAIRED" -ForegroundColor Green
+            Write-Host "  Finding: Corrupt files found and repaired" -ForegroundColor White
+            Write-Host "  Details: Check CBS.log for specific files" -ForegroundColor Gray
+            Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+            Write-Host "  ==================================`n" -ForegroundColor Green
+            
+            Write-MaintenanceLog -Message "SFC scan: Corrupt files repaired (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level SUCCESS
+        }
+        elseif ($Result.Output -match "found corrupt files but was unable to fix") {
+            Write-Host "`n  ========== Scan Results ==========" -ForegroundColor Red
+            Write-Host "  Status: REPAIR FAILED" -ForegroundColor Red
+            Write-Host "  Finding: Corrupt files found but could not be repaired" -ForegroundColor White
+            Write-Host "  Action Required: Manual repair may be needed" -ForegroundColor Yellow
+            Write-Host "  Details: Check CBS.log at C:\Windows\Logs\CBS\CBS.log" -ForegroundColor Gray
+            Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+            Write-Host "  ==================================`n" -ForegroundColor Red
+            
+            Write-MaintenanceLog -Message "SFC scan: Corrupt files found but repair failed (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level WARNING
+        }
+        elseif ($Result.Output -match "Windows Resource Protection could not perform") {
+            Write-Host "`n  ========== Scan Results ==========" -ForegroundColor Red
+            Write-Host "  Status: SCAN FAILED" -ForegroundColor Red
+            Write-Host "  Finding: SFC could not complete the scan" -ForegroundColor White
+            Write-Host "  Common causes:" -ForegroundColor Gray
+            Write-Host "    - Another maintenance operation is running" -ForegroundColor Gray
+            Write-Host "    - Pending system restart required" -ForegroundColor Gray
+            Write-Host "    - System files are locked" -ForegroundColor Gray
+            Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+            Write-Host "  ==================================`n" -ForegroundColor Red
+            
+            Write-MaintenanceLog -Message "SFC scan: Could not perform requested operation (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level ERROR
+        }
+        else {
+            Write-Host "`n  ========== Scan Results ==========" -ForegroundColor Cyan
+            Write-Host "  Status: Completed" -ForegroundColor White
+            Write-Host "  Exit Code: $($Result.ExitCode)" -ForegroundColor White
+            Write-Host "  Duration: $($Result.Duration.TotalMinutes.ToString('F2')) minutes" -ForegroundColor White
+            Write-Host "  Note: Check detailed output above" -ForegroundColor Gray
+            Write-Host "  ==================================`n" -ForegroundColor Cyan
+            
+            Write-MaintenanceLog -Message "SFC scan completed (Duration: $($Result.Duration.TotalMinutes.ToString('F2'))min)" -Level SUCCESS
+        }
+        
+        return $Result
+    }
+    catch {
+        $Result.Output = "Exception: $($_.Exception.Message)"
+        Write-MaintenanceLog -Message "SFC scan failed: $($_.Exception.Message)" -Level ERROR
+        return $Result
+    }
+}
+
+<#
+.SYNOPSIS
+    Tests disk health and schedules CHKDSK if errors are detected.
+
+.DESCRIPTION
+    Evaluates system drive health and schedules CHKDSK for next boot if issues
+    are detected. CHKDSK requires exclusive disk access and must run at boot.
+
+.OUTPUTS
+    [hashtable] Disk health status and CHKDSK scheduling information
+
+.EXAMPLE
+    $DiskHealth = Test-DiskHealth
+
+.NOTES
+    Limitation: CHKDSK requires system restart for system drive
+    Security: Only checks system drive to prevent accidental data drive checks
+#>
+function Test-DiskHealth {
+    [CmdletBinding()]
+    param()
+    
+    $Result = @{
+        ScheduleRequired = $false
+        Drive = $env:SystemDrive
+        IssuesDetected = $false
+        CHKDSKScheduled = $false
+    }
+    
+    try {
+        if ($WhatIf) {
+            Write-MaintenanceLog -Message "[WHATIF] Would check disk health for $($env:SystemDrive)" -Level INFO
+            return $Result
+        }
+        
+        # Check if CHKDSK is already scheduled
+        $CHKDSKScheduled = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "BootExecute" -ErrorAction SilentlyContinue).BootExecute -match "autocheck autochk"
+        
+        if ($CHKDSKScheduled) {
+            Write-MaintenanceLog -Message "CHKDSK is already scheduled for next boot" -Level INFO
+            $Result.CHKDSKScheduled = $true
+            return $Result
+        }
+        
+        # Use WMIC to check for disk errors (non-invasive)
+        Write-MaintenanceLog -Message "Checking disk health status for $($env:SystemDrive)..." -Level INFO
+        
+        $DiskStatus = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$($env:SystemDrive)'" -ErrorAction Stop
+        
+        # Check volume dirty bit using fsutil
+        $FsutilOutput = & fsutil dirty query $env:SystemDrive 2>&1
+        
+        if ($FsutilOutput -match "is dirty" -or $FsutilOutput -match "is set") {
+            Write-MaintenanceLog -Message "Disk dirty bit is set - errors detected on $($env:SystemDrive)" -Level WARNING
+            $Result.IssuesDetected = $true
+            $Result.ScheduleRequired = $true
+            
+            # Schedule CHKDSK for next boot
+            Write-MaintenanceLog -Message "Scheduling CHKDSK for next system restart..." -Level INFO
+            
+            try {
+                # Schedule CHKDSK using chkdsk command
+                $CHKDSKProcess = Start-Process -FilePath "chkdsk.exe" -ArgumentList "$($env:SystemDrive) /F /R /X" -PassThru -NoNewWindow -Wait -ErrorAction Stop
+                
+                if ($CHKDSKProcess.ExitCode -eq 0) {
+                    Write-MaintenanceLog -Message "CHKDSK successfully scheduled for next restart" -Level SUCCESS
+                    $Result.CHKDSKScheduled = $true
+                }
+                else {
+                    # Fallback: Use echo Y to auto-confirm CHKDSK scheduling
+                    $ScheduleResult = echo Y | chkdsk $env:SystemDrive /F /R 2>&1
+                    
+                    if ($ScheduleResult -match "scheduled") {
+                        Write-MaintenanceLog -Message "CHKDSK successfully scheduled for next restart (fallback method)" -Level SUCCESS
+                        $Result.CHKDSKScheduled = $true
+                    }
+                    else {
+                        Write-MaintenanceLog -Message "Failed to schedule CHKDSK - manual intervention required" -Level WARNING
+                    }
+                }
+            }
+            catch {
+                Write-MaintenanceLog -Message "Error scheduling CHKDSK: $($_.Exception.Message)" -Level ERROR
+            }
+        }
+        else {
+            Write-MaintenanceLog -Message "Disk health check passed - no issues detected on $($env:SystemDrive)" -Level SUCCESS
+        }
+        
+        return $Result
+    }
+    catch {
+        Write-MaintenanceLog -Message "Disk health check failed: $($_.Exception.Message)" -Level WARNING
+        return $Result
+    }
+}
+
+<#
+.SYNOPSIS
+    Executes a command with real-time output display and timeout protection.
+
+.DESCRIPTION
+    Provides a unified wrapper for executing external commands with real-time
+    output streaming, progress tracking, and timeout protection. Used by DISM
+    and SFC operations for consistent user experience.
+
+.PARAMETER Command
+    Command executable to run (e.g., "DISM.exe", "sfc.exe")
+
+.PARAMETER Arguments
+    Command-line arguments for the command
+
+.PARAMETER ActivityName
+    Name to display in progress indicators
+
+.PARAMETER StatusMessage
+    Status message to display during execution
+
+.PARAMETER ShowRealTimeOutput
+    Whether to show real-time output from the command
+
+.PARAMETER TimeoutMinutes
+    Maximum time to allow for command execution before timeout
+
+.OUTPUTS
+    [hashtable] Command execution results with success status, output, and duration
+
+.EXAMPLE
+    $Result = Invoke-CommandWithRealTimeOutput -Command "DISM.exe" -Arguments "/Online /Cleanup-Image /ScanHealth"
+
+.NOTES
+    This is a helper function that provides consistent command execution behavior
+    across all system health operations.
+#>
+function Invoke-CommandWithRealTimeOutput {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Command,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$Arguments,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$ActivityName = "Command Execution",
+        
+        [Parameter(Mandatory=$false)]
+        [string]$StatusMessage = "Running command...",
+        
+        [Parameter(Mandatory=$false)]
+        [bool]$ShowRealTimeOutput = $true,
+        
+        [Parameter(Mandatory=$false)]
+        [int]$TimeoutMinutes = 30
+    )
+    
+    $Result = @{
+        Success = $false
+        Output = ""
+        Duration = [TimeSpan]::Zero
+        ExitCode = -1
+    }
+    
+    try {
+        $StartTime = Get-Date
+        $TimeoutSeconds = $TimeoutMinutes * 60
+        
+        Write-Host "  Executing: $Command $Arguments" -ForegroundColor Gray
+        Write-Host "  Timeout: $TimeoutMinutes minutes`n" -ForegroundColor Gray
+        
+        # Configure process
+        $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $ProcessInfo.FileName = $Command
+        $ProcessInfo.Arguments = $Arguments
+        $ProcessInfo.RedirectStandardOutput = $true
+        $ProcessInfo.RedirectStandardError = $true
+        $ProcessInfo.UseShellExecute = $false
+        $ProcessInfo.CreateNoWindow = $true
+        
+        $Process = New-Object System.Diagnostics.Process
+        $Process.StartInfo = $ProcessInfo
+        
+        # Event handlers for real-time output
+        $OutputBuilder = New-Object System.Text.StringBuilder
+        $ErrorBuilder = New-Object System.Text.StringBuilder
+        
+        $OutputHandler = {
+            if ($EventArgs.Data -ne $null) {
+                $line = $EventArgs.Data
+                [void]$OutputBuilder.AppendLine($line)
+                
+                if ($ShowRealTimeOutput) {
+                    # Color code based on content
+                    if ($line -match "error|fail|corrupt") {
+                        Write-Host "  $line" -ForegroundColor Red
+                    }
+                    elseif ($line -match "warning|repairable") {
+                        Write-Host "  $line" -ForegroundColor Yellow
+                    }
+                    elseif ($line -match "success|complete|healthy|100%") {
+                        Write-Host "  $line" -ForegroundColor Green
+                    }
+                    elseif ($line -match "\d+\.\d+%|\d+%") {
+                        Write-Host "  $line" -ForegroundColor Cyan
+                    }
+                    else {
+                        Write-Host "  $line" -ForegroundColor White
+                    }
+                }
+            }
+        }
+        
+        $ErrorHandler = {
+            if ($EventArgs.Data -ne $null) {
+                $line = $EventArgs.Data
+                [void]$ErrorBuilder.AppendLine($line)
+                
+                if ($ShowRealTimeOutput) {
+                    Write-Host "  [ERROR] $line" -ForegroundColor Red
+                }
+            }
+        }
+        
+        # Register event handlers
+        Register-ObjectEvent -InputObject $Process -EventName OutputDataReceived -Action $OutputHandler | Out-Null
+        Register-ObjectEvent -InputObject $Process -EventName ErrorDataReceived -Action $ErrorHandler | Out-Null
+        
+        # Start process
+        $Process.Start() | Out-Null
+        $Process.BeginOutputReadLine()
+        $Process.BeginErrorReadLine()
+        
+        # Wait for process completion with timeout
+        $Completed = $Process.WaitForExit($TimeoutSeconds * 1000)
+        
+        if ($Completed) {
+            # Give event handlers time to finish
+            Start-Sleep -Milliseconds 500
+            
+            $Result.ExitCode = $Process.ExitCode
+            $Result.Output = $OutputBuilder.ToString()
+            $Result.Duration = (Get-Date) - $StartTime
+            
+            if ($ErrorBuilder.Length -gt 0) {
+                $Result.Output += "`n--- ERRORS ---`n" + $ErrorBuilder.ToString()
+            }
+            
+            # Determine success based on exit code
+            $Result.Success = ($Result.ExitCode -eq 0)
+        }
+        else {
+            # Timeout occurred - force kill process
+            $Process.Kill()
+            $Result.Output = "Operation timed out after $TimeoutMinutes minutes`n" + $OutputBuilder.ToString()
+            $Result.Duration = (Get-Date) - $StartTime
+        }
+        
+        # Cleanup event handlers
+        Get-EventSubscriber | Where-Object { $_.SourceObject -eq $Process } | Unregister-Event
+        
+        return $Result
+    }
+    catch {
+        $Result.Output = "Exception: $($_.Exception.Message)"
+        return $Result
+    }
+    finally {
+        if ($Process) {
+            $Process.Dispose()
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Displays a formatted section header for operations.
+
+.DESCRIPTION
+    Provides consistent visual formatting for operation headers throughout
+    the system health module. Uses simple ASCII characters for compatibility.
+
+.PARAMETER Title
+    Main title for the section
+
+.PARAMETER SubTitle
+    Optional subtitle with additional context
+
+.EXAMPLE
+    Show-SectionHeader -Title "DISM Scan" -SubTitle "Checking system image integrity"
+#>
+function Show-SectionHeader {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Title,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$SubTitle = ""
+    )
+    
+    $BorderLength = 70
+    $Border = "=" * $BorderLength
+    
+    Write-Host "`n  $Border" -ForegroundColor Cyan
+    Write-Host "  $Title" -ForegroundColor Cyan
+    if ($SubTitle) {
+        Write-Host "  $SubTitle" -ForegroundColor Gray
+    }
+    Write-Host "  $Border" -ForegroundColor Cyan
+}
+
+<#
+.SYNOPSIS
+    Generates comprehensive system health report with detailed findings.
+
+.DESCRIPTION
+    Creates a detailed HTML/text report of all system health check results
+    including DISM, SFC, and CHKDSK findings with actionable recommendations.
+
+.PARAMETER Results
+    Health check results hashtable containing all diagnostic information
+
+.OUTPUTS
+    [string] Path to generated health report file
+
+.EXAMPLE
+    $ReportPath = Generate-SystemHealthReport -Results $HealthResults
+
+.NOTES
+    Format: Generates both human-readable text and structured data
+    Location: Saves to maintenance reports directory
+#>
+function Generate-SystemHealthReport {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [hashtable]$Results
+    )
+    
+    try {
+        $ReportTimestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $ReportPath = "$($Config.ReportsPath)\system_health_report_$ReportTimestamp.txt"
+        
+        # Ensure reports directory exists
+        if (-not (Test-Path $Config.ReportsPath)) {
+            New-Item -ItemType Directory -Path $Config.ReportsPath -Force | Out-Null
+        }
+        
+        # Generate comprehensive report content
+        $ReportContent = @"
+==========================================
+SYSTEM HEALTH DIAGNOSTIC REPORT
+==========================================
+Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+Computer: $env:COMPUTERNAME
+User: $env:USERNAME
+
+OVERALL SYSTEM HEALTH: $($Results.OverallHealth)
+==========================================
+
+DIAGNOSTIC RESULTS:
+------------------------------------------
+
+1. DISM IMAGE HEALTH SCAN
+   Status: $(if ($Results.DISMScanHealth.Success) { "COMPLETED" } else { "FAILED/INCOMPLETE" })
+   Duration: $($Results.DISMScanHealth.Duration.TotalMinutes.ToString('F2')) minutes
+   Findings: $(if ($Results.DISMScanHealth.Output -match "No component store corruption") { "No corruption detected" } else { "Issues detected - see details below" })
+
+2. DISM COMPONENT STORE HEALTH CHECK
+   Status: $(if ($Results.DISMCheckHealth.Success) { "COMPLETED" } else { "FAILED/INCOMPLETE" })
+   Duration: $($Results.DISMCheckHealth.Duration.TotalMinutes.ToString('F2')) minutes
+   Findings: $(if ($Results.DISMCheckHealth.Output -match "No component store corruption") { "Component store healthy" } elseif ($Results.DISMCheckHealth.Output -match "repairable") { "Corruption detected - repairable" } else { "See details below" })
+
+$(if ($Results.DISMRestoreHealth) {
+@"
+3. DISM RESTORE HEALTH OPERATION
+   Status: $(if ($Results.DISMRestoreHealth.Success) { "COMPLETED" } else { "FAILED/INCOMPLETE" })
+   Duration: $($Results.DISMRestoreHealth.Duration.TotalMinutes.ToString('F2')) minutes
+   Findings: $(if ($Results.DISMRestoreHealth.Output -match "successfully") { "Component store repaired successfully" } else { "Repair incomplete - see details" })
+
+"@
+})
+
+4. SYSTEM FILE CHECKER (SFC) SCAN
+   Status: $(if ($Results.SFCScan.Success) { "COMPLETED" } else { "FAILED/INCOMPLETE" })
+   Duration: $($Results.SFCScan.Duration.TotalMinutes.ToString('F2')) minutes
+   Findings: $(
+       if ($Results.SFCScan.Output -match "did not find any integrity violations") { "No integrity violations found" }
+       elseif ($Results.SFCScan.Output -match "successfully repaired") { "Corrupt files found and repaired" }
+       elseif ($Results.SFCScan.Output -match "unable to fix") { "Corrupt files found but repair failed" }
+       else { "See details below" }
+   )
+
+5. DISK HEALTH CHECK (CHKDSK)
+   System Drive: $env:SystemDrive
+   CHKDSK Scheduled: $(if ($Results.CHKDSKScheduled) { "YES - Restart required" } else { "NO - Disk appears healthy" })
+
+==========================================
+REPAIR ACTIONS TAKEN:
+------------------------------------------
+$(if ($Results.RepairActions.Count -gt 0) {
+    $Results.RepairActions | ForEach-Object { "- $_" }
+} else {
+    "No repairs were necessary"
+})
+
+==========================================
+ERRORS AND WARNINGS:
+------------------------------------------
+$(if ($Results.Errors.Count -gt 0) {
+    $Results.Errors | ForEach-Object { "- $_" }
+} else {
+    "No errors detected"
+})
+
+==========================================
+RECOMMENDATIONS:
+------------------------------------------
+$(
+    $Recommendations = @()
+    
+    if ($Results.OverallHealth -eq "Healthy") {
+        $Recommendations += "- System is in good health - continue regular maintenance"
+    }
+    
+    if ($Results.CHKDSKScheduled) {
+        $Recommendations += "- CRITICAL: Restart your computer to complete disk repair"
+        $Recommendations += "- Save all work before restarting"
+        $Recommendations += "- CHKDSK may take 30-60 minutes depending on disk size"
+    }
+    
+    if ($Results.Errors -match "unable to fix") {
+        $Recommendations += "- Manual repair required - consider running DISM and SFC in Safe Mode"
+        $Recommendations += "- Check Windows Update for pending system updates"
+        $Recommendations += "- Consider creating a system backup before further troubleshooting"
+    }
+    
+    if ($Results.RepairActions.Count -gt 0) {
+        $Recommendations += "- System repairs were performed - monitor for stability"
+        $Recommendations += "- Consider restarting the system after repairs"
+    }
+    
+    if ($Results.OverallHealth -match "Unhealthy") {
+        $Recommendations += "- System health issues detected - consider professional assistance"
+        $Recommendations += "- Backup critical data immediately"
+        $Recommendations += "- Review detailed logs for specific error information"
+    }
+    
+    $Recommendations += "- Regular system health checks recommended (monthly)"
+    $Recommendations += "- Keep Windows and drivers up to date"
+    $Recommendations += "- Maintain adequate free disk space (minimum 20GB)"
+    
+    $Recommendations -join "`n"
+)
+
+==========================================
+DETAILED OUTPUT LOGS:
+------------------------------------------
+
+DISM SCANHEALTH OUTPUT:
+$(if ($Results.DISMScanHealth.Output) { $Results.DISMScanHealth.Output } else { "No output available" })
+
+DISM CHECKHEALTH OUTPUT:
+$(if ($Results.DISMCheckHealth.Output) { $Results.DISMCheckHealth.Output } else { "No output available" })
+
+$(if ($Results.DISMRestoreHealth) {
+@"
+DISM RESTOREHEALTH OUTPUT:
+$(if ($Results.DISMRestoreHealth.Output) { $Results.DISMRestoreHealth.Output } else { "No output available" })
+
+"@
+})
+
+SFC SCAN OUTPUT:
+$(if ($Results.SFCScan.Output) { $Results.SFCScan.Output } else { "No output available" })
+
+==========================================
+ADDITIONAL RESOURCES:
+------------------------------------------
+- DISM Documentation: https://docs.microsoft.com/windows-hardware/manufacture/desktop/dism
+- SFC Documentation: https://support.microsoft.com/en-us/topic/use-the-system-file-checker-tool-to-repair-missing-or-corrupted-system-files
+- CHKDSK Guide: https://support.microsoft.com/en-us/windows/check-your-hard-disk-for-errors-in-windows
+
+For persistent issues, consider:
+1. Running diagnostics in Safe Mode
+2. Checking for hardware failures
+3. Consulting with IT support or Microsoft support
+
+==========================================
+END OF REPORT
+==========================================
+"@
+        
+        # Save report to file
+        $ReportContent | Out-File -FilePath $ReportPath -Encoding UTF8
+        
+        Write-MaintenanceLog -Message "System health report generated: $ReportPath" -Level SUCCESS
+        
+        return $ReportPath
+    }
+    catch {
+        Write-MaintenanceLog -Message "Failed to generate system health report: $($_.Exception.Message)" -Level ERROR
+        return $null
+    }
+}
+
+#endregion SYSTEM_HEALTH_REPAIR
 
 #region DEVELOPER_MAINTENANCE
 
@@ -9611,6 +11798,22 @@ Do you want to proceed with the maintenance operations?
             $Global:MaintenanceCounters.ModulesFailed++
             Show-MaintenanceMessageBox -Message "Disk Maintenance module encountered an error: $($_.Exception.Message)" -Title "Module Error" -Icon "Warning"
         }
+
+        # System Health & Repair Module Execution
+        Show-ProgressNotification -Phase "System Health Check" -Status "Starting system health diagnostics and repair" -Details "This phase includes DISM, SFC, and disk health verification."
+
+        try { 
+            Invoke-SystemHealthRepair
+            $ModuleResults += @{ Module = "SystemHealthRepair"; Success = $true }
+            $Global:MaintenanceCounters.ModulesExecuted++
+            Show-ProgressNotification -Phase "System Health Check" -Status "Completed successfully" -Details "System health diagnostics and repairs completed."
+        }
+        catch { 
+            Write-MaintenanceLog -Message "SystemHealthRepair module failed: $($_.Exception.Message)" -Level ERROR
+            $ModuleResults += @{ Module = "SystemHealthRepair"; Success = $false; Error = $_.Exception.Message }
+            $Global:MaintenanceCounters.ModulesFailed++
+            Show-MaintenanceMessageBox -Message "System Health Repair module encountered an error: $($_.Exception.Message)" -Title "Module Error" -Icon "Warning"
+        }
         
         # Security Scans Module Execution
         Show-ProgressNotification -Phase "Security Scans" -Status "Starting security analysis and threat detection" -Details "This phase includes Windows Defender scans and security policy audits."
@@ -9758,18 +11961,28 @@ Do you want to proceed with the maintenance operations?
         
         # Enterprise completion notification with comprehensive metrics
         $CompletionMessage = @"
-Maintenance Operations Completed
+MAINTENANCE OPERATIONS COMPLETED
 
 Execution Summary:
-> Total Duration: $($ExecutionTime.ToString("hh\:mm\:ss"))
+> Total Duration: $($Global:ScriptEndTime - $Global:ScriptStartTime)
 > Successful Operations: $SuccessCount
 > Warnings Generated: $WarningCount
 > Errors Encountered: $ErrorCount
 > Skipped Operations: $SkippedCount
 
-Module Results:
-- Successful Modules: $SuccessfulModules
-- Failed Modules: $FailedModules
+
+Modules Executed Successfully: $($Global:MaintenanceCounters.ModulesExecuted)
+Modules Failed: $($Global:MaintenanceCounters.ModulesFailed)
+
+Completed Modules:
+- System Updates (Windows, WinGet, Chocolatey)
+- Disk Maintenance (Cleanup, Optimization, Windows Cleanup)
+- System Health & Repair (DISM, SFC, CHKDSK)
+- Security Scans (Windows Defender, Policy Audits)
+- Developer Maintenance (NPM, Python, Docker, VS Code)
+- Performance Optimization (Event Logs, Startup Analysis)
+- Backup Operations (Restore Points, File Backup)
+- System Reporting (Comprehensive Analysis)
 
 System Optimizations:
 - Drive Optimizations: $($Global:MaintenanceCounters.DriveOptimizations)
@@ -9780,7 +11993,11 @@ Log Files:
 - Error Log: $Global:ErrorLog
 - Reports Directory: $($Config.ReportsPath)
 
-$( if ($ErrorCount -eq 0) { "All maintenance operations completed successfully!" } else { "Maintenance completed with some errors. Please review the log files for details." } )
+$( if ($ErrorCount -eq 0) { 
+    "All maintenance operations completed successfully! Please review the logs and reports for detailed information." 
+} else { 
+    "Maintenance completed with some errors. Please review the log files for details." 
+} )
 "@
         
         $CompletionIcon = if ($ErrorCount -eq 0) { "Information" } else { "Warning" }

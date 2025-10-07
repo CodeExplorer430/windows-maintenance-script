@@ -1,0 +1,242 @@
+{
+  "_metadata": {
+    "version": "2.6.0",
+    "description": "Windows Maintenance Script Configuration File",
+    "last_updated": "2025-10-07",
+    "author": "Miguel Velasco",
+    "notes": "This configuration includes new System Health Repair and Enhanced Disk Cleanup modules"
+  },
+  "_instructions": "Modify values below to customize script behavior. Remove metadata and instructions sections if not needed.",
+  
+  "LogPath": "%USERPROFILE%\\Documents\\Maintenance",
+  "BackupPath": "%USERPROFILE%\\Documents\\Backups",
+  "ReportsPath": "%USERPROFILE%\\Documents\\Maintenance\\Reports",
+  
+  "MaxLogSizeMB": 100,
+  "MaxBackupDays": 30,
+  "MaxEventLogSizeMB": 10,
+  "MinFreeSpaceGB": 5,
+  
+  "DetailedLogging": true,
+  "ProgressReporting": true,
+  "TimeoutMinutes": 30,
+  "MaxParallelJobs": 2,
+  "MemoryOptimizeInterval": 5,
+  
+  "EnabledModules": [
+    "SystemUpdate",
+    "DiskMaintenance",
+    "SystemHealthRepair",
+    "SecurityScans",
+    "DeveloperMaintenance",
+    "PerformanceOptimization",
+    "BackupOperations",
+    "SystemReporting",
+    "EventLogManagement"
+  ],
+  
+  "DriveDetection": true,
+  "AutoEventLogArchival": false,
+  "Reporting": true,
+  "SkipLinuxPartitions": true,
+  "SkipNetworkDrives": true,
+  "ValidateHardwareSupport": true,
+  "EnableFastMode": false,
+  "ParallelProcessing": true,
+  "AggressiveCleanup": true,
+  
+  "SystemHealthRepair": {
+    "_description": "System Health & Repair Module Configuration",
+    "EnableDISM": true,
+    "EnableSFC": true,
+    "EnableCHKDSK": true,
+    "DISMTimeout": 30,
+    "SFCTimeout": 20,
+    "AutoRepair": true,
+    "ScheduleCHKDSKOnErrors": true,
+    
+    "_advanced_settings": "Advanced configuration for enterprise environments",
+    "SkipDISMIfHealthy": true,
+    "SkipSFCIfDISMHealthy": false,
+    "GenerateDetailedReports": true,
+    "NotifyOnRepairs": true,
+    
+    "_timeout_notes": "Timeouts in minutes. DISM can take 15-45 minutes, SFC can take 10-30 minutes",
+    "_repair_notes": "AutoRepair will automatically attempt to fix detected issues",
+    "_chkdsk_notes": "CHKDSK requires system restart and runs at boot time"
+  },
+  
+  "EnhancedDiskCleanup": {
+    "_description": "Enhanced Disk Cleanup Module Configuration",
+    "EnableWindowsCleanup": true,
+    "IncludeRecycleBin": false,
+    "StateFlag": 1001,
+    "CleanupTimeout": 30,
+    "EmergencyThresholdGB": 2,
+    "AutoEmergencyCleanup": true,
+    
+    "_advanced_settings": "Advanced cleanup configuration",
+    "CleanupCategories": {
+      "_description": "Configure which cleanup categories to enable",
+      "DownloadedProgramFiles": true,
+      "TemporaryInternetFiles": true,
+      "Thumbnails": true,
+      "WindowsErrorReporting": true,
+      "WindowsDefender": true,
+      "SystemLogFiles": true,
+      "DirectXShaderCache": true,
+      "DeliveryOptimization": true,
+      "OldWindowsInstallation": true,
+      "WindowsUpdateCleanup": true,
+      "TemporaryWindowsFiles": true,
+      "SystemMemoryDumps": true,
+      "RecycleBin": false
+    },
+    
+    "_emergency_settings": "Emergency cleanup triggers when disk space is critically low",
+    "EmergencyIncludeRecycleBin": true,
+    "EmergencyAggressiveMode": true,
+    
+    "_stateflag_notes": "StateFlag is a registry identifier (1-9999) for cleanup configuration persistence",
+    "_recycle_bin_notes": "IncludeRecycleBin is disabled by default for data safety",
+    "_emergency_notes": "Emergency cleanup runs automatically when free space drops below threshold"
+  },
+  
+  "DiskMaintenance": {
+    "_description": "Standard Disk Maintenance Configuration",
+    "CleanupLocations": [
+      {
+        "Path": "%TEMP%",
+        "Name": "User Temp",
+        "Priority": "High",
+        "RetentionDays": 7
+      },
+      {
+        "Path": "%SystemRoot%\\Temp",
+        "Name": "System Temp",
+        "Priority": "High",
+        "RetentionDays": 7
+      },
+      {
+        "Path": "%SystemRoot%\\SoftwareDistribution\\Download",
+        "Name": "Windows Update Cache",
+        "Priority": "Medium",
+        "RetentionDays": 14
+      },
+      {
+        "Path": "%LOCALAPPDATA%\\Microsoft\\Windows\\INetCache",
+        "Name": "Internet Cache",
+        "Priority": "Low",
+        "RetentionDays": 30
+      }
+    ],
+    
+    "OptimizeSSDs": true,
+    "DefragmentHDDs": true,
+    "AnalyzeBeforeOptimize": true,
+    "SkipExternalDrives": false,
+    "MinimumFragmentation": 10
+  },
+  
+  "SystemUpdate": {
+    "_description": "System Update Module Configuration",
+    "EnableWindowsUpdate": true,
+    "EnableWinGet": true,
+    "EnableChocolatey": true,
+    "AutoInstallUpdates": false,
+    "UpdateTimeout": 60,
+    "IncludeOptionalUpdates": false
+  },
+  
+  "SecurityScans": {
+    "_description": "Security Scanning Configuration",
+    "EnableDefenderScan": true,
+    "ScanType": "Quick",
+    "DefenderTimeout": 30,
+    "EnableSecurityPolicyAudit": true,
+    "EnableFirewallCheck": true
+  },
+  
+  "DeveloperMaintenance": {
+    "_description": "Developer Tools Maintenance",
+    "EnableNPM": true,
+    "EnablePython": true,
+    "EnableDocker": true,
+    "EnableVSCode": true,
+    "EnableGit": true,
+    "UpdateDevTools": true
+  },
+  
+  "PerformanceOptimization": {
+    "_description": "Performance Optimization Configuration",
+    "EnableStartupOptimization": true,
+    "EnableEventLogCleanup": true,
+    "EnableMemoryOptimization": true,
+    "RemoveInvalidStartupItems": true,
+    "AnalyzeStartupImpact": true
+  },
+  
+  "BackupOperations": {
+    "_description": "Backup Configuration",
+    "DefaultBackupMode": "RestorePoint",
+    "CreateRestorePoint": true,
+    "BackupCriticalFiles": false,
+    "CompressionEnabled": true,
+    "BackupRetentionDays": 30,
+    "MaxBackupSizeGB": 50
+  },
+  
+  "SystemReporting": {
+    "_description": "Reporting Configuration",
+    "GenerateReports": true,
+    "ReportFormat": "Text",
+    "IncludePerformanceMetrics": true,
+    "IncludeSystemInfo": true,
+    "IncludeNetworkInfo": true,
+    "DetailedReporting": true
+  },
+  
+  "EventLogManagement": {
+    "_description": "Event Log Management Configuration",
+    "EnableLogOptimization": true,
+    "EnableLogArchival": false,
+    "ArchiveOldLogs": false,
+    "LogRetentionDays": 30,
+    "MaxLogSizeMB": 20
+  },
+  
+  "_notification_settings": {
+    "_description": "User notification preferences",
+    "ShowMessageBoxes": false,
+    "SilentMode": true,
+    "NotifyOnErrors": true,
+    "NotifyOnCompletion": false,
+    "EmailNotifications": false
+  },
+  
+  "_performance_tuning": {
+    "_description": "Performance tuning options",
+    "FastMode": false,
+    "ReducedTimeout": false,
+    "SkipNonCritical": false,
+    "ParallelExecution": true,
+    "MaxConcurrentOperations": 2
+  },
+  
+  "_safety_settings": {
+    "_description": "Safety and validation settings",
+    "WhatIfMode": false,
+    "ValidateBeforeDelete": true,
+    "CreateBackupBeforeChanges": true,
+    "MinimumDiskSpaceGB": 5,
+    "ConfirmDangerousOperations": true
+  },
+  
+  "_scheduling": {
+    "_description": "Scheduling preferences (external scheduler required)",
+    "RecommendedFrequency": "Weekly",
+    "BestExecutionTime": "Off-hours",
+    "EstimatedDuration": "30-60 minutes",
+    "RequiresRestart": false
+  }
+}
