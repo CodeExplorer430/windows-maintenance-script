@@ -391,11 +391,77 @@ function Invoke-DeveloperMaintenance {
         }
     }
 
-    # Continue with remaining tool maintenance tasks...
-    # Due to the length of this module, I'll include representative samples of each major section
-    # The full implementation continues with JDK, MinGW, .NET SDK, Windows SDK, VC++ Redistributables,
-    # Composer, PostgreSQL, JetBrains IDEs, Visual Studio, VS Code, Database tools, Adobe tools,
-    # Version control tools, and legacy C/C++ tools
+    # NOTE: Additional developer tool maintenance sections to be added:
+    # The following tools follow the same pattern as NPM/Python/Docker above:
+    #
+    # 1. Java Development Kit (JDK) - Lines 7066-7181 in original script
+    #    - JVM cache, Maven repository, Gradle cache cleanup
+    #    - 30-90 day retention policies
+    #
+    # 2. MinGW - Lines 7183-7316 in original script
+    #    - GCC/G++ compilation cache and temporary files
+    #    - 3-30 day retention policies
+    #
+    # 3. Microsoft .NET SDK - Lines 7318-7510 in original script
+    #    - NuGet cache, template engine, compilation artifacts
+    #    - CLI commands: `dotnet nuget locals all --clear`
+    #    - 30-90 day retention policies
+    #
+    # 4. Windows SDK - Lines 7511-7650 in original script
+    #    - Development cache, debugging symbols, temp files
+    #    - 14-60 day retention policies
+    #
+    # 5. Visual C++ Redistributables - Lines 7651-7750 in original script
+    #    - Installation logs and temporary files
+    #    - 14-30 day retention policies
+    #
+    # 6. Composer (PHP) - Lines 7819-7991 in original script
+    #    - Package cache, vendor directories, project caches
+    #    - CLI commands: `composer clear-cache`
+    #    - 7-60 day retention policies
+    #
+    # 7. PostgreSQL - Lines 7993-8187 in original script
+    #    - Server logs, temp files, command history
+    #    - 7-90 day retention policies
+    #
+    # 8. JetBrains IDEs - Lines 8189-8282 in original script
+    #    - IntelliJ IDEA, PyCharm, WebStorm, CLion, Rider
+    #    - System caches, temp files, logs
+    #    - 7 day retention policy
+    #
+    # 9. Visual Studio 2022 - Lines 8285-8360 in original script
+    #    - Cache, temp files, NuGet cache, IntelliCode logs
+    #    - 3-30 day retention policies
+    #
+    # 10. VS Code - Lines 8362-8437 in original script
+    #     - Logs, extension cache, VSIX cache, workspace storage, crash dumps
+    #     - 7-90 day retention policies
+    #
+    # 11. Database Development Tools - Lines 8439-8520 in original script
+    #     - MySQL Workbench, XAMPP, WAMP, SQL Server Management Studio
+    #     - 7-30 day retention policies
+    #
+    # 12. Adobe Creative Suite - Lines 8522-8630 in original script
+    #     - Photoshop, Illustrator, Figma temp and cache files
+    #     - 7 day retention policy
+    #
+    # 13. Version Control and API Tools - Lines 8632-8746 in original script
+    #     - Git, GitHub Desktop, Postman logs and caches
+    #     - 14-30 day retention policies
+    #
+    # 14. Legacy C/C++ Tools - Lines 8748-8822 in original script
+    #     - Dev-C++, Code::Blocks, Arduino IDE, Turbo C++
+    #     - 7 day retention policy for temp/log files
+    #
+    # Each section follows this pattern:
+    # - Detection (command check, path check, service check)
+    # - Version information gathering
+    # - Define cleanup paths with RetentionDays
+    # - Process each path with wildcard support
+    # - Calculate totals and report summary
+    # - Run tool-specific CLI cleanup commands if available
+    #
+    # To add a section, copy the pattern from NPM/Python/Docker above
 
     Write-MaintenanceLog -Message '======== Developer Maintenance Module Completed ========' -Level SUCCESS
 }

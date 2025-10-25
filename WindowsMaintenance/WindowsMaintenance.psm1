@@ -53,6 +53,7 @@ Import-Module "$ModuleRoot\Modules\SystemHealthRepair.psm1" -Force
 Import-Module "$ModuleRoot\Modules\SecurityScans.psm1" -Force
 Import-Module "$ModuleRoot\Modules\DeveloperMaintenance.psm1" -Force
 Import-Module "$ModuleRoot\Modules\PerformanceOptimization.psm1" -Force
+Import-Module "$ModuleRoot\Modules\NetworkMaintenance.psm1" -Force
 
 <#
 .SYNOPSIS
@@ -158,7 +159,8 @@ function Invoke-WindowsMaintenance {
             @{ Name = "SystemHealthRepair"; Function = "Invoke-SystemHealthRepair" },
             @{ Name = "SecurityScans"; Function = "Invoke-SecurityScans" },
             @{ Name = "DeveloperMaintenance"; Function = "Invoke-DeveloperMaintenance" },
-            @{ Name = "PerformanceOptimization"; Function = "Invoke-PerformanceOptimization" }
+            @{ Name = "PerformanceOptimization"; Function = "Invoke-PerformanceOptimization" },
+            @{ Name = "NetworkMaintenance"; Function = "Invoke-NetworkMaintenance" }
         )
 
         foreach ($Module in $ModuleExecutionOrder) {

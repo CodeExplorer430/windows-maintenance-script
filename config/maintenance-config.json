@@ -1,16 +1,15 @@
 {
   "_metadata": {
-    "version": "2.6.0",
-    "description": "Windows Maintenance Script Configuration File",
-    "last_updated": "2025-10-07",
+    "version": "4.0.0",
+    "description": "Windows Maintenance Framework Configuration File - Modular Architecture",
+    "last_updated": "2025-10-26",
     "author": "Miguel Velasco",
-    "notes": "This configuration includes new System Health Repair and Enhanced Disk Cleanup modules"
+    "notes": "Modular architecture with comprehensive logging, NetworkMaintenance module, and Task Scheduler integration"
   },
   "_instructions": "Modify values below to customize script behavior. Remove metadata and instructions sections if not needed.",
   
-  "LogPath": "%USERPROFILE%\\Documents\\Maintenance",
-  "BackupPath": "%USERPROFILE%\\Documents\\Backups",
-  "ReportsPath": "%USERPROFILE%\\Documents\\Maintenance\\Reports",
+  "LogsPath": "%TEMP%\\WindowsMaintenance\\Logs",
+  "ReportsPath": "%TEMP%\\WindowsMaintenance\\Reports",
   
   "MaxLogSizeMB": 100,
   "MaxBackupDays": 30,
@@ -24,15 +23,13 @@
   "MemoryOptimizeInterval": 5,
   
   "EnabledModules": [
-    "SystemUpdate",
+    "SystemUpdates",
     "DiskMaintenance",
     "SystemHealthRepair",
     "SecurityScans",
     "DeveloperMaintenance",
     "PerformanceOptimization",
-    "BackupOperations",
-    "SystemReporting",
-    "EventLogManagement"
+    "NetworkMaintenance"
   ],
   
   "DriveDetection": true,
@@ -49,61 +46,32 @@
     "_description": "System Health & Repair Module Configuration",
     "EnableDISM": true,
     "EnableSFC": true,
-    "EnableCHKDSK": true,
+    "EnableCHKDSK": false,
     "DISMTimeout": 30,
     "SFCTimeout": 20,
     "AutoRepair": true,
-    "ScheduleCHKDSKOnErrors": true,
-    
+    "ScheduleCHKDSKOnErrors": false,
+
     "_advanced_settings": "Advanced configuration for enterprise environments",
     "SkipDISMIfHealthy": true,
     "SkipSFCIfDISMHealthy": false,
     "GenerateDetailedReports": true,
     "NotifyOnRepairs": true,
-    
-    "_timeout_notes": "Timeouts in minutes. DISM can take 15-45 minutes, SFC can take 10-30 minutes",
-    "_repair_notes": "AutoRepair will automatically attempt to fix detected issues",
-    "_chkdsk_notes": "CHKDSK requires system restart and runs at boot time"
-  },
-  
-  "EnhancedDiskCleanup": {
-    "_description": "Enhanced Disk Cleanup Module Configuration",
-    "EnableWindowsCleanup": true,
-    "IncludeRecycleBin": false,
-    "StateFlag": 1001,
-    "CleanupTimeout": 30,
-    "EmergencyThresholdGB": 2,
-    "AutoEmergencyCleanup": true,
-    
-    "_advanced_settings": "Advanced cleanup configuration",
-    "CleanupCategories": {
-      "_description": "Configure which cleanup categories to enable",
-      "DownloadedProgramFiles": true,
-      "TemporaryInternetFiles": true,
-      "Thumbnails": true,
-      "WindowsErrorReporting": true,
-      "WindowsDefender": true,
-      "SystemLogFiles": true,
-      "DirectXShaderCache": true,
-      "DeliveryOptimization": true,
-      "OldWindowsInstallation": true,
-      "WindowsUpdateCleanup": true,
-      "TemporaryWindowsFiles": true,
-      "SystemMemoryDumps": true,
-      "RecycleBin": false
-    },
-    
-    "_emergency_settings": "Emergency cleanup triggers when disk space is critically low",
-    "EmergencyIncludeRecycleBin": true,
-    "EmergencyAggressiveMode": true,
-    
-    "_stateflag_notes": "StateFlag is a registry identifier (1-9999) for cleanup configuration persistence",
-    "_recycle_bin_notes": "IncludeRecycleBin is disabled by default for data safety",
-    "_emergency_notes": "Emergency cleanup runs automatically when free space drops below threshold"
+    "ForceOfflineScan": false,
+
+    "_timeout_notes": "Timeouts in minutes. DISM can take 15-45 minutes, SFC can take 10-30 minutes. CHKDSK requires restart and runs at boot.",
+    "_repair_notes": "AutoRepair will automatically attempt to fix detected issues using /RestoreHealth for DISM and automatic repair for SFC",
+    "_chkdsk_notes": "CHKDSK is disabled by default as it requires system restart. Enable only if disk errors are suspected."
   },
   
   "DiskMaintenance": {
-    "_description": "Standard Disk Maintenance Configuration",
+    "_description": "Disk Maintenance and Optimization Configuration",
+    "EnableCleanup": true,
+    "EnableOptimization": true,
+    "EnableWindowsCleanup": true,
+    "EnableRecycleBinCleanup": false,
+
+    "_cleanup_settings": "Temporary file cleanup configuration",
     "CleanupLocations": [
       {
         "Path": "%TEMP%",
@@ -128,24 +96,49 @@
         "Name": "Internet Cache",
         "Priority": "Low",
         "RetentionDays": 30
+      },
+      {
+        "Path": "%SystemRoot%\\Logs",
+        "Name": "Windows Logs",
+        "Priority": "Low",
+        "RetentionDays": 90
+      },
+      {
+        "Path": "%LOCALAPPDATA%\\Temp",
+        "Name": "Local Temp",
+        "Priority": "Medium",
+        "RetentionDays": 7
       }
     ],
-    
+
+    "_optimization_settings": "Disk optimization configuration",
     "OptimizeSSDs": true,
     "DefragmentHDDs": true,
     "AnalyzeBeforeOptimize": true,
     "SkipExternalDrives": false,
-    "MinimumFragmentation": 10
+    "MinimumFragmentation": 10,
+    "EnableTRIM": true,
+    "OptimizationPriority": "Normal",
+
+    "_advanced_settings": "Advanced disk maintenance settings",
+    "CleanupTimeout": 30,
+    "EmergencyThresholdGB": 2,
+    "AutoEmergencyCleanup": false,
+    "StateFlag": 1001,
+
+    "_notes": "OptimizeSSDs runs TRIM on SSDs. DefragmentHDDs only defragments traditional HDDs. RecycleBin cleanup is disabled by default for safety. EmergencyCleanup activates when free space drops below threshold."
   },
   
-  "SystemUpdate": {
-    "_description": "System Update Module Configuration",
+  "SystemUpdates": {
+    "_description": "System Updates Module Configuration",
     "EnableWindowsUpdate": true,
     "EnableWinGet": true,
     "EnableChocolatey": true,
     "AutoInstallUpdates": false,
     "UpdateTimeout": 60,
-    "IncludeOptionalUpdates": false
+    "IncludeOptionalUpdates": false,
+    "RestartAfterUpdates": false,
+    "DownloadOnly": false
   },
   
   "SecurityScans": {
@@ -153,18 +146,47 @@
     "EnableDefenderScan": true,
     "ScanType": "Quick",
     "DefenderTimeout": 30,
-    "EnableSecurityPolicyAudit": true,
-    "EnableFirewallCheck": true
+    "EnableSecurityPolicyAudit": false,
+    "EnableFirewallCheck": false,
+    "SkipIfRecentScan": true,
+    "RecentScanThresholdHours": 24,
+
+    "_advanced_settings": "Advanced security scan configuration",
+    "DetectConflictingAV": true,
+    "UpdateDefinitionsBeforeScan": true,
+    "ScanRemovableDrives": false,
+
+    "_notes": "Quick scan is recommended for routine maintenance. Full scan can take 1-3 hours. SkipIfRecentScan prevents redundant scans. Defender will skip scanning if conflicting antivirus is detected."
   },
   
   "DeveloperMaintenance": {
-    "_description": "Developer Tools Maintenance",
+    "_description": "Developer Tools Maintenance Configuration",
     "EnableNPM": true,
     "EnablePython": true,
     "EnableDocker": true,
-    "EnableVSCode": true,
-    "EnableGit": true,
-    "UpdateDevTools": true
+    "EnableJDK": true,
+    "EnableMinGW": false,
+    "EnableDotNetSDK": false,
+    "EnableWindowsSDK": false,
+    "EnableVCRedist": false,
+    "EnableComposer": false,
+    "EnablePostgreSQL": false,
+    "EnableJetBrainsIDEs": false,
+    "EnableVisualStudio2022": false,
+    "EnableVSCode": false,
+    "EnableDatabaseTools": false,
+    "EnableAdobeTools": false,
+    "EnableVersionControl": true,
+    "EnableLegacyCppTools": false,
+
+    "_advanced_settings": "Advanced developer tools configuration",
+    "NPMCacheRetentionDays": 30,
+    "PythonCacheRetentionDays": 30,
+    "DockerCleanupAggressiveness": "Medium",
+    "JDKCacheRetentionDays": 90,
+    "UpdateDevTools": false,
+
+    "_notes": "Only enable tools that are installed on your system. Setting tools to true when not installed will be safely skipped. UpdateDevTools will attempt to update package managers (npm, pip, etc.) which may take additional time."
   },
   
   "PerformanceOptimization": {
@@ -173,36 +195,32 @@
     "EnableEventLogCleanup": true,
     "EnableMemoryOptimization": true,
     "RemoveInvalidStartupItems": true,
-    "AnalyzeStartupImpact": true
+    "AnalyzeStartupImpact": true,
+    "EnableResourceAnalysis": true,
+    "EventLogRetentionDays": 30,
+    "MaxEventLogSizeMB": 20
   },
-  
-  "BackupOperations": {
-    "_description": "Backup Configuration",
-    "DefaultBackupMode": "RestorePoint",
-    "CreateRestorePoint": true,
-    "BackupCriticalFiles": false,
-    "CompressionEnabled": true,
-    "BackupRetentionDays": 30,
-    "MaxBackupSizeGB": 50
-  },
-  
-  "SystemReporting": {
-    "_description": "Reporting Configuration",
-    "GenerateReports": true,
-    "ReportFormat": "Text",
-    "IncludePerformanceMetrics": true,
-    "IncludeSystemInfo": true,
-    "IncludeNetworkInfo": true,
-    "DetailedReporting": true
-  },
-  
-  "EventLogManagement": {
-    "_description": "Event Log Management Configuration",
-    "EnableLogOptimization": true,
-    "EnableLogArchival": false,
-    "ArchiveOldLogs": false,
-    "LogRetentionDays": 30,
-    "MaxLogSizeMB": 20
+
+  "NetworkMaintenance": {
+    "_description": "Network Maintenance and Diagnostics Configuration",
+    "EnableDNSCacheClear": true,
+    "EnableARPCacheClear": true,
+    "EnableNetBIOSCacheClear": true,
+    "EnableConnectivityTest": true,
+    "EnableAdapterAnalysis": true,
+    "EnableWinsockReset": false,
+
+    "_advanced_settings": "Advanced network diagnostics configuration",
+    "ConnectivityTestEndpoints": [
+      "8.8.8.8",
+      "1.1.1.1",
+      "www.google.com",
+      "www.microsoft.com"
+    ],
+    "ConnectivityTimeout": 5,
+    "RequireUserConfirmationForWinsockReset": true,
+
+    "_notes": "DNS, ARP, and NetBIOS cache clearing are safe and recommended. Winsock reset should only be enabled if experiencing persistent network issues and may require restart."
   },
   
   "_notification_settings": {

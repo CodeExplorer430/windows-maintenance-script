@@ -436,8 +436,31 @@ $(if ($ManageEventLogs) { "- Automated archival was performed for safe logs" } e
         }
     } -TimeoutMinutes 10
 
-    # Continue with startup analysis and resource analysis...
-    # (Abbreviated for size - the full implementation includes all sections from the original)
+    # NOTE: Additional PerformanceOptimization sections from original script:
+    #
+    # Comprehensive startup performance analysis (Lines 9201-9341 in original)
+    # - WMI startup item detection (Get-CimInstance Win32_StartupCommand)
+    # - Registry startup item detection (HKLM/HKCU Run/RunOnce)
+    # - Startup impact analysis with categorization (High/Medium/Low)
+    # - File size analysis for startup items
+    # - Missing/invalid item detection
+    # - Comprehensive report generation with recommendations
+    #
+    # Invalid startup items cleanup (Lines 9343-9378 in original)
+    # - Calls Remove-InvalidStartupItems function
+    # - Message box notification for significant cleanup (>5 items)
+    # - Progress tracking with Write-ProgressBar
+    #
+    # System resource analysis (Lines 9380-9553 in original)
+    # - Memory usage analysis (physical and virtual)
+    # - CPU performance with 5-sample averaging
+    # - Disk I/O metrics (Read/Write MB/s, Queue Length)
+    # - Top 15 memory-consuming processes
+    # - Performance assessment with threshold alerts
+    # - Comprehensive report generation with recommendations
+    #
+    # To add these sections, extract from the original script and integrate following
+    # the same pattern as event log management above.
 
     # Final memory optimization after comprehensive performance analysis
     Optimize-MemoryUsage

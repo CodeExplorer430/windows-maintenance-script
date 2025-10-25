@@ -56,7 +56,8 @@
         'Modules\SystemHealthRepair.psm1',
         'Modules\SecurityScans.psm1',
         'Modules\DeveloperMaintenance.psm1',
-        'Modules\PerformanceOptimization.psm1'
+        'Modules\PerformanceOptimization.psm1',
+        'Modules\NetworkMaintenance.psm1'
     )
 
     # Functions to export from this module
