@@ -1282,6 +1282,7 @@ function Write-PerformanceMetric {
 .EXAMPLE
     Write-DetailedOperation -Operation "Drive Analysis" -Details "Scanning C: drive" -Result "Complete"
 #>
+
 function Write-DetailedOperation {
     [CmdletBinding()]
     param(
@@ -1289,13 +1290,21 @@ function Write-DetailedOperation {
         [string] $Operation,
         
         [Parameter(Mandatory = $true, HelpMessage="Detailed operation information")]
+        [AllowEmptyString()]  # FIX: Allow empty strings
         [string] $Details,
         
         [Parameter(Mandatory=$false, HelpMessage="Operation result")]
         [string] $Result = 'Completed'
     )
 
-    $DetailMessage = "OPERATION: $Operation - DETAILS: $Details - RESULT: $Result"
+    # FIX: Provide default value if Details is empty
+    $SafeDetails = if ([string]::IsNullOrWhiteSpace($Details)) {
+        "No additional details available"
+    } else {
+        $Details
+    }
+
+    $DetailMessage = "OPERATION: $Operation - DETAILS: $SafeDetails - RESULT: $Result"
     Write-MaintenanceLog $DetailMessage "DETAIL"
 }
 
@@ -1594,6 +1603,7 @@ function Show-SectionHeader {
 
 .DESCRIPTION
     Shows package information in an easy-to-read format before updates begin.
+    FIXED: Resolved parameter binding ambiguity with format operator.
 
 .PARAMETER Packages
     Array of package objects with Name, CurrentVersion, NewVersion
@@ -1606,6 +1616,7 @@ function Show-SectionHeader {
 
 .NOTES
     UX: Provides clear overview of what will be updated
+    FIX: Separated format operation to prevent parameter binding conflicts
 #>
 function Show-PackageUpdateTable {
     [CmdletBinding()]
@@ -1624,12 +1635,23 @@ function Show-PackageUpdateTable {
     
     Write-Host "`n  Packages to update ($($Packages.Count)):" -ForegroundColor Yellow
     Write-Host "  $("-" * 68)" -ForegroundColor Gray
-    Write-Host "  {0,-30} {1,-15} {2,-15}" -f "Package", "Current", "New" -ForegroundColor Cyan
+    
+    # FIX: Separate the format operation from the Write-Host call
+    $HeaderText = "  {0,-30} {1,-15} {2,-15}" -f "Package", "Current", "New"
+    Write-Host $HeaderText -ForegroundColor Cyan
+    
     Write-Host "  $("-" * 68)" -ForegroundColor Gray
     
     foreach ($Package in $Packages | Select-Object -First 10) {
-        $Name = if ($Package.Name.Length -gt 28) { $Package.Name.Substring(0, 25) + "..." } else { $Package.Name }
-        Write-Host "  {0,-30} {1,-15} {2,-15}" -f $Name, $Package.CurrentVersion, $Package.NewVersion -ForegroundColor White
+        $Name = if ($Package.Name.Length -gt 28) { 
+            $Package.Name.Substring(0, 25) + "..." 
+        } else { 
+            $Package.Name 
+        }
+        
+        # FIX: Separate format operation here too for consistency
+        $PackageText = "  {0,-30} {1,-15} {2,-15}" -f $Name, $Package.CurrentVersion, $Package.NewVersion
+        Write-Host $PackageText -ForegroundColor White
     }
     
     if ($Packages.Count -gt 10) {
@@ -3161,7 +3183,7 @@ function Invoke-SystemUpdates {
     # ============================================================
     # WINGET WITH REAL-TIME OUTPUT
     # ============================================================
-    Invoke-SafeCommand -TaskName "Enhanced WinGet Package Management" -Command {
+    Invoke-SafeCommand -TaskName "WinGet Package Management" -Command {
         if (Get-Command winget -ErrorAction SilentlyContinue) {
             Show-SectionHeader -Title "WinGet Package Updates" -SubTitle "Checking for available updates"
             
@@ -3276,7 +3298,7 @@ function Invoke-SystemUpdates {
     # ============================================================
     # CHOCOLATEY WITH REAL-TIME OUTPUT
     # ============================================================
-    Invoke-SafeCommand -TaskName "Enhanced Chocolatey Package Management" -Command {
+    Invoke-SafeCommand -TaskName "Chocolatey Package Management" -Command {
         $ChocolateyPath = "$env:ProgramData\chocolatey\bin\choco.exe"
         
         # Enhanced Windows Installer cache cleanup function (KEEP YOUR EXISTING FUNCTION)
@@ -5655,20 +5677,27 @@ function Invoke-SystemHealthRepair {
         Write-ProgressBar -Activity 'System Health Check' -PercentComplete 10 -Status 'DISM: Scanning image health...'
         Write-MaintenanceLog -Message 'Starting DISM image health scan...' -Level PROGRESS
         
-        try {
+       try {
             # DISM ScanHealth - Quick integrity check
             Write-DetailedOperation -Operation 'DISM ScanHealth' -Details 'Performing quick image integrity scan' -Result 'Starting'
             
             $DISMScanResult = Invoke-DISMOperation -Operation "ScanHealth" -TimeoutMinutes 15
             $HealthResults.DISMScanHealth = $DISMScanResult
             
+            # FIX: Handle empty or null output strings
+            $ScanDetails = if ([string]::IsNullOrWhiteSpace($DISMScanResult.Output)) {
+                "DISM ScanHealth completed with no detailed output"
+            } else {
+                $DISMScanResult.Output
+            }
+            
             if ($DISMScanResult.Success) {
                 Write-MaintenanceLog -Message "DISM ScanHealth completed successfully" -Level SUCCESS
-                Write-DetailedOperation -Operation 'DISM ScanHealth' -Details $DISMScanResult.Output -Result 'Success'
+                Write-DetailedOperation -Operation 'DISM ScanHealth' -Details $ScanDetails -Result 'Success'
             }
             else {
-                Write-MaintenanceLog -Message "DISM ScanHealth detected issues: $($DISMScanResult.Output)" -Level WARNING
-                Write-DetailedOperation -Operation 'DISM ScanHealth' -Details $DISMScanResult.Output -Result 'Issues Detected'
+                Write-MaintenanceLog -Message "DISM ScanHealth detected issues: $ScanDetails" -Level WARNING
+                Write-DetailedOperation -Operation 'DISM ScanHealth' -Details $ScanDetails -Result 'Issues Detected'
                 $HealthResults.Errors += "DISM ScanHealth: Issues detected"
             }
         }
@@ -5681,36 +5710,44 @@ function Invoke-SystemHealthRepair {
         Write-ProgressBar -Activity 'System Health Check' -PercentComplete 25 -Status 'DISM: Checking component store health...'
         Write-MaintenanceLog -Message 'Checking Windows component store health...' -Level PROGRESS
         
-        try {
-            # DISM CheckHealth - Detailed component store analysis
+       try {
+            # DISM CheckHealth - Component store verification
             Write-DetailedOperation -Operation 'DISM CheckHealth' -Details 'Analyzing component store integrity' -Result 'Starting'
             
             $DISMCheckResult = Invoke-DISMOperation -Operation "CheckHealth" -TimeoutMinutes 10
             $HealthResults.DISMCheckHealth = $DISMCheckResult
             
-            if ($DISMCheckResult.Success -and $DISMCheckResult.Output -match "No component store corruption detected") {
-                Write-MaintenanceLog -Message "Component store is healthy - no corruption detected" -Level SUCCESS
-                Write-DetailedOperation -Operation 'DISM CheckHealth' -Details 'Component store integrity verified' -Result 'Healthy'
+            # FIX: Handle empty or null output strings
+            $CheckDetails = if ([string]::IsNullOrWhiteSpace($DISMCheckResult.Output)) {
+                "DISM CheckHealth completed with no detailed output"
+            } else {
+                $DISMCheckResult.Output
             }
-            elseif ($DISMCheckResult.Success -and $DISMCheckResult.Output -match "component store is repairable") {
-                Write-MaintenanceLog -Message "Component store corruption detected but repairable" -Level WARNING
-                Write-DetailedOperation -Operation 'DISM CheckHealth' -Details 'Repairable corruption detected' -Result 'Repairable'
-                $HealthResults.RepairActions += "Component Store Repair Required"
-                
-                # Escalate to RestoreHealth if corruption is repairable
-                Invoke-DISMRestoreHealth -HealthResults ([ref]$HealthResults)
+            
+            if ($DISMCheckResult.Success) {
+                if ($DISMCheckResult.Output -match "repairable") {
+                    Write-MaintenanceLog -Message "Component store corruption detected - repairable with RestoreHealth" -Level WARNING
+                    Write-DetailedOperation -Operation 'DISM CheckHealth' -Details $CheckDetails -Result 'Repairable'
+                    $HealthResults.Errors += "Component Store: Repairable corruption detected"
+                    
+                    # Trigger RestoreHealth if corruption is repairable
+                    $HealthResults.RepairNeeded = $true
+                }
+                else {
+                    Write-MaintenanceLog -Message "Component store health check completed successfully" -Level SUCCESS
+                    Write-DetailedOperation -Operation 'DISM CheckHealth' -Details $CheckDetails -Result 'Healthy'
+                }
             }
             else {
                 Write-MaintenanceLog -Message "Component store health check completed with warnings" -Level WARNING
-                Write-DetailedOperation -Operation 'DISM CheckHealth' -Details $DISMCheckResult.Output -Result 'Warning'
-                $HealthResults.Errors += "DISM CheckHealth: Warnings detected"
+                Write-DetailedOperation -Operation 'DISM CheckHealth' -Details $CheckDetails -Result 'Warning'
             }
         }
         catch {
             Write-MaintenanceLog -Message "DISM CheckHealth failed: $($_.Exception.Message)" -Level ERROR
             $HealthResults.Errors += "DISM CheckHealth: Failed - $($_.Exception.Message)"
         }
-        
+
         # Stage 3: System File Checker (SFC) Scan
         Write-ProgressBar -Activity 'System Health Check' -PercentComplete 60 -Status 'Running System File Checker...'
         Write-MaintenanceLog -Message 'Starting System File Checker (SFC) scan...' -Level PROGRESS
