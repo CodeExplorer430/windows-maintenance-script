@@ -436,31 +436,359 @@ $(if ($ManageEventLogs) { "- Automated archival was performed for safe logs" } e
         }
     } -TimeoutMinutes 10
 
-    # NOTE: Additional PerformanceOptimization sections from original script:
-    #
-    # Comprehensive startup performance analysis (Lines 9201-9341 in original)
-    # - WMI startup item detection (Get-CimInstance Win32_StartupCommand)
-    # - Registry startup item detection (HKLM/HKCU Run/RunOnce)
-    # - Startup impact analysis with categorization (High/Medium/Low)
-    # - File size analysis for startup items
-    # - Missing/invalid item detection
-    # - Comprehensive report generation with recommendations
-    #
-    # Invalid startup items cleanup (Lines 9343-9378 in original)
-    # - Calls Remove-InvalidStartupItems function
-    # - Message box notification for significant cleanup (>5 items)
-    # - Progress tracking with Write-ProgressBar
-    #
-    # System resource analysis (Lines 9380-9553 in original)
-    # - Memory usage analysis (physical and virtual)
-    # - CPU performance with 5-sample averaging
-    # - Disk I/O metrics (Read/Write MB/s, Queue Length)
-    # - Top 15 memory-consuming processes
-    # - Performance assessment with threshold alerts
-    # - Comprehensive report generation with recommendations
-    #
-    # To add these sections, extract from the original script and integrate following
-    # the same pattern as event log management above.
+    # Comprehensive startup performance analysis with enterprise-grade reporting
+    Invoke-SafeCommand -TaskName 'Advanced Startup Performance Analysis' -Command {
+        Write-ProgressBar -Activity 'Startup Analysis' -PercentComplete 10 -Status 'Gathering startup configuration...'
+
+        Write-MaintenanceLog -Message 'Executing startup performance analysis...' -Level PROGRESS
+        Write-DetailedOperation -Operation 'Startup Analysis' -Details 'Analyzing system startup configuration and performance impact' -Result 'Starting'
+
+        try {
+            # Comprehensive startup item detection from multiple sources
+            $StartupItems = Get-CimInstance Win32_StartupCommand |
+                           Select-Object Name, Command, Location, User |
+                           Sort-Object Name
+
+            # Advanced registry-based startup item detection
+            $RegistryStartup = @()
+            $StartupRegistryPaths = @(
+                'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+                'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce',
+                'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+                'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
+            )
+
+            foreach ($RegPath in $StartupRegistryPaths) {
+                try {
+                    $RegItems = Get-ItemProperty $RegPath -ErrorAction SilentlyContinue
+                    if ($RegItems) {
+                        $RegItems.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS' } | ForEach-Object {
+                            $RegistryStartup += @{
+                                Name = $_.Name
+                                Command = $_.Value
+                                Location = $RegPath
+                                Type = 'Registry'
+                            }
+                        }
+                    }
+                }
+                catch {
+                    $RegScanDetails = Format-SafeString -Template "Path: {0} | Error: {1}" -Arguments @($RegPath, $_.Exception.Message)
+                    Write-DetailedOperation -Operation 'Registry Scan' -Details $RegScanDetails -Result 'Error'
+                }
+            }
+
+            $TotalStartupItems = $StartupItems.Count + $RegistryStartup.Count
+
+            $StartupMessage = Format-SafeString -Template "Found {0} total startup items ({1} WMI + {2} Registry)" -Arguments @($TotalStartupItems, $StartupItems.Count, $RegistryStartup.Count)
+            Write-MaintenanceLog -Message $StartupMessage -Level INFO
+
+            $StartupDetails = Format-SafeString -Template "WMI Items: {0} | Registry Items: {1} | Total: {2}" -Arguments @($StartupItems.Count, $RegistryStartup.Count, $TotalStartupItems)
+            Write-DetailedOperation -Operation 'Startup Discovery' -Details $StartupDetails -Result 'Complete'
+
+            # Advanced startup impact analysis with performance categorization
+            $HighImpactItems = @()
+            $UnknownItems = @()
+
+            foreach ($Item in $StartupItems) {
+                $OriginalCommand = $Item.Command
+                $CleanedCommand = $OriginalCommand -replace [char]34, ""
+                $CommandArray = $CleanedCommand -split [char]32
+                $CommandPath = $CommandArray[0]
+
+                if (Test-Path $CommandPath) {
+                    try {
+                        $FileInfo = Get-ItemProperty $CommandPath -ErrorAction SilentlyContinue
+                        $FileSize = if ($FileInfo) { [math]::Round($FileInfo.Length / 1MB, 2) } else { 0 }
+
+                        # Intelligent impact assessment based on multiple criteria
+                        $ImpactLevel = 'Medium'
+
+                        $IsHighImpact = $Item.Name.Contains('Adobe') -or $Item.Name.Contains('Java') -or $Item.Name.Contains('Office') -or $Item.Name.Contains('Antivirus') -or $Item.Name.Contains('Security')
+                        if ($IsHighImpact -or $FileSize -gt 50) {
+                            $ImpactLevel = "High"
+                            $HighImpactItems += $Item
+                        }
+                        elseif ($Item.Name -like "*Windows*" -or $Item.Name -like "*Microsoft*" -or $Item.Name -like "*Driver*" -or $Item.Name -like "*Audio*" -or $Item.Name -like "*Network*") {
+                            $ImpactLevel = "Low"
+                        }
+
+                        $StartupImpactDetails = Format-SafeString -Template "Item: {0} | Size: {1} MB | Impact: {2} | Path: {3}" -Arguments @($Item.Name, $FileSize, $ImpactLevel, $CommandPath)
+                        Write-DetailedOperation -Operation "Startup Impact" -Details $StartupImpactDetails -Result "Analyzed"
+                    }
+                    catch {
+                        $StartupErrorDetails = Format-SafeString -Template "Item: {0} | Error: {1}" -Arguments @($Item.Name, $_.Exception.Message)
+                        Write-DetailedOperation -Operation "Startup Impact" -Details $StartupErrorDetails -Result "Error"
+                    }
+                } else {
+                    $UnknownItems += $Item
+                    $MissingDetails = Format-SafeString -Template "Item: {0} | Status: File not found | Path: {1}" -Arguments @($Item.Name, $CommandPath)
+                    Write-DetailedOperation -Operation "Startup Impact" -Details $MissingDetails -Result "Missing"
+                }
+            }
+
+            # Enterprise-grade startup performance report generation
+            Write-ProgressBar -Activity 'Startup Analysis' -PercentComplete 80 -Status 'Generating startup report...'
+
+            $StartupReport = "$($Config.ReportsPath)\startup_analysis_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
+
+            $ReportContent = @"
+STARTUP PERFORMANCE ANALYSIS REPORT
+Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+===========================================
+
+STARTUP SUMMARY:
+Total Startup Items: $TotalStartupItems
+WMI Detected Items: $($StartupItems.Count)
+Registry Items: $($RegistryStartup.Count)
+High Impact Items: $($HighImpactItems.Count)
+Missing/Invalid Items: $($UnknownItems.Count)
+
+HIGH IMPACT STARTUP ITEMS:
+$($HighImpactItems | ForEach-Object { "  $($_.Name): $($_.Command)" } | Out-String)
+
+REGISTRY STARTUP ITEMS:
+$($RegistryStartup | ForEach-Object { "  $($_.Name) [$($_.Location)]: $($_.Command)" } | Out-String)
+
+MISSING/INVALID ITEMS:
+$($UnknownItems | ForEach-Object { "  $($_.Name): $($_.Command)" } | Out-String)
+
+RECOMMENDATIONS:
+$(if ($HighImpactItems.Count -gt 0) { "  Review high-impact startup items for necessity" })
+$(if ($UnknownItems.Count -gt 0) { "  Remove invalid startup entries to improve boot time" })
+  Consider using Task Scheduler for delayed startup of non-critical applications
+  Use MSConfig or Task Manager to disable unnecessary startup items
+===========================================
+"@
+
+            $ReportContent | Out-File -FilePath $StartupReport
+
+            $SummaryText = Format-SafeString -Template "Total: {0} items analyzed" -Arguments @($TotalStartupItems)
+            Write-DetailedOperation -Operation 'Startup Analysis Summary' -Details $SummaryText -Result 'Complete'
+
+            $StartupSummaryDetails = Format-SafeString -Template "Total: {0} | High Impact: {1} | Invalid: {2} | Report: {3}" -Arguments @($TotalStartupItems, $HighImpactItems.Count, $UnknownItems.Count, $StartupReport)
+            Write-DetailedOperation -Operation 'Startup Analysis Summary' -Details $StartupSummaryDetails -Result 'Complete'
+
+            Write-ProgressBar -Activity 'Startup Analysis' -PercentComplete 100 -Status 'Analysis completed'
+            Write-Progress -Activity 'Startup Analysis' -Completed
+        }
+        catch {
+            Write-MaintenanceLog -Message "Startup analysis failed: $($_.Exception.Message)" -Level ERROR
+            Write-DetailedOperation -Operation 'Startup Analysis' -Details "Error: $($_.Exception.Message)" -Result 'Error'
+        }
+    } -TimeoutMinutes 10
+
+    # Enterprise startup cleanup with comprehensive validation and reporting
+    Invoke-SafeCommand -TaskName "Invalid Startup Items Cleanup" -Command {
+        Write-ProgressBar -Activity 'Startup Cleanup' -PercentComplete 10 -Status 'Analyzing startup registry entries...'
+
+        Write-MaintenanceLog -Message 'Executing invalid startup items cleanup...' -Level PROGRESS
+        Write-DetailedOperation -Operation 'Startup Cleanup' -Details "Scanning for invalid startup entries in registry" -Result 'Starting'
+
+        $StartupCleanupResult = Remove-InvalidStartupItems -WhatIf:$WhatIf
+
+        if ($StartupCleanupResult.Success) {
+            $CleanupMessage = Format-SafeString -Template "Startup cleanup completed - Removed: {0}, Valid: {1}, Total Processed: {2}" -Arguments @($StartupCleanupResult.RemovedCount, $StartupCleanupResult.SkippedCount, ($StartupCleanupResult.RemovedCount + $StartupCleanupResult.SkippedCount))
+            Write-MaintenanceLog -Message $CleanupMessage -Level SUCCESS
+
+            Write-DetailedOperation -Operation 'Startup Cleanup Summary' -Details "Removed: $($StartupCleanupResult.RemovedCount) | Valid: $($StartupCleanupResult.SkippedCount) | Errors: $($StartupCleanupResult.ErrorCount)" -Result 'Complete'
+
+            # Enterprise notification for significant startup optimization
+            if ($StartupCleanupResult.RemovedCount -gt 5 -and $ShowMessageBoxes -and -not $SilentMode) {
+                $CleanupNotification = @"
+Startup Items Cleanup Completed
+
+Invalid startup entries removed: $($StartupCleanupResult.RemovedCount)
+Valid entries preserved: $($StartupCleanupResult.SkippedCount)
+
+Removing invalid startup items can improve system boot time and performance.
+"@
+                Show-MaintenanceMessageBox -Message $CleanupNotification -Title "Startup Cleanup Results" -Icon "Information"
+            }
+        }
+        else {
+            Write-MaintenanceLog -Message "Startup cleanup encountered issues - Errors: $($StartupCleanupResult.ErrorCount)" -Level WARNING
+            Write-DetailedOperation -Operation 'Startup Cleanup' -Details "Errors encountered: $($StartupCleanupResult.ErrorCount)" -Result 'Warning'
+        }
+
+        Write-ProgressBar -Activity 'Startup Cleanup' -PercentComplete 100 -Status 'Startup cleanup completed'
+        Write-Progress -Activity 'Startup Cleanup' -Completed
+    } -TimeoutMinutes 5
+
+    # Advanced system resource analysis with comprehensive performance baselines
+    Invoke-SafeCommand -TaskName "System Resource Analysis" -Command {
+        Write-ProgressBar -Activity 'Resource Analysis' -PercentComplete 10 -Status 'Gathering system performance metrics...'
+
+        Write-MaintenanceLog -Message 'Executing system resource analysis...' -Level PROGRESS
+        Write-DetailedOperation -Operation 'Resource Analysis' -Details "Collecting system performance metrics and baselines" -Result 'Starting'
+
+        try {
+            # Comprehensive memory analysis with detailed reporting
+            Write-ProgressBar -Activity 'Resource Analysis' -PercentComplete 30 -Status 'Analyzing memory usage...'
+
+            $MemInfo = Get-WmiObject -Class Win32_OperatingSystem
+            $TotalMemGB = [math]::Round($MemInfo.TotalVisibleMemorySize / 1MB, 2)
+            $FreeMemGB = [math]::Round($MemInfo.FreePhysicalMemory / 1MB, 2)
+            $UsedMemGB = $TotalMemGB - $FreeMemGB
+            $UsedMemPercent = [math]::Round(($UsedMemGB / $TotalMemGB) * 100, 1)
+
+            # Advanced virtual memory analysis
+            $PageFileInfo = Get-WmiObject -Class Win32_PageFileUsage
+            $PageFileSize = if ($PageFileInfo) { [math]::Round($PageFileInfo.AllocatedBaseSize / 1024, 2) } else { 0 }
+            $PageFileUsed = if ($PageFileInfo) { [math]::Round($PageFileInfo.CurrentUsage / 1024, 2) } else { 0 }
+
+            $MemoryText = Format-SafeString -Template "Physical: {0} GB/{1} GB - Virtual: {2} GB/{3} GB" -Arguments @($UsedMemGB, $TotalMemGB, $PageFileUsed, $PageFileSize)
+            Write-DetailedOperation -Operation 'Memory Analysis' -Details $MemoryText -Result 'Complete'
+
+            $VirtualMemoryMessage = Format-SafeString -Template "Virtual Memory: {0} GB used / {1} GB allocated" -Arguments @($PageFileUsed, $PageFileSize)
+            Write-MaintenanceLog -Message $VirtualMemoryMessage -Level INFO
+
+            $PhysicalMemoryDetails = Format-SafeString -Template "Physical: {0} GB/{1} GB ({2} percent) - Virtual: {3} GB/{4} GB" -Arguments @($UsedMemGB, $TotalMemGB, $UsedMemPercent, $PageFileUsed, $PageFileSize)
+            Write-DetailedOperation -Operation 'Memory Analysis' -Details $PhysicalMemoryDetails -Result 'Complete'
+
+            # Advanced CPU performance analysis with multi-sample averaging
+            Write-ProgressBar -Activity 'Resource Analysis' -PercentComplete 50 -Status 'Analyzing CPU performance...'
+
+            $CPU = Get-WmiObject -Class Win32_Processor -ErrorAction Stop
+            $CPUName = $CPU.Name
+            $CPUCores = $CPU.NumberOfCores
+            $CPULogicalProcessors = $CPU.NumberOfLogicalProcessors
+
+            # Enterprise CPU usage sampling with statistical analysis
+            $CPUSamples = @()
+            for ($i = 1; $i -le 5; $i++) {
+                $CPUSamplingMessage = Format-SafeString -Template "CPU sampling ({0}/5)..." -Arguments @($i)
+                Write-ProgressBar -Activity 'Resource Analysis' -PercentComplete (50 + ($i * 5)) -Status $CPUSamplingMessage
+
+                try {
+                    $CPUSample = (Get-Counter "\Processor(_Total)\% Processor Time" -SampleInterval 1 -MaxSamples 1 -ErrorAction Stop).CounterSamples.CookedValue
+                    $CPUSamples += $CPUSample
+                }
+                catch {
+                    Write-DetailedOperation -Operation 'CPU Sampling' -Details "Sample $i failed: $($_.Exception.Message)" -Result 'Warning'
+                }
+
+                Start-Sleep -Milliseconds 200  # Brief pause between samples for accuracy
+            }
+
+            if ($CPUSamples.Count -gt 0) {
+                $AvgCPUUsage = [math]::Round(($CPUSamples | Measure-Object -Average).Average, 1)
+                $MaxCPUUsage = [math]::Round(($CPUSamples | Measure-Object -Maximum).Maximum, 1)
+                $MinCPUUsage = [math]::Round(($CPUSamples | Measure-Object -Minimum).Minimum, 1)
+
+                $CPUInfoMessage = Format-SafeString -Template "CPU: {0} - {1} cores, {2} logical processors" -Arguments @($CPUName, $CPUCores, $CPULogicalProcessors)
+                Write-MaintenanceLog -Message $CPUInfoMessage -Level INFO
+
+                $CPUUsageMessage = Format-SafeString -Template "CPU Usage: Average {0} percent (Range: {1} percent - {2} percent)" -Arguments @($AvgCPUUsage, $MinCPUUsage, $MaxCPUUsage)
+                Write-MaintenanceLog -Message $CPUUsageMessage -Level INFO
+
+                $CPUAnalysisDetails = Format-SafeString -Template "CPU: {0} | Cores: {1} | Usage: Avg {2} percent ({3} percent-{4} percent)" -Arguments @($CPUName, $CPUCores, $AvgCPUUsage, $MinCPUUsage, $MaxCPUUsage)
+                Write-DetailedOperation -Operation 'CPU Analysis' -Details $CPUAnalysisDetails -Result 'Complete'
+            }
+            else {
+                Write-MaintenanceLog -Message "CPU sampling failed - no valid samples collected" -Level WARNING
+                $AvgCPUUsage = 0
+            }
+
+            # Advanced disk I/O performance analysis
+            Write-ProgressBar -Activity 'Resource Analysis' -PercentComplete 75 -Status 'Analyzing disk performance...'
+
+            try {
+                $DiskCounters = @(
+                    "\PhysicalDisk(_Total)\Disk Read Bytes/sec",
+                    "\PhysicalDisk(_Total)\Disk Write Bytes/sec",
+                    "\PhysicalDisk(_Total)\Current Disk Queue Length"
+                )
+
+                $DiskMetrics = Get-Counter -Counter $DiskCounters -SampleInterval 2 -MaxSamples 3 -ErrorAction SilentlyContinue
+
+                if ($DiskMetrics) {
+                    $AvgReadMBps = [math]::Round((($DiskMetrics.CounterSamples | Where-Object { $_.Path -like "*Read*" } | Measure-Object -Property CookedValue -Average).Average / 1MB), 2)
+                    $AvgWriteMBps = [math]::Round((($DiskMetrics.CounterSamples | Where-Object { $_.Path -like "*Write*" } | Measure-Object -Property CookedValue -Average).Average / 1MB), 2)
+                    $AvgQueueLength = [math]::Round((($DiskMetrics.CounterSamples | Where-Object { $_.Path -like "*Queue*" } | Measure-Object -Property CookedValue -Average).Average), 2)
+
+                    $DiskIOMessage = Format-SafeString -Template "Disk I/O: Read {0} MB/s, Write {1} MB/s, Queue Length {2}" -Arguments @($AvgReadMBps, $AvgWriteMBps, $AvgQueueLength)
+                    Write-MaintenanceLog -Message $DiskIOMessage -Level INFO
+
+                    $DiskIODetails = Format-SafeString -Template "Read: {0} MB/s | Write: {1} MB/s | Queue: {2}" -Arguments @($AvgReadMBps, $AvgWriteMBps, $AvgQueueLength)
+                    Write-DetailedOperation -Operation 'Disk I/O Analysis' -Details $DiskIODetails -Result 'Complete'
+                }
+            }
+            catch {
+                Write-MaintenanceLog -Message "Disk I/O analysis failed: $($_.Exception.Message)" -Level WARNING
+            }
+
+            # Enterprise process analysis with resource consumption metrics
+            Write-ProgressBar -Activity 'Resource Analysis' -PercentComplete 90 -Status 'Analyzing top resource consumers...'
+
+            $TopProcesses = Get-Process | Where-Object { $_.WorkingSet -gt 50MB } |
+                           Sort-Object WorkingSet -Descending | Select-Object -First 15 |
+                           Select-Object Name, Id,
+                                        @{N='Memory(MB)';E={[math]::Round($_.WorkingSet/1MB,1)}},
+                                        @{N='CPU(s)';E={[math]::Round($_.TotalProcessorTime.TotalSeconds,1)}},
+                                        @{N='Handles';E={$_.HandleCount}},
+                                        @{N='Threads';E={$_.Threads.Count}}
+
+            # Comprehensive performance report generation
+            $ProcessReport = "$($Config.ReportsPath)\process_analysis_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
+            $ReportContent = @"
+SYSTEM RESOURCE ANALYSIS REPORT
+Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+===========================================
+
+SYSTEM SUMMARY:
+CPU: $CPUName
+Physical Cores: $CPUCores
+Logical Processors: $CPULogicalProcessors
+Total Memory: $TotalMemGB GB
+Available Memory: $FreeMemGB GB
+Memory Usage: $UsedMemPercent percent
+
+PERFORMANCE METRICS:
+Average CPU Usage: $AvgCPUUsage percent
+$(if ($MinCPUUsage -and $MaxCPUUsage) { "CPU Usage Range: $MinCPUUsage percent - $MaxCPUUsage percent" })
+$(if ($DiskMetrics) { "Disk Read Rate: $AvgReadMBps MB/s" })
+$(if ($DiskMetrics) { "Disk Write Rate: $AvgWriteMBps MB/s" })
+$(if ($DiskMetrics) { "Disk Queue Length: $AvgQueueLength" })
+Virtual Memory Size: $PageFileSize GB
+Virtual Memory Used: $PageFileUsed GB
+
+TOP MEMORY CONSUMERS:
+$($TopProcesses | Format-Table -AutoSize | Out-String)
+
+PERFORMANCE ASSESSMENT:
+$(if ($UsedMemPercent -gt 85) { "[!]  High memory usage detected - consider closing unnecessary applications" })
+$(if ($AvgCPUUsage -gt 80) { "[!]  High CPU usage detected - system may be under stress" })
+$(if ($AvgQueueLength -gt 2) { "[!]  High disk queue length - storage performance may be impacted" })
+$(if ($UsedMemPercent -le 85 -and $AvgCPUUsage -le 80 -and $AvgQueueLength -le 2) { "[√] System performance metrics are within normal ranges" })
+===========================================
+"@
+
+            $ReportContent | Out-File -FilePath $ProcessReport
+
+            # Enterprise performance threshold analysis and alerting
+            if ($UsedMemPercent -gt 85) {
+                $HighMemoryMessage = Format-SafeString -Template "High memory usage detected ({0} percent) - consider closing unnecessary applications" -Arguments @($UsedMemPercent)
+                Write-MaintenanceLog -Message $HighMemoryMessage -Level WARNING
+            }
+            if ($AvgCPUUsage -gt 80) {
+                $HighCPUMessage = Format-SafeString -Template "High CPU usage detected ({0} percent) - system may be under stress" -Arguments @($AvgCPUUsage)
+                Write-MaintenanceLog -Message $HighCPUMessage -Level WARNING
+            }
+
+            Write-MaintenanceLog -Message "System resource analysis completed - Report saved to: $ProcessReport" -Level SUCCESS
+
+            $ResourceSummaryDetails = Format-SafeString -Template "Memory: {0} percent - CPU: {1} percent - Top Processes: {2} - Report: {3}" -Arguments @($UsedMemPercent, $AvgCPUUsage, $TopProcesses.Count, $ProcessReport)
+            Write-DetailedOperation -Operation 'Resource Analysis Summary' -Details $ResourceSummaryDetails -Result 'Complete'
+
+            Write-ProgressBar -Activity 'Resource Analysis' -PercentComplete 100 -Status 'Analysis completed'
+            Write-Progress -Activity 'Resource Analysis' -Completed
+        }
+        catch {
+            Write-MaintenanceLog -Message "System resource analysis failed: $($_.Exception.Message)" -Level ERROR
+            Write-DetailedOperation -Operation 'Resource Analysis' -Details "Error: $($_.Exception.Message)" -Result 'Error'
+        }
+    } -TimeoutMinutes 15
 
     # Final memory optimization after comprehensive performance analysis
     Optimize-MemoryUsage

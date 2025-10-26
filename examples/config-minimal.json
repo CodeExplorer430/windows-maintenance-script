@@ -1,0 +1,55 @@
+{
+  "_comment": "Minimal Configuration - Basic system maintenance only",
+  "_description": "Suitable for quick maintenance runs or systems with limited resources",
+
+  "EnabledModules": [
+    "DiskMaintenance",
+    "SystemUpdates"
+  ],
+
+  "LogsPath": "C:\\Temp\\MaintenanceLogs",
+  "ReportsPath": "C:\\Temp\\MaintenanceReports",
+  "MaxEventLogSizeMB": 100,
+
+  "DiskMaintenance": {
+    "EnableRecycleBinCleanup": true,
+    "EnableTempFileCleanup": true,
+    "EnableWindowsTempCleanup": true,
+    "EnableBrowserCacheCleanup": false,
+    "EnableWindowsUpdateCleanup": true,
+    "EnableThumbnailCacheCleanup": true,
+    "EnableErrorReportCleanup": true,
+    "EnablePrefetchCleanup": false,
+    "EnableLogFileCleanup": true,
+    "EnableDeliveryOptimizationCleanup": true,
+    "EnableDiskCleanupUtility": false,
+    "TempFileRetentionDays": 7,
+    "LogFileRetentionDays": 30
+  },
+
+  "DeveloperMaintenance": {
+    "EnableNPM": false,
+    "EnablePython": false,
+    "EnableDocker": false,
+    "EnableJDK": false,
+    "EnableMinGW": false,
+    "EnableDotNetSDK": false,
+    "EnableWindowsSDK": false,
+    "EnableVCRedist": false,
+    "EnableComposer": false,
+    "EnablePostgreSQL": false,
+    "EnableJetBrainsIDEs": false,
+    "EnableVisualStudio2022": false,
+    "EnableVSCode": false,
+    "EnableDatabaseTools": false,
+    "EnableAdobeTools": false,
+    "EnableVersionControl": false,
+    "EnableLegacyCppTools": false
+  },
+
+  "PerformanceOptimization": {
+    "EnableEventLogAnalysis": false,
+    "EnableStartupAnalysis": false,
+    "EnableResourceAnalysis": false
+  }
+}

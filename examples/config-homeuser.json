@@ -1,0 +1,60 @@
+{
+  "_comment": "Home User Configuration",
+  "_description": "Balanced configuration for typical home users - cleanup, security, and performance optimization without development tools",
+
+  "EnabledModules": [
+    "SystemUpdates",
+    "DiskMaintenance",
+    "SystemHealthRepair",
+    "SecurityScans",
+    "PerformanceOptimization",
+    "NetworkMaintenance"
+  ],
+
+  "LogsPath": "C:\\Temp\\MaintenanceLogs",
+  "ReportsPath": "C:\\Temp\\MaintenanceReports",
+  "MaxEventLogSizeMB": 100,
+
+  "DiskMaintenance": {
+    "EnableRecycleBinCleanup": true,
+    "EnableTempFileCleanup": true,
+    "EnableWindowsTempCleanup": true,
+    "EnableBrowserCacheCleanup": true,
+    "EnableWindowsUpdateCleanup": true,
+    "EnableThumbnailCacheCleanup": true,
+    "EnableErrorReportCleanup": true,
+    "EnablePrefetchCleanup": true,
+    "EnableLogFileCleanup": true,
+    "EnableDeliveryOptimizationCleanup": true,
+    "EnableDiskCleanupUtility": true,
+    "TempFileRetentionDays": 7,
+    "LogFileRetentionDays": 30
+  },
+
+  "DeveloperMaintenance": {
+    "_note": "All developer tools disabled for typical home users",
+    "EnableNPM": false,
+    "EnablePython": false,
+    "EnableDocker": false,
+    "EnableJDK": false,
+    "EnableMinGW": false,
+    "EnableDotNetSDK": false,
+    "EnableWindowsSDK": false,
+    "EnableVCRedist": true,
+    "EnableComposer": false,
+    "EnablePostgreSQL": false,
+    "EnableJetBrainsIDEs": false,
+    "EnableVisualStudio2022": false,
+    "EnableVSCode": false,
+    "EnableDatabaseTools": false,
+    "EnableAdobeTools": false,
+    "EnableVersionControl": false,
+    "EnableLegacyCppTools": false
+  },
+
+  "PerformanceOptimization": {
+    "EnableEventLogAnalysis": true,
+    "EnableStartupAnalysis": true,
+    "EnableResourceAnalysis": true
+  }
+}

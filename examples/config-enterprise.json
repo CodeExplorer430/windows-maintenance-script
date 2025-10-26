@@ -1,0 +1,68 @@
+{
+  "_comment": "Enterprise/Full Configuration",
+  "_description": "Complete maintenance with all modules and features enabled - suitable for comprehensive monthly maintenance",
+
+  "EnabledModules": [
+    "SystemUpdates",
+    "DiskMaintenance",
+    "SystemHealthRepair",
+    "SecurityScans",
+    "DeveloperMaintenance",
+    "PerformanceOptimization",
+    "NetworkMaintenance"
+  ],
+
+  "LogsPath": "C:\\Temp\\MaintenanceLogs",
+  "ReportsPath": "C:\\Temp\\MaintenanceReports",
+  "MaxEventLogSizeMB": 100,
+
+  "DiskMaintenance": {
+    "EnableRecycleBinCleanup": true,
+    "EnableTempFileCleanup": true,
+    "EnableWindowsTempCleanup": true,
+    "EnableBrowserCacheCleanup": true,
+    "EnableWindowsUpdateCleanup": true,
+    "EnableThumbnailCacheCleanup": true,
+    "EnableErrorReportCleanup": true,
+    "EnablePrefetchCleanup": true,
+    "EnableLogFileCleanup": true,
+    "EnableDeliveryOptimizationCleanup": true,
+    "EnableDiskCleanupUtility": true,
+    "TempFileRetentionDays": 7,
+    "LogFileRetentionDays": 30
+  },
+
+  "DeveloperMaintenance": {
+    "EnableNPM": true,
+    "EnablePython": true,
+    "EnableDocker": true,
+    "EnableJDK": true,
+    "EnableMinGW": true,
+    "EnableDotNetSDK": true,
+    "EnableWindowsSDK": true,
+    "EnableVCRedist": true,
+    "EnableComposer": true,
+    "EnablePostgreSQL": true,
+    "EnableJetBrainsIDEs": true,
+    "EnableVisualStudio2022": true,
+    "EnableVSCode": true,
+    "EnableDatabaseTools": true,
+    "EnableAdobeTools": true,
+    "EnableVersionControl": true,
+    "EnableLegacyCppTools": true,
+
+    "_note": "Balanced retention days for comprehensive cleanup",
+    "NPMCacheRetentionDays": 60,
+    "PythonCacheRetentionDays": 60,
+    "DockerImageRetentionDays": 90,
+    "JDKCacheRetentionDays": 90,
+    "DotNetCacheRetentionDays": 60,
+    "VSCodeLogRetentionDays": 30
+  },
+
+  "PerformanceOptimization": {
+    "EnableEventLogAnalysis": true,
+    "EnableStartupAnalysis": true,
+    "EnableResourceAnalysis": true
+  }
+}

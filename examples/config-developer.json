@@ -1,0 +1,65 @@
+{
+  "_comment": "Developer-Focused Configuration",
+  "_description": "Optimized for development workstations with all dev tool cleanup enabled",
+
+  "EnabledModules": [
+    "DiskMaintenance",
+    "DeveloperMaintenance",
+    "PerformanceOptimization",
+    "SystemUpdates"
+  ],
+
+  "LogsPath": "C:\\Temp\\MaintenanceLogs",
+  "ReportsPath": "C:\\Temp\\MaintenanceReports",
+  "MaxEventLogSizeMB": 100,
+
+  "DiskMaintenance": {
+    "EnableRecycleBinCleanup": true,
+    "EnableTempFileCleanup": true,
+    "EnableWindowsTempCleanup": true,
+    "EnableBrowserCacheCleanup": true,
+    "EnableWindowsUpdateCleanup": true,
+    "EnableThumbnailCacheCleanup": true,
+    "EnableErrorReportCleanup": true,
+    "EnablePrefetchCleanup": true,
+    "EnableLogFileCleanup": true,
+    "EnableDeliveryOptimizationCleanup": true,
+    "EnableDiskCleanupUtility": false,
+    "TempFileRetentionDays": 7,
+    "LogFileRetentionDays": 14
+  },
+
+  "DeveloperMaintenance": {
+    "EnableNPM": true,
+    "EnablePython": true,
+    "EnableDocker": true,
+    "EnableJDK": true,
+    "EnableMinGW": false,
+    "EnableDotNetSDK": true,
+    "EnableWindowsSDK": true,
+    "EnableVCRedist": true,
+    "EnableComposer": false,
+    "EnablePostgreSQL": false,
+    "EnableJetBrainsIDEs": true,
+    "EnableVisualStudio2022": true,
+    "EnableVSCode": true,
+    "EnableDatabaseTools": false,
+    "EnableAdobeTools": false,
+    "EnableVersionControl": true,
+    "EnableLegacyCppTools": false,
+
+    "_note": "Retention days for developer tool caches",
+    "NPMCacheRetentionDays": 60,
+    "PythonCacheRetentionDays": 60,
+    "DockerImageRetentionDays": 90,
+    "JDKCacheRetentionDays": 90,
+    "DotNetCacheRetentionDays": 60,
+    "VSCodeLogRetentionDays": 30
+  },
+
+  "PerformanceOptimization": {
+    "EnableEventLogAnalysis": true,
+    "EnableStartupAnalysis": true,
+    "EnableResourceAnalysis": true
+  }
+}

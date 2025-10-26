@@ -1,7 +1,52 @@
 <#
+================================================================================
+                          ⚠️ DEPRECATION NOTICE ⚠️
+================================================================================
+
+This monolithic script has been DEPRECATED as of October 2025 (Version 4.0.0).
+
+Please migrate to the NEW MODULAR FRAMEWORK located in the WindowsMaintenance
+directory. The modular framework provides the same functionality with:
+
+✅ Better maintainability and code organization
+✅ Enhanced error handling and logging
+✅ Comprehensive test suite (Pester 5.x)
+✅ JSON-based configuration system
+✅ Task scheduler integration
+✅ Individual module execution
+✅ Improved performance and reliability
+
+MIGRATION INSTRUCTIONS:
+1. Review your current script parameters and settings
+2. Configure WindowsMaintenance\config\maintenance-config.json
+3. Test with: Import-Module .\WindowsMaintenance.psd1; Invoke-WindowsMaintenance -WhatIf
+4. Run: Invoke-WindowsMaintenance (requires Administrator)
+
+For task scheduling:
+  .\Scripts\Install-MaintenanceTask.ps1 -TaskName "WeeklyMaintenance"
+
+DOCUMENTATION:
+- Framework README: WindowsMaintenance\README.md
+- Configuration Guide: WindowsMaintenance\CONFIG.md
+- Feature Parity: FEATURE_PARITY.md
+- Implementation Guide: IMPLEMENTATION_GUIDE.md
+
+SUPPORT:
+This legacy script will receive NO further updates or bug fixes.
+All development efforts have moved to the modular framework.
+
+For issues or questions, please see documentation in the WindowsMaintenance
+directory or review the FEATURE_PARITY.md document for feature mapping.
+
+================================================================================
+                   Legacy Script Documentation Below
+================================================================================
+
 .SYNOPSIS
     Enterprise-grade Windows 10/11 maintenance and optimization script with comprehensive system analysis,
     security scanning, performance optimization, and automated reporting capabilities.
+
+    ⚠️ DEPRECATED: Use WindowsMaintenance modular framework instead ⚠️
 
 .DESCRIPTION
      This PowerShell script provides comprehensive system maintenance for Windows 10/11 Pro workstations
