@@ -64,37 +64,36 @@ Import-Module "$ModuleRoot\Modules\NetworkMaintenance.psm1" -Force
     Executes maintenance operations in optimal order with comprehensive logging
     and error handling.
 
+    Supports -WhatIf and -Confirm through SupportsShouldProcess.
+
 .PARAMETER ConfigPath
     Path to JSON configuration file
 
-.PARAMETER WhatIf
-    Simulation mode - shows what would be done without making changes
-
-.PARAMETER Verbose
-    Enable verbose logging
-
 .PARAMETER SilentMode
-    Suppress message boxes
+    Suppress message boxes and interactive prompts
 
 .EXAMPLE
     Invoke-WindowsMaintenance -ConfigPath "C:\Config\maintenance.json"
 
 .EXAMPLE
     Invoke-WindowsMaintenance -WhatIf
+    Runs in simulation mode without making changes (via SupportsShouldProcess)
+
+.EXAMPLE
+    Invoke-WindowsMaintenance -Verbose
+    Runs with detailed verbose output
 
 .NOTES
     Security: Requires administrator privileges
     Performance: Optimized execution order for efficiency
     Logging: Comprehensive audit trail generated
+    WhatIf Support: Use -WhatIf parameter for simulation mode
 #>
 function Invoke-WindowsMaintenance {
     [CmdletBinding(SupportsShouldProcess=$true)]
     param(
         [Parameter(Mandatory=$false)]
         [string]$ConfigPath = "$ModuleRoot\Config\maintenance-config.json",
-
-        [Parameter(Mandatory=$false)]
-        [switch]$WhatIf = $false,
 
         [Parameter(Mandatory=$false)]
         [switch]$SilentMode = $false
@@ -131,7 +130,7 @@ function Invoke-WindowsMaintenance {
         }
 
         # Set global flags
-        $Global:WhatIf = $WhatIf
+        $Global:WhatIf = $WhatIfPreference
         $Global:SilentMode = $SilentMode
         $Global:ShowMessageBoxes = -not $SilentMode
 
@@ -148,7 +147,7 @@ function Invoke-WindowsMaintenance {
         Write-MaintenanceLog -Message "Windows Maintenance Script Started" -Level INFO
         Write-MaintenanceLog -Message "Version: 4.0.0" -Level INFO
         Write-MaintenanceLog -Message "Execution Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -Level INFO
-        Write-MaintenanceLog -Message "WhatIf Mode: $WhatIf" -Level INFO
+        Write-MaintenanceLog -Message "WhatIf Mode: $Global:WhatIf" -Level INFO
         Write-MaintenanceLog -Message "Silent Mode: $SilentMode" -Level INFO
         Write-MaintenanceLog -Message "========================================" -Level INFO
 

@@ -54,11 +54,11 @@ Add-Type -AssemblyName System.Drawing
 
 # Script root for file paths
 $Script:ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Script:ModulePath = Join-Path $Script:ScriptRoot "WindowsMaintenance.psd1"
+$Script:ModulePath = Join-Path $Script:ScriptRoot "WindowsMaintenance\WindowsMaintenance.psd1"
 
 # Default configuration path
 if (-not $ConfigPath) {
-    $Script:ConfigPath = Join-Path $Script:ScriptRoot "WindowsMaintenance\config\maintenance-config.json"
+    $Script:ConfigPath = Join-Path $Script:ScriptRoot "config\maintenance-config.json"
 } else {
     $Script:ConfigPath = $ConfigPath
 }
@@ -133,7 +133,7 @@ function Show-MainForm {
     # Create main form
     $mainForm = New-Object System.Windows.Forms.Form
     $mainForm.Text = "Windows Maintenance Framework v4.0.0"
-    $mainForm.Size = New-Object System.Drawing.Size(900, 700)
+    $mainForm.Size = New-Object System.Drawing.Size(900, 780)
     $mainForm.StartPosition = "CenterScreen"
     $mainForm.FormBorderStyle = "FixedDialog"
     $mainForm.MaximizeBox = $false
@@ -243,10 +243,10 @@ function Show-MainForm {
     $statusLabel.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 
     if (Test-Administrator) {
-        $statusLabel.Text = "✓ Running with Administrator privileges"
+        $statusLabel.Text = "[/] Running with Administrator privileges"
         $statusLabel.ForeColor = [System.Drawing.Color]::DarkGreen
     } else {
-        $statusLabel.Text = "⚠ WARNING: Not running as Administrator - maintenance will fail!"
+        $statusLabel.Text = "[!] WARNING: Not running as Administrator - maintenance will fail!"
         $statusLabel.ForeColor = [System.Drawing.Color]::Red
     }
     $mainForm.Controls.Add($statusLabel)
@@ -532,7 +532,13 @@ function Show-ConfigurationEditor {
     $maxEventLogNumeric.Size = New-Object System.Drawing.Size(150, 25)
     $maxEventLogNumeric.Minimum = 10
     $maxEventLogNumeric.Maximum = 1000
-    $maxEventLogNumeric.Value = $Script:Config.MaxEventLogSizeMB
+    # Use default value if property doesn't exist or is invalid
+    $eventLogValue = if ($Script:Config.MaxEventLogSizeMB -and $Script:Config.MaxEventLogSizeMB -ge 10) {
+        [Math]::Min($Script:Config.MaxEventLogSizeMB, 1000)
+    } else {
+        100
+    }
+    $maxEventLogNumeric.Value = $eventLogValue
     $generalTab.Controls.Add($maxEventLogNumeric)
 
     # Disk Maintenance tab
@@ -560,7 +566,12 @@ function Show-ConfigurationEditor {
         $checkbox.Location = New-Object System.Drawing.Point(20, $diskYPos)
         $checkbox.Size = New-Object System.Drawing.Size(350, 25)
         $checkbox.Text = $option.Label
-        $checkbox.Checked = $Script:Config.DiskMaintenance.($option.Name)
+        # Safely handle missing properties - default to false
+        $checkbox.Checked = if ($Script:Config.DiskMaintenance.PSObject.Properties.Name -contains $option.Name) {
+            [bool]$Script:Config.DiskMaintenance.($option.Name)
+        } else {
+            $false
+        }
         $diskCheckboxes[$option.Name] = $checkbox
         $diskTab.Controls.Add($checkbox)
         $diskYPos += 30
@@ -579,7 +590,13 @@ function Show-ConfigurationEditor {
     $tempRetentionNumeric.Size = New-Object System.Drawing.Size(100, 25)
     $tempRetentionNumeric.Minimum = 1
     $tempRetentionNumeric.Maximum = 365
-    $tempRetentionNumeric.Value = $Script:Config.DiskMaintenance.TempFileRetentionDays
+    # Use default value if property doesn't exist or is invalid
+    $retentionValue = if ($Script:Config.DiskMaintenance.TempFileRetentionDays -and $Script:Config.DiskMaintenance.TempFileRetentionDays -ge 1) {
+        $Script:Config.DiskMaintenance.TempFileRetentionDays
+    } else {
+        7
+    }
+    $tempRetentionNumeric.Value = $retentionValue
     $diskTab.Controls.Add($tempRetentionNumeric)
 
     # Developer Maintenance tab
@@ -602,7 +619,12 @@ function Show-ConfigurationEditor {
         $checkbox.Location = New-Object System.Drawing.Point(20, $devYPos)
         $checkbox.Size = New-Object System.Drawing.Size(300, 25)
         $checkbox.Text = $tool -replace "Enable", ""
-        $checkbox.Checked = $Script:Config.DeveloperMaintenance.$tool
+        # Safely handle missing properties - default to false
+        $checkbox.Checked = if ($Script:Config.DeveloperMaintenance.PSObject.Properties.Name -contains $tool) {
+            [bool]$Script:Config.DeveloperMaintenance.$tool
+        } else {
+            $false
+        }
         $devCheckboxes[$tool] = $checkbox
         $devTab.Controls.Add($checkbox)
         $devYPos += 30
@@ -679,18 +701,24 @@ function Show-LogViewer {
 
     # Populate log files
     try {
-        $logsPath = $Script:Config.LogsPath
+        # Expand environment variables in the path
+        $logsPath = [System.Environment]::ExpandEnvironmentVariables($Script:Config.LogsPath)
+
         if (Test-Path $logsPath) {
-            $logFiles = Get-ChildItem -Path $logsPath -Filter "*.log" | Sort-Object LastWriteTime -Descending
+            $logFiles = Get-ChildItem -Path $logsPath -Filter "*.log" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
             foreach ($file in $logFiles) {
                 $logFileCombo.Items.Add($file.FullName) | Out-Null
             }
             if ($logFileCombo.Items.Count -gt 0) {
                 $logFileCombo.SelectedIndex = 0
             }
+        } else {
+            $logTextBox.Text = "Log directory not found: $logsPath`n`nLogs will be created here when maintenance runs."
         }
     }
-    catch {}
+    catch {
+        $logTextBox.Text = "Error loading log files: $($_.Exception.Message)"
+    }
 
     # Refresh button
     $refreshButton = New-Object System.Windows.Forms.Button
@@ -698,16 +726,29 @@ function Show-LogViewer {
     $refreshButton.Size = New-Object System.Drawing.Size(100, 30)
     $refreshButton.Text = "Refresh"
     $refreshButton.Add_Click({
-        $logFileCombo.Items.Clear()
-        $logsPath = $Script:Config.LogsPath
-        if (Test-Path $logsPath) {
-            $logFiles = Get-ChildItem -Path $logsPath -Filter "*.log" | Sort-Object LastWriteTime -Descending
-            foreach ($file in $logFiles) {
-                $logFileCombo.Items.Add($file.FullName) | Out-Null
+        try {
+            $logFileCombo.Items.Clear()
+            $logTextBox.Clear()
+
+            # Expand environment variables in the path
+            $logsPath = [System.Environment]::ExpandEnvironmentVariables($Script:Config.LogsPath)
+
+            if (Test-Path $logsPath) {
+                $logFiles = Get-ChildItem -Path $logsPath -Filter "*.log" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
+                foreach ($file in $logFiles) {
+                    $logFileCombo.Items.Add($file.FullName) | Out-Null
+                }
+                if ($logFileCombo.Items.Count -gt 0) {
+                    $logFileCombo.SelectedIndex = 0
+                } else {
+                    $logTextBox.Text = "No log files found in: $logsPath"
+                }
+            } else {
+                $logTextBox.Text = "Log directory not found: $logsPath`n`nLogs will be created here when maintenance runs."
             }
-            if ($logFileCombo.Items.Count -gt 0) {
-                $logFileCombo.SelectedIndex = 0
-            }
+        }
+        catch {
+            $logTextBox.Text = "Error refreshing log files: $($_.Exception.Message)"
         }
     })
     $logViewerForm.Controls.Add($refreshButton)
@@ -718,8 +759,25 @@ function Show-LogViewer {
     $openFolderButton.Size = New-Object System.Drawing.Size(110, 30)
     $openFolderButton.Text = "Open Folder"
     $openFolderButton.Add_Click({
-        if (Test-Path $Script:Config.LogsPath) {
-            Start-Process explorer.exe -ArgumentList $Script:Config.LogsPath
+        try {
+            # Expand environment variables in the path
+            $logsPath = [System.Environment]::ExpandEnvironmentVariables($Script:Config.LogsPath)
+
+            if (Test-Path $logsPath) {
+                Start-Process explorer.exe -ArgumentList $logsPath
+            } else {
+                # Create the directory if it doesn't exist
+                New-Item -Path $logsPath -ItemType Directory -Force | Out-Null
+                Start-Process explorer.exe -ArgumentList $logsPath
+            }
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show(
+                "Error opening log folder: $($_.Exception.Message)",
+                "Error",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Error
+            )
         }
     })
     $logViewerForm.Controls.Add($openFolderButton)
@@ -771,12 +829,30 @@ function Show-LogViewer {
     $filterButton.Add_Click({
         if ($logFileCombo.SelectedItem -and $filterTextBox.Text) {
             try {
-                $content = Get-Content -Path $logFileCombo.SelectedItem | Where-Object { $_ -match $filterTextBox.Text }
-                $logTextBox.Text = $content -join "`r`n"
+                $content = Get-Content -Path $logFileCombo.SelectedItem -ErrorAction Stop | Where-Object { $_ -match $filterTextBox.Text }
+                if ($content) {
+                    $logTextBox.Text = $content -join "`r`n"
+                } else {
+                    $logTextBox.Text = "No matches found for filter: '$($filterTextBox.Text)'"
+                }
             }
             catch {
                 $logTextBox.Text = "Error filtering log file: $($_.Exception.Message)"
             }
+        } elseif (-not $logFileCombo.SelectedItem) {
+            [System.Windows.Forms.MessageBox]::Show(
+                "Please select a log file first.",
+                "No File Selected",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Information
+            )
+        } elseif (-not $filterTextBox.Text) {
+            [System.Windows.Forms.MessageBox]::Show(
+                "Please enter a filter text.",
+                "No Filter Text",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Information
+            )
         }
     })
 

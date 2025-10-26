@@ -583,7 +583,11 @@ Built with enterprise best practices from:
 ---
 
 **Last Updated:** October 2025
+
 **Version:** 4.0.0
+
 **Author:** Miguel Velasco
+
 **PowerShell Version:** 5.1+
+
 **Platform:** Windows 10/11

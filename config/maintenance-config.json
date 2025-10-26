@@ -8,8 +8,8 @@
   },
   "_instructions": "Modify values below to customize script behavior. Remove metadata and instructions sections if not needed.",
   
-  "LogsPath": "%TEMP%\\WindowsMaintenance\\Logs",
-  "ReportsPath": "%TEMP%\\WindowsMaintenance\\Reports",
+  "LogsPath": "C:\\Users\\Miguel\\Documents\\Maintenance\\Logs",
+  "ReportsPath": "C:\\Users\\Miguel\\Documents\\Maintenance\\Reports",
   
   "MaxLogSizeMB": 100,
   "MaxBackupDays": 30,

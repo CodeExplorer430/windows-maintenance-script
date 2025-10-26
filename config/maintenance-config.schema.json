@@ -10,11 +10,21 @@
       "type": "object",
       "description": "Configuration metadata (optional)",
       "properties": {
-        "version": { "type": "string" },
-        "description": { "type": "string" },
-        "last_updated": { "type": "string" },
-        "author": { "type": "string" },
-        "notes": { "type": "string" }
+        "version": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "last_updated": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
       }
     },
     "_instructions": {
@@ -155,213 +165,619 @@
     },
     "SystemHealthRepair": {
       "type": "object",
-      "description": "System Health & Repair module configuration",
+      "description": "System Health \u0026 Repair module configuration",
       "properties": {
-        "_description": { "type": "string" },
-        "EnableDISM": { "type": "boolean", "default": true },
-        "EnableSFC": { "type": "boolean", "default": true },
-        "EnableCHKDSK": { "type": "boolean", "default": false },
-        "DISMTimeout": { "type": "integer", "minimum": 5, "maximum": 120, "default": 30 },
-        "SFCTimeout": { "type": "integer", "minimum": 5, "maximum": 60, "default": 20 },
-        "AutoRepair": { "type": "boolean", "default": true },
-        "ScheduleCHKDSKOnErrors": { "type": "boolean", "default": false },
-        "_advanced_settings": { "type": "string" },
-        "SkipDISMIfHealthy": { "type": "boolean", "default": true },
-        "SkipSFCIfDISMHealthy": { "type": "boolean", "default": false },
-        "GenerateDetailedReports": { "type": "boolean", "default": true },
-        "NotifyOnRepairs": { "type": "boolean", "default": true },
-        "ForceOfflineScan": { "type": "boolean", "default": false },
-        "_timeout_notes": { "type": "string" },
-        "_repair_notes": { "type": "string" },
-        "_chkdsk_notes": { "type": "string" }
+        "_description": {
+          "type": "string"
+        },
+        "EnableDISM": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableSFC": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableCHKDSK": {
+          "type": "boolean",
+          "default": false
+        },
+        "DISMTimeout": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 120,
+          "default": 30
+        },
+        "SFCTimeout": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 60,
+          "default": 20
+        },
+        "AutoRepair": {
+          "type": "boolean",
+          "default": true
+        },
+        "ScheduleCHKDSKOnErrors": {
+          "type": "boolean",
+          "default": false
+        },
+        "_advanced_settings": {
+          "type": "string"
+        },
+        "SkipDISMIfHealthy": {
+          "type": "boolean",
+          "default": true
+        },
+        "SkipSFCIfDISMHealthy": {
+          "type": "boolean",
+          "default": false
+        },
+        "GenerateDetailedReports": {
+          "type": "boolean",
+          "default": true
+        },
+        "NotifyOnRepairs": {
+          "type": "boolean",
+          "default": true
+        },
+        "ForceOfflineScan": {
+          "type": "boolean",
+          "default": false
+        },
+        "_timeout_notes": {
+          "type": "string"
+        },
+        "_repair_notes": {
+          "type": "string"
+        },
+        "_chkdsk_notes": {
+          "type": "string"
+        }
       }
     },
     "DiskMaintenance": {
       "type": "object",
       "description": "Disk Maintenance module configuration",
       "properties": {
-        "_description": { "type": "string" },
-        "EnableCleanup": { "type": "boolean", "default": true },
-        "EnableOptimization": { "type": "boolean", "default": true },
-        "EnableWindowsCleanup": { "type": "boolean", "default": true },
-        "EnableRecycleBinCleanup": { "type": "boolean", "default": false },
-        "_cleanup_settings": { "type": "string" },
+        "_description": {
+          "type": "string"
+        },
+        "EnableCleanup": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableOptimization": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableWindowsCleanup": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableRecycleBinCleanup": {
+          "type": "boolean",
+          "default": false
+        },
+        "_cleanup_settings": {
+          "type": "string"
+        },
         "CleanupLocations": {
           "type": "array",
           "items": {
             "type": "object",
             "required": ["Path", "Name", "Priority", "RetentionDays"],
             "properties": {
-              "Path": { "type": "string", "minLength": 1 },
-              "Name": { "type": "string", "minLength": 1 },
-              "Priority": { "type": "string", "enum": ["High", "Medium", "Low"] },
-              "RetentionDays": { "type": "integer", "minimum": 0, "maximum": 365 }
+              "Path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "Name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "Priority": {
+                "type": "string",
+                "enum": ["High", "Medium", "Low"]
+              },
+              "RetentionDays": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 365
+              }
             }
           }
         },
-        "_optimization_settings": { "type": "string" },
-        "OptimizeSSDs": { "type": "boolean", "default": true },
-        "DefragmentHDDs": { "type": "boolean", "default": true },
-        "AnalyzeBeforeOptimize": { "type": "boolean", "default": true },
-        "SkipExternalDrives": { "type": "boolean", "default": false },
-        "MinimumFragmentation": { "type": "integer", "minimum": 0, "maximum": 100, "default": 10 },
-        "EnableTRIM": { "type": "boolean", "default": true },
-        "OptimizationPriority": { "type": "string", "enum": ["Low", "Normal", "High"], "default": "Normal" },
-        "_advanced_settings": { "type": "string" },
-        "CleanupTimeout": { "type": "integer", "minimum": 5, "maximum": 120, "default": 30 },
-        "EmergencyThresholdGB": { "type": "integer", "minimum": 1, "maximum": 50, "default": 2 },
-        "AutoEmergencyCleanup": { "type": "boolean", "default": false },
-        "StateFlag": { "type": "integer", "minimum": 1, "maximum": 9999, "default": 1001 },
-        "_notes": { "type": "string" }
+        "_optimization_settings": {
+          "type": "string"
+        },
+        "OptimizeSSDs": {
+          "type": "boolean",
+          "default": true
+        },
+        "DefragmentHDDs": {
+          "type": "boolean",
+          "default": true
+        },
+        "AnalyzeBeforeOptimize": {
+          "type": "boolean",
+          "default": true
+        },
+        "SkipExternalDrives": {
+          "type": "boolean",
+          "default": false
+        },
+        "MinimumFragmentation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 10
+        },
+        "EnableTRIM": {
+          "type": "boolean",
+          "default": true
+        },
+        "OptimizationPriority": {
+          "type": "string",
+          "enum": ["Low", "Normal", "High"],
+          "default": "Normal"
+        },
+        "_advanced_settings": {
+          "type": "string"
+        },
+        "CleanupTimeout": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 120,
+          "default": 30
+        },
+        "EmergencyThresholdGB": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 2
+        },
+        "AutoEmergencyCleanup": {
+          "type": "boolean",
+          "default": false
+        },
+        "StateFlag": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999,
+          "default": 1001
+        },
+        "_notes": {
+          "type": "string"
+        }
       }
     },
     "SystemUpdates": {
       "type": "object",
       "description": "System Updates module configuration",
       "properties": {
-        "_description": { "type": "string" },
-        "EnableWindowsUpdate": { "type": "boolean", "default": true },
-        "EnableWinGet": { "type": "boolean", "default": true },
-        "EnableChocolatey": { "type": "boolean", "default": true },
-        "AutoInstallUpdates": { "type": "boolean", "default": false },
-        "UpdateTimeout": { "type": "integer", "minimum": 5, "maximum": 240, "default": 60 },
-        "IncludeOptionalUpdates": { "type": "boolean", "default": false },
-        "RestartAfterUpdates": { "type": "boolean", "default": false },
-        "DownloadOnly": { "type": "boolean", "default": false }
+        "_description": {
+          "type": "string"
+        },
+        "EnableWindowsUpdate": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableWinGet": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableChocolatey": {
+          "type": "boolean",
+          "default": true
+        },
+        "AutoInstallUpdates": {
+          "type": "boolean",
+          "default": false
+        },
+        "UpdateTimeout": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 240,
+          "default": 60
+        },
+        "IncludeOptionalUpdates": {
+          "type": "boolean",
+          "default": false
+        },
+        "RestartAfterUpdates": {
+          "type": "boolean",
+          "default": false
+        },
+        "DownloadOnly": {
+          "type": "boolean",
+          "default": false
+        }
       }
     },
     "SecurityScans": {
       "type": "object",
       "description": "Security Scans module configuration",
       "properties": {
-        "_description": { "type": "string" },
-        "EnableDefenderScan": { "type": "boolean", "default": true },
-        "ScanType": { "type": "string", "enum": ["Quick", "Full", "Custom"], "default": "Quick" },
-        "DefenderTimeout": { "type": "integer", "minimum": 5, "maximum": 240, "default": 30 },
-        "EnableSecurityPolicyAudit": { "type": "boolean", "default": false },
-        "EnableFirewallCheck": { "type": "boolean", "default": false },
-        "SkipIfRecentScan": { "type": "boolean", "default": true },
-        "RecentScanThresholdHours": { "type": "integer", "minimum": 1, "maximum": 168, "default": 24 },
-        "_advanced_settings": { "type": "string" },
-        "DetectConflictingAV": { "type": "boolean", "default": true },
-        "UpdateDefinitionsBeforeScan": { "type": "boolean", "default": true },
-        "ScanRemovableDrives": { "type": "boolean", "default": false },
-        "_notes": { "type": "string" }
+        "_description": {
+          "type": "string"
+        },
+        "EnableDefenderScan": {
+          "type": "boolean",
+          "default": true
+        },
+        "ScanType": {
+          "type": "string",
+          "enum": ["Quick", "Full", "Custom"],
+          "default": "Quick"
+        },
+        "DefenderTimeout": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 240,
+          "default": 30
+        },
+        "EnableSecurityPolicyAudit": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableFirewallCheck": {
+          "type": "boolean",
+          "default": false
+        },
+        "SkipIfRecentScan": {
+          "type": "boolean",
+          "default": true
+        },
+        "RecentScanThresholdHours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 168,
+          "default": 24
+        },
+        "_advanced_settings": {
+          "type": "string"
+        },
+        "DetectConflictingAV": {
+          "type": "boolean",
+          "default": true
+        },
+        "UpdateDefinitionsBeforeScan": {
+          "type": "boolean",
+          "default": true
+        },
+        "ScanRemovableDrives": {
+          "type": "boolean",
+          "default": false
+        },
+        "_notes": {
+          "type": "string"
+        }
       }
     },
     "DeveloperMaintenance": {
       "type": "object",
       "description": "Developer Tools Maintenance module configuration",
       "properties": {
-        "_description": { "type": "string" },
-        "EnableNPM": { "type": "boolean", "default": true },
-        "EnablePython": { "type": "boolean", "default": true },
-        "EnableDocker": { "type": "boolean", "default": true },
-        "EnableJDK": { "type": "boolean", "default": true },
-        "EnableMinGW": { "type": "boolean", "default": false },
-        "EnableDotNetSDK": { "type": "boolean", "default": false },
-        "EnableWindowsSDK": { "type": "boolean", "default": false },
-        "EnableVCRedist": { "type": "boolean", "default": false },
-        "EnableComposer": { "type": "boolean", "default": false },
-        "EnablePostgreSQL": { "type": "boolean", "default": false },
-        "EnableJetBrainsIDEs": { "type": "boolean", "default": false },
-        "EnableVisualStudio2022": { "type": "boolean", "default": false },
-        "EnableVSCode": { "type": "boolean", "default": false },
-        "EnableDatabaseTools": { "type": "boolean", "default": false },
-        "EnableAdobeTools": { "type": "boolean", "default": false },
-        "EnableVersionControl": { "type": "boolean", "default": true },
-        "EnableLegacyCppTools": { "type": "boolean", "default": false },
-        "_advanced_settings": { "type": "string" },
-        "NPMCacheRetentionDays": { "type": "integer", "minimum": 1, "maximum": 365, "default": 30 },
-        "PythonCacheRetentionDays": { "type": "integer", "minimum": 1, "maximum": 365, "default": 30 },
-        "DockerCleanupAggressiveness": { "type": "string", "enum": ["Low", "Medium", "High"], "default": "Medium" },
-        "JDKCacheRetentionDays": { "type": "integer", "minimum": 1, "maximum": 365, "default": 90 },
-        "UpdateDevTools": { "type": "boolean", "default": false },
-        "_notes": { "type": "string" }
+        "_description": {
+          "type": "string"
+        },
+        "EnableNPM": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnablePython": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableDocker": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableJDK": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableMinGW": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableDotNetSDK": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableWindowsSDK": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableVCRedist": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableComposer": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnablePostgreSQL": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableJetBrainsIDEs": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableVisualStudio2022": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableVSCode": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableDatabaseTools": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableAdobeTools": {
+          "type": "boolean",
+          "default": false
+        },
+        "EnableVersionControl": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableLegacyCppTools": {
+          "type": "boolean",
+          "default": false
+        },
+        "_advanced_settings": {
+          "type": "string"
+        },
+        "NPMCacheRetentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 30
+        },
+        "PythonCacheRetentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 30
+        },
+        "DockerCleanupAggressiveness": {
+          "type": "string",
+          "enum": ["Low", "Medium", "High"],
+          "default": "Medium"
+        },
+        "JDKCacheRetentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 90
+        },
+        "UpdateDevTools": {
+          "type": "boolean",
+          "default": false
+        },
+        "_notes": {
+          "type": "string"
+        }
       }
     },
     "PerformanceOptimization": {
       "type": "object",
       "description": "Performance Optimization module configuration",
       "properties": {
-        "_description": { "type": "string" },
-        "EnableStartupOptimization": { "type": "boolean", "default": true },
-        "EnableEventLogCleanup": { "type": "boolean", "default": true },
-        "EnableMemoryOptimization": { "type": "boolean", "default": true },
-        "RemoveInvalidStartupItems": { "type": "boolean", "default": true },
-        "AnalyzeStartupImpact": { "type": "boolean", "default": true },
-        "EnableResourceAnalysis": { "type": "boolean", "default": true },
-        "EventLogRetentionDays": { "type": "integer", "minimum": 1, "maximum": 365, "default": 30 },
-        "MaxEventLogSizeMB": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+        "_description": {
+          "type": "string"
+        },
+        "EnableStartupOptimization": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableEventLogCleanup": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableMemoryOptimization": {
+          "type": "boolean",
+          "default": true
+        },
+        "RemoveInvalidStartupItems": {
+          "type": "boolean",
+          "default": true
+        },
+        "AnalyzeStartupImpact": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableResourceAnalysis": {
+          "type": "boolean",
+          "default": true
+        },
+        "EventLogRetentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 30
+        },
+        "MaxEventLogSizeMB": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
       }
     },
     "NetworkMaintenance": {
       "type": "object",
       "description": "Network Maintenance module configuration",
       "properties": {
-        "_description": { "type": "string" },
-        "EnableDNSCacheClear": { "type": "boolean", "default": true },
-        "EnableARPCacheClear": { "type": "boolean", "default": true },
-        "EnableNetBIOSCacheClear": { "type": "boolean", "default": true },
-        "EnableConnectivityTest": { "type": "boolean", "default": true },
-        "EnableAdapterAnalysis": { "type": "boolean", "default": true },
-        "EnableWinsockReset": { "type": "boolean", "default": false },
-        "_advanced_settings": { "type": "string" },
+        "_description": {
+          "type": "string"
+        },
+        "EnableDNSCacheClear": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableARPCacheClear": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableNetBIOSCacheClear": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableConnectivityTest": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableAdapterAnalysis": {
+          "type": "boolean",
+          "default": true
+        },
+        "EnableWinsockReset": {
+          "type": "boolean",
+          "default": false
+        },
+        "_advanced_settings": {
+          "type": "string"
+        },
         "ConnectivityTestEndpoints": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "minItems": 1
         },
-        "ConnectivityTimeout": { "type": "integer", "minimum": 1, "maximum": 60, "default": 5 },
-        "RequireUserConfirmationForWinsockReset": { "type": "boolean", "default": true },
-        "_notes": { "type": "string" }
+        "ConnectivityTimeout": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60,
+          "default": 5
+        },
+        "RequireUserConfirmationForWinsockReset": {
+          "type": "boolean",
+          "default": true
+        },
+        "_notes": {
+          "type": "string"
+        }
       }
     },
     "_notification_settings": {
       "type": "object",
       "description": "User notification preferences",
       "properties": {
-        "_description": { "type": "string" },
-        "ShowMessageBoxes": { "type": "boolean", "default": false },
-        "SilentMode": { "type": "boolean", "default": true },
-        "NotifyOnErrors": { "type": "boolean", "default": true },
-        "NotifyOnCompletion": { "type": "boolean", "default": false },
-        "EmailNotifications": { "type": "boolean", "default": false }
+        "_description": {
+          "type": "string"
+        },
+        "ShowMessageBoxes": {
+          "type": "boolean",
+          "default": false
+        },
+        "SilentMode": {
+          "type": "boolean",
+          "default": true
+        },
+        "NotifyOnErrors": {
+          "type": "boolean",
+          "default": true
+        },
+        "NotifyOnCompletion": {
+          "type": "boolean",
+          "default": false
+        },
+        "EmailNotifications": {
+          "type": "boolean",
+          "default": false
+        }
       }
     },
     "_performance_tuning": {
       "type": "object",
       "description": "Performance tuning options",
       "properties": {
-        "_description": { "type": "string" },
-        "FastMode": { "type": "boolean", "default": false },
-        "ReducedTimeout": { "type": "boolean", "default": false },
-        "SkipNonCritical": { "type": "boolean", "default": false },
-        "ParallelExecution": { "type": "boolean", "default": true },
-        "MaxConcurrentOperations": { "type": "integer", "minimum": 1, "maximum": 8, "default": 2 }
+        "_description": {
+          "type": "string"
+        },
+        "FastMode": {
+          "type": "boolean",
+          "default": false
+        },
+        "ReducedTimeout": {
+          "type": "boolean",
+          "default": false
+        },
+        "SkipNonCritical": {
+          "type": "boolean",
+          "default": false
+        },
+        "ParallelExecution": {
+          "type": "boolean",
+          "default": true
+        },
+        "MaxConcurrentOperations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "default": 2
+        }
       }
     },
     "_safety_settings": {
       "type": "object",
       "description": "Safety and validation settings",
       "properties": {
-        "_description": { "type": "string" },
-        "WhatIfMode": { "type": "boolean", "default": false },
-        "ValidateBeforeDelete": { "type": "boolean", "default": true },
-        "CreateBackupBeforeChanges": { "type": "boolean", "default": true },
-        "MinimumDiskSpaceGB": { "type": "integer", "minimum": 1, "maximum": 100, "default": 5 },
-        "ConfirmDangerousOperations": { "type": "boolean", "default": true }
+        "_description": {
+          "type": "string"
+        },
+        "WhatIfMode": {
+          "type": "boolean",
+          "default": false
+        },
+        "ValidateBeforeDelete": {
+          "type": "boolean",
+          "default": true
+        },
+        "CreateBackupBeforeChanges": {
+          "type": "boolean",
+          "default": true
+        },
+        "MinimumDiskSpaceGB": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 5
+        },
+        "ConfirmDangerousOperations": {
+          "type": "boolean",
+          "default": true
+        }
       }
     },
     "_scheduling": {
       "type": "object",
       "description": "Scheduling preferences",
       "properties": {
-        "_description": { "type": "string" },
-        "RecommendedFrequency": { "type": "string", "enum": ["Daily", "Weekly", "BiWeekly", "Monthly"] },
-        "BestExecutionTime": { "type": "string" },
-        "EstimatedDuration": { "type": "string" },
-        "RequiresRestart": { "type": "boolean", "default": false }
+        "_description": {
+          "type": "string"
+        },
+        "RecommendedFrequency": {
+          "type": "string",
+          "enum": ["Daily", "Weekly", "BiWeekly", "Monthly"]
+        },
+        "BestExecutionTime": {
+          "type": "string"
+        },
+        "EstimatedDuration": {
+          "type": "string"
+        },
+        "RequiresRestart": {
+          "type": "boolean",
+          "default": false
+        }
       }
     }
   },

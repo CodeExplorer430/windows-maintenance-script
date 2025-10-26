@@ -81,7 +81,7 @@
 
 #Requires -Version 5.1
 
-[CmdletBinding(SupportsShouldProcess=$true)]
+[CmdletBinding()]
 param(
     [Parameter(Mandatory=$false, HelpMessage="Path to custom configuration file")]
     [ValidateScript({Test-Path $_})]
@@ -157,7 +157,7 @@ Write-Host "  PowerShell version: $($psVersion.ToString()) OK" -ForegroundColor 
 
 # Determine script location
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ModulePath = Join-Path $ScriptRoot "WindowsMaintenance.psd1"
+$ModulePath = Join-Path $ScriptRoot "WindowsMaintenance\WindowsMaintenance.psd1"
 
 # Check if WindowsMaintenance module exists
 if (-not (Test-Path $ModulePath)) {
@@ -174,7 +174,7 @@ Write-Host "  WindowsMaintenance module: Found" -ForegroundColor Green
 
 # Determine configuration path
 if (-not $ConfigPath) {
-    $ConfigPath = Join-Path $ScriptRoot "WindowsMaintenance\config\maintenance-config.json"
+    $ConfigPath = Join-Path $ScriptRoot "config\maintenance-config.json"
 }
 
 # Verify configuration exists
@@ -220,6 +220,26 @@ if ($SkipExternalDrives) {
 
 Write-Host ""
 
+# Check for parameters that need to be configured in the JSON file
+$unusedParams = @()
+if ($DetailedOutput) { $unusedParams += "DetailedOutput" }
+if ($ManageEventLogs) { $unusedParams += "ManageEventLogs" }
+if ($ScanLevel -ne 'Quick') { $unusedParams += "ScanLevel" }
+if ($ShowMessageBoxes) { $unusedParams += "ShowMessageBoxes" }
+if ($SkipExternalDrives) { $unusedParams += "SkipExternalDrives" }
+if ($FastMode) { $unusedParams += "FastMode" }
+
+if ($unusedParams.Count -gt 0) {
+    Write-Host "NOTE: The following parameters are specified but need to be configured in the JSON file:" -ForegroundColor Yellow
+    foreach ($param in $unusedParams) {
+        Write-Host "  - $param" -ForegroundColor Gray
+    }
+    Write-Host ""
+    Write-Host "To use these settings, please edit the configuration file:" -ForegroundColor Yellow
+    Write-Host "  $ConfigPath" -ForegroundColor Gray
+    Write-Host ""
+}
+
 # Confirmation prompt (unless in SilentMode or WhatIf)
 if (-not $SilentMode -and -not $WhatIf) {
     Write-Host "Ready to start maintenance." -ForegroundColor Yellow
@@ -254,22 +274,23 @@ catch {
 }
 
 # Prepare parameters for Invoke-WindowsMaintenance
+# Note: The function only accepts ConfigPath and SilentMode
+# All other settings are read from the configuration file
 $MaintenanceParams = @{
     ConfigPath = $ConfigPath
-    WhatIf = $WhatIf
-    DetailedOutput = $DetailedOutput
-    ManageEventLogs = $ManageEventLogs
-    ScanLevel = $ScanLevel
-    ShowMessageBoxes = $ShowMessageBoxes
     SilentMode = $SilentMode
-    SkipExternalDrives = $SkipExternalDrives
-    FastMode = $FastMode
 }
 
 # Execute maintenance
 $StartTime = Get-Date
 try {
-    Invoke-WindowsMaintenance @MaintenanceParams
+    # Pass -WhatIf parameter if specified
+    # The function now properly supports -WhatIf through SupportsShouldProcess
+    if ($WhatIf) {
+        Invoke-WindowsMaintenance @MaintenanceParams -WhatIf
+    } else {
+        Invoke-WindowsMaintenance @MaintenanceParams
+    }
     $Success = $true
 }
 catch {
