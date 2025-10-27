@@ -142,6 +142,13 @@ function Invoke-WindowsMaintenance {
             New-Item -Path $Global:Config.ReportsPath -ItemType Directory -Force | Out-Null
         }
 
+        # Initialize log file paths
+        $LogTimestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $Global:LogFile = Join-Path $Global:Config.LogsPath "maintenance_$LogTimestamp.log"
+        $Global:ErrorLog = Join-Path $Global:Config.LogsPath "errors_$LogTimestamp.log"
+        $Global:OperationsLog = Join-Path $Global:Config.LogsPath "operations_$LogTimestamp.log"
+        $Global:DetailedLog = Join-Path $Global:Config.LogsPath "detailed_$LogTimestamp.log"
+
         # Initialize logging
         Write-MaintenanceLog -Message "========================================" -Level INFO
         Write-MaintenanceLog -Message "Windows Maintenance Script Started" -Level INFO
@@ -234,7 +241,7 @@ $($_.ScriptStackTrace)
     finally {
         # Final cleanup
         Write-Verbose "Performing final cleanup..."
-        Optimize-MemoryUsage -Mode Aggressive
+        Optimize-MemoryUsage -Force -Aggressive
     }
 }
 
