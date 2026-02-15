@@ -146,7 +146,7 @@ The framework includes a modern, resilient Pester 5.7.1+ test suite.
 .\Tests\Invoke-Tests.ps1
 ```
 
-For testing documentation, see: **[TESTING-PLAN.md](TESTING-PLAN.md)**
+For testing documentation, see: **[testing-plan.md](testing-plan.md)**
 
 ---
 
@@ -154,10 +154,10 @@ For testing documentation, see: **[TESTING-PLAN.md](TESTING-PLAN.md)**
 
 | Document | Description |
 |----------|-------------|
-| [docs/config.md](docs/config.md) | Complete configuration reference |
-| [docs/architecture.md](docs/architecture.md) | System design and dependency injection |
-| [docs/user-guide.md](docs/user-guide.md) | Detailed usage and troubleshooting |
-| [docs/module-development.md](docs/module-development.md) | Guide for creating new modules |
+| [Docs/config.md](docs/config.md) | Complete configuration reference |
+| [Docs/architecture.md](docs/architecture.md) | System design and dependency injection |
+| [Docs/user-guide.md](docs/user-guide.md) | Detailed usage and troubleshooting |
+| [Docs/module-development.md](docs/module-development.md) | Guide for creating new modules |
 
 ---
 

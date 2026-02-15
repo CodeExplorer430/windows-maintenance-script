@@ -23,4 +23,4 @@
 
 ## Documentation
 - Maintain `docs/` (MkDocs) alongside code changes.
-- Update `TESTING-PLAN.md` if test strategies evolve.
+- Update `testing-plan.md` if test strategies evolve.

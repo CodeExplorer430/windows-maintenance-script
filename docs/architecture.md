@@ -17,7 +17,7 @@ The Windows Maintenance Framework (v4.2.0) is a modernized, decoupled PowerShell
 ```mermaid
 graph TD
     Root[WindowsMaintenance.psm1]
-    
+
     subgraph Infrastructure [Common Infrastructure]
         Logging[Logging.psm1]
         SafeExec[SafeExecution.psm1]
@@ -27,20 +27,20 @@ graph TD
         Drive[DriveAnalysis.psm1]
         Analytics[Analytics.psm1]
     end
-    
+
     subgraph UI [User Interfaces]
         CLI[Launcher.ps1]
         GUI[Start-MaintenanceGUI.ps1]
         Web[PS Universal Dashboard]
     end
-    
+
     subgraph Features [Feature Modules]
         Disk[DiskMaintenance.psm1]
         Sec[SecurityScans.psm1]
         Dev[DeveloperMaintenance.psm1]
         ...[etc.]
     end
-    
+
     UI --> Root
     Root --> Infrastructure
     Root --> Features
@@ -72,12 +72,12 @@ sequenceDiagram
 
     U->>O: Invoke-WindowsMaintenance
     O->>S: Get-MaintenanceSecret (Cloud/SMTP)
-    
+
     loop Each Enabled Module
         O->>M: Invoke-Module (Config)
         M-->>O: Return Result
     end
-    
+
     O->>C: Export-MaintenanceReportToCloud
     O-->>U: Done
 ```

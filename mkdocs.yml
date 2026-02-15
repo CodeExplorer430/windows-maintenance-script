@@ -49,7 +49,10 @@ nav:
   - Getting Started: installation.md
   - User Guide: user-guide.md
   - Architecture: architecture.md
+  - Testing: testing-plan.md
+  - GUI Guide: gui-guide.md
+  - Code Signing: code-signing-guide.md
   - Cmdlet Reference:
-      - Overview: reference/index.md
+      - Overview: Reference/index.md
   - Development: module-development.md
   - About: feature-parity.md

@@ -397,7 +397,7 @@ if ($CertificateThumbprint) {
         Write-Host "ERROR: No code signing certificates found in Cert:\CurrentUser\My" -ForegroundColor Red
         Write-Host ""
         Write-Host "Please create or import a code signing certificate first." -ForegroundColor Yellow
-        Write-Host "See CODE-SIGNING-GUIDE.md for instructions." -ForegroundColor Yellow
+        Write-Host "See code-signing-guide.md for instructions." -ForegroundColor Yellow
         exit 1
     }
 
@@ -1345,4 +1345,4 @@ Write-Host "✅ Certificate is valid for code signing" -ForegroundColor Green
 **Author:** Miguel Velasco
 **Framework Version:** 4.0.0
 
-For questions or issues with code signing, please refer to the [INSTALLATION-GUIDE.md](INSTALLATION-GUIDE.md) and [TESTING-PLAN.md](TESTING-PLAN.md).
+For questions or issues with code signing, please refer to the [INSTALLATION-GUIDE.md](INSTALLATION-GUIDE.md) and [testing-plan.md](testing-plan.md).
