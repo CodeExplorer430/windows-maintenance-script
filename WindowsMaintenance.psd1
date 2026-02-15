@@ -3,7 +3,7 @@
     RootModule = 'WindowsMaintenance.psm1'
 
     # Version number of this module
-    ModuleVersion = '4.1.0'
+    ModuleVersion = '4.2.0'
 
     # ID used to uniquely identify this module
     GUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'

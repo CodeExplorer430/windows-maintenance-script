@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Signs all PowerShell scripts in the Windows Maintenance Framework.
 

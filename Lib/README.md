@@ -1,4 +1,4 @@
-# External Libraries Directory (v4.1.0)
+# External Libraries Directory (v4.2.0)
 
 This directory contains external binary dependencies required by the Windows Maintenance Framework.
 

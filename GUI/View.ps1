@@ -17,7 +17,7 @@ function New-MaintenanceView {
 
     # Initialize Form
     $Form = New-Object System.Windows.Forms.Form
-    $Form.Text = "Windows Maintenance Framework v4.1.0"
+    $Form.Text = "Windows Maintenance Framework v4.2.0"
     $Form.Size = "900, 800"
     $Form.StartPosition = "CenterScreen"
     $Form.BackColor = $Theme.Background

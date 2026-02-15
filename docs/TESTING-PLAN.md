@@ -1,6 +1,6 @@
 # Windows Maintenance Framework - Comprehensive Testing Plan
 
-**Version:** 4.1.0
+**Version:** 4.2.0
 **Date:** February 2026
 **Purpose:** Complete testing checklist for framework validation across PowerShell 5.1 and 7.4+.
 
@@ -146,7 +146,7 @@ Get-ChildItem -Path . -Recurse -File |
 
 ---
 
-## Test Results Matrix (v4.1.0)
+## Test Results Matrix (v4.2.0)
 
 | Environment | Unit Tests | Integration | Simulation (WhatIf) |
 |-------------|------------|-------------|-------------------|

@@ -140,7 +140,7 @@ function Invoke-WindowsMaintenance {
         $FreeGB = [math]::Round($SystemDrive.FreeSpace / 1GB, 2)
         Invoke-SQLiteQuery -Query "INSERT INTO SystemMetrics (MetricName, MetricValue, Unit) VALUES ('SystemDriveFreeGB', $FreeGB, 'GB');"
 
-        Write-MaintenanceLog -Message "Version: 4.1.0" -Level INFO
+        Write-MaintenanceLog -Message "Version: 4.2.0" -Level INFO
         Write-MaintenanceLog -Message "WhatIf Mode: $WhatIfPreference" -Level INFO
         Write-MaintenanceLog -Message "========================================" -Level INFO
 

@@ -1,6 +1,6 @@
 # Windows Maintenance Framework - Installation Guide
 
-**Version:** 4.1.0
+**Version:** 4.2.0
 **Date:** February 2026
 **Platform:** Windows 10/11 | PowerShell 5.1 & 7.4+
 

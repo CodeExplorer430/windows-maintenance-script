@@ -1,6 +1,6 @@
 # Windows Maintenance Framework - GUI User Guide
 
-**Version:** 4.1.0
+**Version:** 4.2.0
 **Last Updated:** February 2026
 
 ---
@@ -39,7 +39,7 @@ Right-click `Tools/Start-MaintenanceGUI.ps1` and select "Run with PowerShell".
 - **Config Path**: Shows the currently active settings file.
 
 ### 2. Module Selection
-Check the modules you wish to run. New in v4.1.0:
+Check the modules you wish to run. New in v4.2.0:
 - **Parallel Optimization**: Automatically enabled if running on PowerShell 7.
 - **Tool Selection**: Choose from 13 different maintenance areas.
 
@@ -80,5 +80,5 @@ Reports are automatically saved to your configured `ReportsPath`. These provide 
 
 ---
 
-**Version**: 4.1.0
+**Version**: 4.2.0
 **Author**: Miguel Velasco

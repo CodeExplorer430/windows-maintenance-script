@@ -1,4 +1,4 @@
-# Module Development Guide (v4.1.0)
+# Module Development Guide (v4.2.0)
 
 ## Architectural Standards
 

@@ -1,6 +1,6 @@
 # Windows Maintenance Framework - Configuration Guide
 
-This guide provides comprehensive documentation for configuring the Windows Maintenance Framework (v4.1.0).
+This guide provides comprehensive documentation for configuring the Windows Maintenance Framework (v4.2.0).
 
 ## Overview
 
@@ -28,7 +28,7 @@ Fields prefixed with `_` are optional metadata and comments. They are ignored du
 ```json
 {
   "_metadata": {
-    "version": "4.1.0",
+    "version": "4.2.0",
     "description": "Windows Maintenance Framework Configuration - PowerShell 7.4 Optimized",
     "last_updated": "2026-02-13"
   }
@@ -124,5 +124,5 @@ Always validate your JSON file before deployment to prevent runtime errors:
 ---
 
 **Last Updated**: February 2026
-**Version**: 4.1.0
+**Version**: 4.2.0
 **Author**: Miguel Velasco

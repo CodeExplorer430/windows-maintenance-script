@@ -2,7 +2,21 @@
 
 **Enterprise-Grade Windows System Maintenance and Optimization**
 
-Version 4.1.0 | February 2026 | PowerShell 5.1 & 7.4+
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-brightgreen)](https://miguel.github.io/windows-maintenance-script/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207.4%2B-blue.svg)](https://microsoft.com/powershell)
+
+Version 4.2.0 | February 2026 | [Official Documentation](https://miguel.github.io/windows-maintenance-script/)
+
+---
+
+## ⚡ One-Liner Installation
+
+Run the following command in an **Administrator PowerShell** terminal to download and install the latest version automatically:
+
+```powershell
+iex (irm https://raw.githubusercontent.com/Miguel/windows-maintenance-script/main/Bootstrap.ps1)
+```
 
 ---
 
@@ -201,7 +215,7 @@ MIT License - See **[LICENSE](LICENSE)** file for details
 ---
 
 **Last Updated:** February 2026
-**Version:** 4.1.0
+**Version:** 4.2.0
 **Author:** Miguel Velasco
 **PowerShell Version:** 5.1 / 7.4+
 **Platform:** Windows 10/11

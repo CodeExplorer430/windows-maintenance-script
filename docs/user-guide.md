@@ -1,4 +1,4 @@
-# User Guide (v4.1.0)
+# User Guide (v4.2.0)
 
 ## Overview
 
