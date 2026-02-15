@@ -2,9 +2,9 @@ name: Windows Maintenance Framework CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, develop ]
 
 jobs:
   test:
@@ -41,7 +41,7 @@ jobs:
         ./Tests/Invoke-Tests.ps1 -CI
 
   docs:
-    name: Build Documentation
+    name: Build and Deploy Documentation
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -51,9 +51,16 @@ jobs:
       with:
         python-version: '3.x'
         
-    - name: Install MkDocs
+    - name: Install MkDocs dependencies
       run: |
         pip install mkdocs-material pymdown-extensions
         
     - name: Build MkDocs Site
       run: mkdocs build
+      
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./site
