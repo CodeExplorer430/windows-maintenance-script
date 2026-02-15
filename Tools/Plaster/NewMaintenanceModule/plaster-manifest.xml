@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plasterManifest schemaVersion="1.1" 
+  xmlns="http://www.microsoft.com/schemas/PowerShell/Plaster/v1">
+  <metadata>
+    <name>NewMaintenanceModule</name>
+    <id>7d89e5a1-4567-4b8c-9d0e-123456789abc</id>
+    <version>1.0.0</version>
+    <title>Maintenance Feature Module</title>
+    <description>Creates a new feature module for the Windows Maintenance Framework.</description>
+    <author>Miguel Velasco</author>
+  </metadata>
+  <parameters>
+    <parameter name="ModuleName" type="text" prompt="Name of the maintenance module (e.g. BrowserCleanup)" />
+    <parameter name="Author" type="text" prompt="Author name" default="Miguel Velasco" />
+    <parameter name="Description" type="text" prompt="Module description" />
+  </parameters>
+  <content>
+    <file source="template.psm1" destination="Modules/${PLASTER_PARAM_ModuleName}.psm1" />
+    <file source="template.Tests.ps1" destination="Tests/Unit/${PLASTER_PARAM_ModuleName}.Tests.ps1" />
+  </content>
+</plasterManifest>

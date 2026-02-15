@@ -1,8 +1,8 @@
 {
   "_metadata": {
-    "version": "4.0.0",
+    "version": "4.1.0",
     "description": "Windows Maintenance Framework Configuration File - Modular Architecture",
-    "last_updated": "2025-10-26",
+    "last_updated": "2026-02-14",
     "author": "Miguel Velasco",
     "notes": "Modular architecture with comprehensive logging, NetworkMaintenance module, and Task Scheduler integration"
   },
@@ -28,8 +28,13 @@
     "SystemHealthRepair",
     "SecurityScans",
     "DeveloperMaintenance",
+    "MultimediaMaintenance",
     "PerformanceOptimization",
-    "NetworkMaintenance"
+    "NetworkMaintenance",
+    "GPUMaintenance",
+    "EventLogManagement",
+    "BackupOperations",
+    "SystemReporting"
   ],
   
   "DriveDetection": true,
@@ -42,15 +47,59 @@
   "ParallelProcessing": true,
   "AggressiveCleanup": true,
   
+  "EventLogManagement": {
+    "_description": "Event Log Archival and Optimization Configuration",
+    "ManageEventLogs": true,
+    "MaxEventLogSizeMB": 50,
+    "RetentionDays": 30,
+    "ArchiveDirectory": "%ReportsPath%\\EventLogArchives"
+  },
+
+  "BackupOperations": {
+    "_description": "System Backup and Restore Point Configuration",
+    "BackupMode": "RestorePoint",
+    "KeepDays": 30,
+    "KeepMinimum": 5,
+    "BackupPath": "C:\\Users\\Miguel\\Documents\\Backups"
+  },
+
+  "SystemReporting": {
+    "_description": "System Reporting and Summary Configuration",
+    "GenerateComprehensiveReport": true,
+    "IncludeDiskAnalysis": true,
+    "IncludeNetworkAnalysis": true,
+    "IncludeSecurityStatus": true
+  },
+
+  "GPUMaintenance": {
+    "_description": "GPU Shader Cache and Optimization Configuration",
+    "EnableNVIDIACleanup": true,
+    "EnableAMDCleanup": true,
+    "EnableIntelCleanup": true,
+    "EnableDirectXCleanup": true,
+    "ShaderCacheRetentionDays": 1
+  },
+  
+  "MultimediaMaintenance": {
+    "_description": "Multimedia Software Maintenance Configuration",
+    "EnableAdobeSuite": true,
+    "EnableDaVinciResolve": true,
+    "EnableCapCut": true,
+    "EnableAudacity": true,
+    "EnableOBSStudio": true,
+    "LogRetentionDays": 7,
+    "MediaCacheRetentionDays": 30
+  },
+
   "SystemHealthRepair": {
     "_description": "System Health & Repair Module Configuration",
     "EnableDISM": true,
     "EnableSFC": true,
-    "EnableCHKDSK": false,
+    "EnableCHKDSK": true,
     "DISMTimeout": 30,
     "SFCTimeout": 20,
     "AutoRepair": true,
-    "ScheduleCHKDSKOnErrors": false,
+    "ScheduleCHKDSKOnErrors": true,
 
     "_advanced_settings": "Advanced configuration for enterprise environments",
     "SkipDISMIfHealthy": true,
@@ -132,12 +181,13 @@
   "SystemUpdates": {
     "_description": "System Updates Module Configuration",
     "EnableWindowsUpdate": true,
+    "EnableWUReset": false,
     "EnableWinGet": true,
     "EnableChocolatey": true,
-    "AutoInstallUpdates": false,
+    "AutoInstallUpdates": true,
     "UpdateTimeout": 60,
-    "IncludeOptionalUpdates": false,
-    "RestartAfterUpdates": false,
+    "IncludeOptionalUpdates": true,
+    "RestartAfterUpdates": true,
     "DownloadOnly": false
   },
   
@@ -146,8 +196,8 @@
     "EnableDefenderScan": true,
     "ScanType": "Quick",
     "DefenderTimeout": 30,
-    "EnableSecurityPolicyAudit": false,
-    "EnableFirewallCheck": false,
+    "EnableSecurityPolicyAudit": true,
+    "EnableFirewallCheck": true,
     "SkipIfRecentScan": true,
     "RecentScanThresholdHours": 24,
 
@@ -165,26 +215,27 @@
     "EnablePython": true,
     "EnableDocker": true,
     "EnableJDK": true,
-    "EnableMinGW": false,
-    "EnableDotNetSDK": false,
-    "EnableWindowsSDK": false,
-    "EnableVCRedist": false,
-    "EnableComposer": false,
-    "EnablePostgreSQL": false,
-    "EnableJetBrainsIDEs": false,
-    "EnableVisualStudio2022": false,
-    "EnableVSCode": false,
-    "EnableDatabaseTools": false,
-    "EnableAdobeTools": false,
+    "EnableMinGW": true,
+    "EnableDotNetSDK": true,
+    "EnableWindowsSDK": true,
+    "EnableVCRedist": true,
+    "EnableComposer": true,
+    "EnablePostgreSQL": true,
+    "EnableJetBrainsIDEs": true,
+    "EnableVisualStudio": true,
+    "EnableVSCode": true,
+    "EnableSSMS": true,
+    "EnableDatabaseTools": true,
     "EnableVersionControl": true,
-    "EnableLegacyCppTools": false,
+    "EnableLegacyCppTools": true,
 
     "_advanced_settings": "Advanced developer tools configuration",
     "NPMCacheRetentionDays": 30,
     "PythonCacheRetentionDays": 30,
+    "PIMCacheRetentionDays": 30,
     "DockerCleanupAggressiveness": "Medium",
     "JDKCacheRetentionDays": 90,
-    "UpdateDevTools": false,
+    "UpdateDevTools": true,
 
     "_notes": "Only enable tools that are installed on your system. Setting tools to true when not installed will be safely skipped. UpdateDevTools will attempt to update package managers (npm, pip, etc.) which may take additional time."
   },
@@ -199,6 +250,18 @@
     "EnableResourceAnalysis": true,
     "EventLogRetentionDays": 30,
     "MaxEventLogSizeMB": 20
+  },
+
+  "PrivacyMaintenance": {
+    "_description": "Privacy and Telemetry Maintenance Configuration",
+    "DisableTelemetryServices": true,
+    "DisablePrivacyRegistryPolicies": true
+  },
+
+  "BloatwareRemoval": {
+    "_description": "UWP Bloatware Removal Configuration",
+    "EnableUWPRemoval": true,
+    "KeepStandardApps": true
   },
 
   "NetworkMaintenance": {
@@ -228,7 +291,7 @@
     "ShowMessageBoxes": false,
     "SilentMode": true,
     "NotifyOnErrors": true,
-    "NotifyOnCompletion": false,
+    "NotifyOnCompletion": true,
     "EmailNotifications": false
   },
   

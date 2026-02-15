@@ -1,0 +1,51 @@
+site_name: Windows Maintenance Framework
+site_description: Enterprise-Grade Windows System Maintenance and Optimization
+site_author: Miguel Velasco
+repo_url: https://github.com/Miguel/windows-maintenance-script
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: cyan
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: cyan
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started: installation.md
+  - User Guide: user-guide.md
+  - Architecture: architecture.md
+  - Cmdlet Reference:
+      - Overview: reference/index.md
+  - Development: module-development.md
+  - About: chate-parity.md

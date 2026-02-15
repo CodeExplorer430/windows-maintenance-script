@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>windows-maintenance-framework</id>
+    <version>4.2.0</version>
+    <title>Windows Maintenance Framework</title>
+    <authors>Miguel Velasco</authors>
+    <owners>Miguel Velasco</authors>
+    <projectUrl>https://github.com/Miguel/windows-maintenance-script</projectUrl>
+    <tags>windows maintenance automation powershell optimization cleanup security</tags>
+    <summary>Enterprise-grade Windows system maintenance and optimization framework.</summary>
+    <description>
+      A modular PowerShell framework for automating Windows maintenance tasks:
+      - Windows Updates &amp; Package Management
+      - Disk Cleanup &amp; Optimization
+      - Security Scanning (Defender)
+      - Developer Tool Cleanup (NPM, Docker, etc.)
+      - System Health Repair (DISM/SFC)
+    </description>
+    <dependencies>
+      <dependency id="powershell-core" version="7.4.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

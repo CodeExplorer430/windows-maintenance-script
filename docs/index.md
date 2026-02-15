@@ -138,11 +138,10 @@ Detailed configuration documentation is available in **[CONFIG.md](CONFIG.md)**.
 
 ## Testing
 
-The framework includes a modern, resilient Pester 5.7.1+ test suite.
+The framework includes a modern, resilient Pester 5.x test suite.
 
 ```powershell
 # Run all tests (Environment-aware: skips admin tests if not elevated)
-# Utilizes Show-TestResult for colorized output and handles Pester 5 discovery phases.
 .\Tests\Invoke-Tests.ps1
 ```
 
@@ -154,10 +153,11 @@ For testing documentation, see: **[TESTING-PLAN.md](TESTING-PLAN.md)**
 
 | Document | Description |
 |----------|-------------|
-| [docs/config.md](docs/config.md) | Complete configuration reference |
-| [docs/architecture.md](docs/architecture.md) | System design and dependency injection |
-| [docs/user-guide.md](docs/user-guide.md) | Detailed usage and troubleshooting |
-| [docs/module-development.md](docs/module-development.md) | Guide for creating new modules |
+| [CONFIG.md](CONFIG.md) | Complete configuration reference |
+| [ARCHITECTURE.md](Docs/Architecture.md) | System design and dependency injection |
+| [USERGUIDE.md](Docs/UserGuide.md) | Detailed usage and troubleshooting |
+| [MODULEDEVELOPMENT.md](Docs/ModuleDevelopment.md) | Guide for creating new modules |
+| [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) | Development history and standards |
 
 ---
 
@@ -170,10 +170,9 @@ For testing documentation, see: **[TESTING-PLAN.md](TESTING-PLAN.md)**
 - Administrator privileges for system operations
 
 ### Optional Requirements
-- **Pester 5.7.1+** - Strictly required for the modern test suite
+- **Pester 5.x** - For running tests
 - **Git** - For development tool features
 - **PowerShell 7.4** - Recommended for parallel performance
-- **SQLite Runtime** - For high-performance database persistent logging (modularized)
 
 ---
 
@@ -188,15 +187,9 @@ The framework implements security best practices:
 
 ---
 
-## Community
-
-- **Contributing**: Please read our **[CONTRIBUTING.md](CONTRIBUTING.md)** for details on our code of conduct and the process for submitting pull requests.
-- **Code of Conduct**: This project adheres to the **[Contributor Covenant](CODE_OF_CONDUCT.md)**.
-- **Security**: For reporting vulnerabilities, please see our **[Security Policy](SECURITY.md)**.
-
 ## License
 
-MIT License - See **[LICENSE](LICENSE)** file for details
+MIT License - See LICENSE file for details
 
 ---
 

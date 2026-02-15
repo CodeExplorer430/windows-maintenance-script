@@ -1,0 +1,36 @@
+# Windows Maintenance Framework - Git Ignore Settings
+
+# PowerShell temporary files
+*.log
+*.xml
+*.csv
+CodeCoverage.xml
+TestResults.xml
+
+# SQLite Database files
+*.db
+*.db-journal
+*.db-wal
+
+# Local configuration overrides
+Config/maintenance-config.local.json
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Infrastructure / Build artifacts
+site/
+__pycache__/
+node_modules/
+temp/
+tmp/
+
+# External Libraries (DLLs)
+# Lib/*.dll
+# Un-comment if you want to exclude binary dependencies from the repo
