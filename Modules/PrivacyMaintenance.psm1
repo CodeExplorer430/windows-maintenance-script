@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Privacy maintenance module for managing telemetry and privacy settings.
 

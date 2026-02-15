@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Real-time progress output module for displaying live command execution.
 
@@ -74,7 +74,7 @@ Import-Module "$PSScriptRoot\Logging.psm1" -Force
 function Invoke-CommandWithRealTimeOutput {
     [CmdletBinding(SupportsShouldProcess=$true)]
     [OutputType([hashtable])]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "_EventSender")]
+
     param(
         [Parameter(Mandatory=$true)]
         [string]$Command,
@@ -145,7 +145,7 @@ function Invoke-CommandWithRealTimeOutput {
 
         # Event handlers for real-time output
         $OutputDataReceived = {
-            param($_EventSender, $EventArguments)
+            param($EventArguments)
             if ($EventArguments.Data) {
                 # Display in real-time if enabled
                 if ($ShowRealTimeOutput) {
@@ -156,7 +156,7 @@ function Invoke-CommandWithRealTimeOutput {
         }
 
         $ErrorDataReceived = {
-            param($_EventSender, $EventArguments)
+            param($EventArguments)
             if ($EventArguments.Data) {
                 # Display errors in real-time with color coding
                 if ($ShowRealTimeOutput) {
@@ -322,13 +322,10 @@ function Show-SectionHeader {
 function Show-PackageUpdateTable {
     [CmdletBinding()]
     [OutputType([void])]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "_PackageManager")]
+
     param(
         [Parameter(Mandatory=$true)]
-        [array]$Packages,
-
-        [Parameter(Mandatory=$true)]
-        [string]$_PackageManager
+        [array]$Packages
     )
 
     if ($Packages.Count -eq 0) {

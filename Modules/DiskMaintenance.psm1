@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Comprehensive disk maintenance module with intelligent optimization and cleanup.
 

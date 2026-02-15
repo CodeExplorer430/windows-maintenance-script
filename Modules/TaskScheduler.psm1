@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Windows Task Scheduler integration module for automated maintenance scheduling.
 

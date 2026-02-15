@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Network maintenance and optimization module.
 

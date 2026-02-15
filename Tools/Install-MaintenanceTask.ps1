@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Installation script for Windows Maintenance scheduled task.
 

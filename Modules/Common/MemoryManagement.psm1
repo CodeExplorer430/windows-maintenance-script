@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Memory management and optimization utilities for Windows Maintenance module.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Interactive setup wizard for the Windows Maintenance Framework.
 #>

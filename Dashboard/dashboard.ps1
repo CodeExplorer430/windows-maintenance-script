@@ -1,4 +1,4 @@
-# Windows Maintenance Framework - PowerShell Universal Dashboard (v4.2.0)
+﻿# Windows Maintenance Framework - PowerShell Universal Dashboard (v4.2.0)
 
 $ModuleRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Import-Module (Join-Path $ModuleRoot "WindowsMaintenance.psd1") -Force

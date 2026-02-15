@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Comprehensive system health diagnostics and repair module with DISM, SFC, and CHKDSK support.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Modularized .NET 8 GUI Launcher for the Windows Maintenance Framework.
 
@@ -27,33 +27,33 @@ $ControllerPath = Join-Path $GuiDir "Controller.ps1"
 
 # Load Components
 . $ThemePath      # Loads $script:UITheme and $script:UIFonts
-. $ViewPath       # Loads New-MaintenanceView
+. $ViewPath       # Loads Get-MaintenanceView
 . $ControllerPath # Loads event handler functions
 
 # Create UI
-$Controls = New-MaintenanceView -Theme $script:UITheme -Fonts $script:UIFonts
+$Controls = Get-MaintenanceView -Theme $script:UITheme -Fonts $script:UIFonts
 
 # Register Event Handlers
 $Controls.StartBtn.Add_Click({ Invoke-StartMaintenanceUI -Controls $Controls })
-$Controls.StopBtn.Add_Click({ Stop-MaintenanceUI -Controls $Controls })
+$Controls.StopBtn.Add_Click({ Invoke-MaintenanceUIStop -Controls $Controls })
 
 # Initialize Timer for UI Updates
 $Timer = New-Object System.Windows.Forms.Timer
 $Timer.Interval = 500
-$Timer.Add_Tick({ Update-MaintenanceTimerUI -Controls $Controls })
+$Timer.Add_Tick({ Receive-MaintenanceTimerUIUpdate -Controls $Controls })
 $Timer.Start()
 
 # Show Initial Message
-Update-UIConsole -ConsoleControl $Controls.Console -Text "Modern GUI initialized successfully."
+Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Modern GUI initialized successfully."
 
 if ($ConfigPath) {
-    Update-UIConsole -ConsoleControl $Controls.Console -Text "Using custom configuration: $ConfigPath"
+    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Using custom configuration: $ConfigPath"
 }
 
 if ($PSVersionTable.PSVersion.Major -ge 7) {
-    Update-UIConsole -ConsoleControl $Controls.Console -Text "PowerShell $($PSVersionTable.PSVersion) (Core) environment detected."
+    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "PowerShell $($PSVersionTable.PSVersion) (Core) environment detected."
 } else {
-    Update-UIConsole -ConsoleControl $Controls.Console -Text "PowerShell 5.1 (Desktop) environment detected. Parallel features disabled."
+    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "PowerShell 5.1 (Desktop) environment detected. Parallel features disabled."
 }
 
 # Run Form

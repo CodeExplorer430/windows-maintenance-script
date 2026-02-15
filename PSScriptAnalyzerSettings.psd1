@@ -1,4 +1,4 @@
-@{
+﻿@{
     Rules = @{
         PSAvoidUsingWriteHost = @{
             Enable = $false

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     UI Theme and Styling for the Windows Maintenance Framework.
 #>

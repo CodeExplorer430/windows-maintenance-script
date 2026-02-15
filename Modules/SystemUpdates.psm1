@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Comprehensive system update management module with multi-source package updates.
 

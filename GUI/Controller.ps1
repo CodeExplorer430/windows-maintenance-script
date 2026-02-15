@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     GUI Controller and Logic for the Windows Maintenance Framework.
 #>
@@ -7,11 +7,10 @@ $script:MaintenanceJob = $null
 
 <#
 .SYNOPSIS
-    Updates the UI console with timestamped text.
+    Displays text in the UI console with a timestamp.
 #>
-function Update-UIConsole {
+function Show-UIConsoleUpdate {
     [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param(
         [Parameter(Mandatory=$true)]
         $ConsoleControl,
@@ -41,7 +40,7 @@ function Invoke-StartMaintenanceUI {
         return
     }
 
-    Update-UIConsole -ConsoleControl $Controls.Console -Text "Initializing maintenance for: $($EnabledModules -join ', ')"
+    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Initializing maintenance for: $($EnabledModules -join ', ')"
 
     $Controls.StartBtn.Enabled = $false
     $Controls.Progress.Style = "Marquee"
@@ -64,14 +63,13 @@ function Invoke-StartMaintenanceUI {
 .SYNOPSIS
     Handles the Stop button click event.
 #>
-function Stop-MaintenanceUI {
+function Invoke-MaintenanceUIStop {
     [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param($Controls)
 
     if ($script:MaintenanceJob) {
         Stop-Job $script:MaintenanceJob
-        Update-UIConsole -ConsoleControl $Controls.Console -Text "Maintenance job stopped by user."
+        Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Maintenance job stopped by user."
         $Controls.StartBtn.Enabled = $true
         $Controls.Progress.Style = "Continuous"
         $Controls.Progress.Value = 0
@@ -82,9 +80,8 @@ function Stop-MaintenanceUI {
 .SYNOPSIS
     Handles the timer tick event for UI updates.
 #>
-function Update-MaintenanceTimerUI {
+function Receive-MaintenanceTimerUIUpdate {
     [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
     param($Controls)
 
     if ($script:MaintenanceJob) {
@@ -92,11 +89,11 @@ function Update-MaintenanceTimerUI {
             if ($script:MaintenanceJob.HasMoreData) {
                 $Data = Receive-Job -Job $script:MaintenanceJob
                 foreach ($line in $Data) {
-                    if ($line) { Update-UIConsole -ConsoleControl $Controls.Console -Text $line }
+                    if ($line) { Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text $line }
                 }
             }
         } else {
-            Update-UIConsole -ConsoleControl $Controls.Console -Text "Maintenance completed with status: $($script:MaintenanceJob.State)"
+            Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Maintenance completed with status: $($script:MaintenanceJob.State)"
             $Controls.Progress.Style = "Continuous"
             $Controls.Progress.Value = 100
             $Controls.StartBtn.Enabled = $true

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Build script for Windows Maintenance Framework using Invoke-Build (v4.2.0).
 #>

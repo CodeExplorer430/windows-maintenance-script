@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     User interface and interaction utilities for Windows Maintenance module.
 

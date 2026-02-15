@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Event Log Maintenance Module
 

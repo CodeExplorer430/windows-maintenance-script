@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Multimedia software maintenance and optimization module.
 

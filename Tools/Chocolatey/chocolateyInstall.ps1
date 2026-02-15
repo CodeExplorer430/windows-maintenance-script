@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 $PackageName = 'windows-maintenance-framework'
 $InstallDir  = Join-Path $env:ProgramData $PackageName

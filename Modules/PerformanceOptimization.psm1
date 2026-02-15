@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Advanced system performance optimization module.
 

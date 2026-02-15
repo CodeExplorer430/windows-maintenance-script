@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Test runner for Windows Maintenance Framework (Cross-Version Compatible).
 

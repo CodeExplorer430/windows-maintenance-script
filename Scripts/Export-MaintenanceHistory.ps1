@@ -1,9 +1,9 @@
-<#
+﻿<#
 .SYNOPSIS
     Exports maintenance history from the SQLite database to a CSV file.
 
 .DESCRIPTION
-    Queries the localized maintenance_history.db and exports all records 
+    Queries the localized maintenance_history.db and exports all records
     to a timestamped CSV for external auditing or reporting.
 
 .PARAMETER OutputPath
@@ -46,7 +46,7 @@ Write-Information -MessageData "Exporting history from $DbPath..." -Tags "Color:
 try {
     $LibRoot = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "Lib"
     $DllPath = Join-Path $LibRoot "System.Data.SQLite.dll"
-    
+
     if (-not (Test-Path $DllPath)) {
         throw "SQLite library not found at $DllPath"
     }
@@ -66,9 +66,10 @@ try {
 
     $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $File = Join-Path $OutputPath "MaintenanceHistory_$Timestamp.csv"
-    
+
+$InformationPreference = 'Continue'
     $data | Export-Csv -Path $File -NoTypeInformation -Encoding UTF8
-    Write-Host "History exported successfully to: $File" -ForegroundColor Green
+    Write-Information -MessageData "History exported successfully to: $File" -Tags "Color:Green"
 }
 catch {
     Write-Error "Failed to export history: $($_.Exception.Message)"

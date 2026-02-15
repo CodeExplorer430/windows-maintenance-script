@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     String formatting and sanitization utilities for the Windows Maintenance module.
 

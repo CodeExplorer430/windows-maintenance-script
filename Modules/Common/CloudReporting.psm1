@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Cloud reporting integration for Windows Maintenance Framework.
 

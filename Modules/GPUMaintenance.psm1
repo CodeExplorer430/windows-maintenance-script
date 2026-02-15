@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     GPU maintenance and optimization module.
 

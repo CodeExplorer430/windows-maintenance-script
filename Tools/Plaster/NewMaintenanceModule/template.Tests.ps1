@@ -1,4 +1,4 @@
-Describe "${PLASTER_PARAM_ModuleName} Module" {
+﻿Describe "${PLASTER_PARAM_ModuleName} Module" {
     $ModuleRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
     Import-Module (Join-Path $ModuleRoot "WindowsMaintenance.psd1") -Force
 

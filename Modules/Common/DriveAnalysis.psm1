@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Comprehensive drive analysis and caching system for Windows Maintenance module.
 

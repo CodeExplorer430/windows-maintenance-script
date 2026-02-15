@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Database management module for maintenance history and metrics.
 

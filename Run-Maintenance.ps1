@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Standalone launcher for the Windows Maintenance Framework.
 #>

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Enterprise-grade logging system for the Windows Maintenance module.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Predictive Analytics module for Windows Maintenance Framework.
 

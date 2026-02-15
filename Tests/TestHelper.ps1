@@ -1,11 +1,11 @@
-# Test Helpers for Windows Maintenance Framework
+﻿# Test Helpers for Windows Maintenance Framework
 # Provides utility functions for tests.
 
 # Helper for showing test status in the console
 # Uses Show-TestResult to avoid state-changing verb warnings
 function Show-TestResult {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingWriteHost", "")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
+
+
     [CmdletBinding()]
     param(
         [switch]$Skipped,

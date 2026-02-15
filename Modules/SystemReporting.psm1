@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     System Reporting Module
 

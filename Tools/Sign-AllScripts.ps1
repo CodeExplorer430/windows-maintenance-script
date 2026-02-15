@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Signs all PowerShell scripts in the Windows Maintenance Framework.
 
@@ -399,5 +399,3 @@ if ($failCount -eq 0 -and $verifyFailed -eq 0) {
     Write-Information -MessageData "" -Tags "Color:White"
     exit 1
 }
-
-

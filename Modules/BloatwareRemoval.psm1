@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Bloatware and junkware removal module.
 

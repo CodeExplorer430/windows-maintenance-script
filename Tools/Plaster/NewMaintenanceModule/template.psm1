@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     ${PLASTER_PARAM_Description}
 

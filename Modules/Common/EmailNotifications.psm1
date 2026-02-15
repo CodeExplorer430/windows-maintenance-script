@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Email notification module for maintenance reporting.
 

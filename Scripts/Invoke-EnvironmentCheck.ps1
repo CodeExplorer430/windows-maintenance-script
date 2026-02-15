@@ -3,8 +3,8 @@
     Performs a diagnostic check of the current environment.
 
 .DESCRIPTION
-    Verifies OS version, Administrator privileges, PowerShell edition, 
-    and required modules (Pester, PSScriptAnalyzer) to ensure the 
+    Verifies OS version, Administrator privileges, PowerShell edition,
+    and required modules (Pester, PSScriptAnalyzer) to ensure the
     framework can run optimally.
 
 .EXAMPLE
@@ -14,9 +14,11 @@
 [CmdletBinding()]
 param()
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Windows Maintenance Diagnostic Check  " -ForegroundColor Cyan
-Write-Host "========================================`n" -ForegroundColor Cyan
+$InformationPreference = 'Continue'
+
+Write-Information -MessageData "========================================" -Tags "Color:Cyan"
+Write-Information -MessageData "  Windows Maintenance Diagnostic Check  " -Tags "Color:Cyan"
+Write-Information -MessageData "========================================`n" -Tags "Color:Cyan"
 
 $Results = @()
 
@@ -77,17 +79,18 @@ $Results | ForEach-Object {
         "INFO"    { "Gray" }
         Default   { "White" }
     }
-    Write-Host ("[{0,-7}] {1,-25} : {2}" -f $_.Status, $_.Check, $_.Details) -ForegroundColor $Color
+    $Line = ("[{0,-7}] {1,-25} : {2}" -f $_.Status, $_.Check, $_.Details)
+    Write-Information -MessageData $Line -Tags "Color:$Color"
 }
 
-Write-Host "`nRecommendation:" -ForegroundColor Cyan
+Write-Information -MessageData "`nRecommendation:" -Tags "Color:Cyan"
 if (-not $IsAdmin) {
-    Write-Host " - Relaunch as Administrator for full functionality."
+    Write-Information -MessageData " - Relaunch as Administrator for full functionality." -Tags "Color:White"
 }
 if ($Pester -and $Pester.Version.Major -lt 5) {
-    Write-Host " - Upgrade Pester to 5.7.1+ for the modern test suite."
+    Write-Information -MessageData " - Upgrade Pester to 5.7.1+ for the modern test suite." -Tags "Color:White"
 }
 if (-not (Test-Path $DllPath)) {
-    Write-Host " - Place System.Data.SQLite.dll in the /Lib folder to enable history."
+    Write-Information -MessageData " - Place System.Data.SQLite.dll in the /Lib folder to enable history." -Tags "Color:White"
 }
-Write-Host "========================================`n"
+Write-Information -MessageData "========================================`n" -Tags "Color:Cyan"

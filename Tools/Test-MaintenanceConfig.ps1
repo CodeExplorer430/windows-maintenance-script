@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Validates Windows Maintenance configuration file against JSON schema.
 

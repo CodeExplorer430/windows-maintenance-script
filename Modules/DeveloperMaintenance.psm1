@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Comprehensive developer environment maintenance module.
 
@@ -20,8 +20,9 @@ Import-Module "$PSScriptRoot\Common\StringFormatting.psm1" -Force
     Executes comprehensive developer environment maintenance operations.
 #>
 function Invoke-DeveloperMaintenance {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "")]
     [CmdletBinding(SupportsShouldProcess=$true)]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "npm")]
+
     param(
         [Parameter(Mandatory=$true)]
         [hashtable]$Config
@@ -38,8 +39,8 @@ function Invoke-DeveloperMaintenance {
     if ($Config.DeveloperMaintenance.EnableNPM -ne $false -and (Get-Command npm -ErrorAction SilentlyContinue)) {
         if ($PSCmdlet.ShouldProcess("NPM", "Update global packages and clear cache")) {
             Invoke-SafeCommand -TaskName "NPM Cleanup" -Command {
-                npm update -g 2>$null | Out-Null
-                npm audit fix -g 2>&1 | Out-Null
+                npm update --global 2>$null | Out-Null
+                npm audit fix --global 2>&1 | Out-Null
                 npm cache clean --force 2>$null | Out-Null
             }
         }

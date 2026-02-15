@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Windows Maintenance Script - Modular PowerShell Maintenance Framework
 

@@ -18,6 +18,8 @@ param(
     [int]$Days = 30
 )
 
+$InformationPreference = 'Continue'
+
 # Load configuration
 $ConfigPath = Join-Path (Split-Path $PSScriptRoot) "Config\maintenance-config.json"
 if (-not (Test-Path $ConfigPath)) {
@@ -36,24 +38,24 @@ if (-not (Test-Path $LogsPath)) {
 $CutoffDate = (Get-Date).AddDays(-$Days)
 
 # 1. Cleanup Files
-Write-Host "Cleaning up files in $LogsPath older than $Days days..." -ForegroundColor Cyan
+Write-Information -MessageData "Cleaning up files in $LogsPath older than $Days days..." -Tags "Color:Cyan"
 $OldFiles = Get-ChildItem -Path $LogsPath -File -Recurse | Where-Object { $_.LastWriteTime -lt $CutoffDate }
 
 foreach ($File in $OldFiles) {
     if ($PSCmdlet.ShouldProcess($File.FullName, "Delete old log file")) {
         Remove-Item $File.FullName -Force
-        Write-Host "  Deleted: $($File.Name)" -ForegroundColor Gray
+        Write-Information -MessageData "  Deleted: $($File.Name)" -Tags "Color:Gray"
     }
 }
 
 # 2. Cleanup Database
 $DbPath = Join-Path $LogsPath "maintenance_history.db"
 if (Test-Path $DbPath) {
-    Write-Host "`nCleaning up database entries..." -ForegroundColor Cyan
+    Write-Information -MessageData "`nCleaning up database entries..." -Tags "Color:Cyan"
     try {
         $LibRoot = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "Lib"
         $DllPath = Join-Path $LibRoot "System.Data.SQLite.dll"
-        
+
         if (Test-Path $DllPath) {
             if (-not ([System.AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.FullName -match "System.Data.SQLite" })) {
                 Add-Type -Path $DllPath
@@ -61,14 +63,14 @@ if (Test-Path $DbPath) {
 
             $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$DbPath;Version=3;")
             $conn.Open()
-            
+
             $Query = "DELETE FROM MaintenanceHistory WHERE Timestamp < datetime('now', '-$Days days')"
             if ($PSCmdlet.ShouldProcess("Database History", "Delete records older than $Days days")) {
                 $cmd = $conn.CreateCommand()
                 $cmd.CommandText = $Query
                 $Count = $cmd.ExecuteNonQuery()
-                Write-Host "  Purged $Count history records." -ForegroundColor Green
-                
+                Write-Information -MessageData "  Purged $Count history records." -Tags "Color:Green"
+
                 # Vaccum to reclaim space
                 $cmd.CommandText = "VACUUM"
                 $cmd.ExecuteNonQuery() | Out-Null
@@ -81,4 +83,4 @@ if (Test-Path $DbPath) {
     }
 }
 
-Write-Host "`nCleanup complete." -ForegroundColor Green
+Write-Information -MessageData "`nCleanup complete." -Tags "Color:Green"

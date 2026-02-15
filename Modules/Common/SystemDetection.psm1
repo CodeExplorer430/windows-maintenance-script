@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     System detection and hardware information utilities for Windows Maintenance module.
 

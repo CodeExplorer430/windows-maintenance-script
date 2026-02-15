@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Hardware diagnostics and reporting module.
 

@@ -1,12 +1,12 @@
-<#
+﻿<#
 .SYNOPSIS
     GUI View Construction for the Windows Maintenance Framework.
 #>
 
-function New-MaintenanceView {
+function Get-MaintenanceView {
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "")]
+
     param(
         [Parameter(Mandatory=$true)]
         [hashtable]$Theme,

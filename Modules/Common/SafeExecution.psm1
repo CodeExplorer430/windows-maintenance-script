@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Safe command execution utilities for Windows Maintenance module.
 
@@ -83,8 +83,8 @@ Import-Module "$PSScriptRoot\MemoryManagement.psm1" -Force
 function Invoke-SafeCommand {
     [CmdletBinding()]
     [OutputType([hashtable])]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "_Context")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "_TimeoutMinutes")]
+
+
     param(
         [Parameter(Mandatory = $true, HelpMessage="Descriptive name for the task")]
         [string] $TaskName,
@@ -97,13 +97,7 @@ function Invoke-SafeCommand {
 
         [Parameter(Mandatory = $false, HelpMessage="Error handling behavior")]
         [ValidateSet("Continue","Stop")]
-        [string] $OnErrorAction = 'Continue',
-
-        [Parameter(Mandatory = $false, HelpMessage="Additional context for debugging")]
-        [hashtable] $_Context = @{},
-
-        [Parameter(Mandatory = $false, HelpMessage="Maximum execution timeout in minutes")]
-        [int] $_TimeoutMinutes = 30
+        [string] $OnErrorAction = 'Continue'
     )
 
     # Initialize execution tracking

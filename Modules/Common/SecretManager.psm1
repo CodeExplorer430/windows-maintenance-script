@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Secret Management wrapper for Windows Maintenance Framework.
 

@@ -1,4 +1,4 @@
-$HelperPath = Join-Path $PSScriptRoot "..TestHelper.ps1"
+﻿$HelperPath = Join-Path $PSScriptRoot "..TestHelper.ps1"
 if (Test-Path $HelperPath) { . $HelperPath }
 
 #Requires -Module Pester
@@ -24,7 +24,3 @@ Describe "EmailNotifications Module" {
         }
     }
 }
-
-
-
-
