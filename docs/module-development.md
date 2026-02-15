@@ -84,4 +84,4 @@ stateDiagram-v2
 - **Parallelism**: If your module processes a collection (e.g., files or drives), use `Invoke-Parallel` from `SafeExecution.psm1` to support PowerShell 7 multi-threading.
 - **Paths**: Use `$Config.ReportsPath` and `$Config.LogsPath` for any file output.
 - **Naming**: Use singular nouns for function names (e.g., `Invoke-SecurityScan` NOT `Invoke-SecurityScans`).
-- **Tests**: Every new module must include a corresponding test file in `Tests/Unit/` using Pester 5.x.
+- **Tests**: Every new module must include a corresponding test file in `Tests/Unit/` using Pester 5.7.1+.

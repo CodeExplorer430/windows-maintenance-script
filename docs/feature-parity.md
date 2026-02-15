@@ -249,7 +249,7 @@
 ### New Capabilities
 1. ✅ **Modular Architecture** - Clean separation of concerns
 2. ✅ **Configuration System** - JSON-based with schema validation
-3. ✅ **Test Framework** - Pester 5.x test suite
+3. ✅ **Test Framework** - Pester 5.7.1+ test suite
 4. ✅ **Task Scheduler Integration** - Automated maintenance scheduling
 5. ✅ **Comprehensive Documentation** - CONFIG.md, module-level docs
 6. ✅ **WhatIf Mode** - Safe testing without changes

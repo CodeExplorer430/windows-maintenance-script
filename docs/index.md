@@ -132,20 +132,20 @@ While fully compatible with PowerShell 5.1, the framework is optimized for Power
 The framework uses JSON-based configuration located at:
 `Config/maintenance-config.json`
 
-Detailed configuration documentation is available in **[CONFIG.md](CONFIG.md)**.
+Detailed configuration documentation is available in **[config.md](config.md)**.
 
 ---
 
 ## Testing
 
-The framework includes a modern, resilient Pester 5.x test suite.
+The framework includes a modern, resilient Pester 5.7.1+ test suite.
 
 ```powershell
 # Run all tests (Environment-aware: skips admin tests if not elevated)
 .\Tests\Invoke-Tests.ps1
 ```
 
-For testing documentation, see: **[TESTING-PLAN.md](TESTING-PLAN.md)**
+For testing documentation, see: **[testing-plan.md](testing-plan.md)**
 
 ---
 
@@ -153,11 +153,11 @@ For testing documentation, see: **[TESTING-PLAN.md](TESTING-PLAN.md)**
 
 | Document | Description |
 |----------|-------------|
-| [CONFIG.md](CONFIG.md) | Complete configuration reference |
-| [ARCHITECTURE.md](Docs/Architecture.md) | System design and dependency injection |
-| [USERGUIDE.md](Docs/UserGuide.md) | Detailed usage and troubleshooting |
-| [MODULEDEVELOPMENT.md](Docs/ModuleDevelopment.md) | Guide for creating new modules |
-| [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) | Development history and standards |
+| [config.md](config.md) | Complete configuration reference |
+| [architecture.md](architecture.md) | System design and dependency injection |
+| [user-guide.md](user-guide.md) | Detailed usage and troubleshooting |
+| [module-development.md](module-development.md) | Guide for creating new modules |
+
 
 ---
 

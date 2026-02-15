@@ -33,7 +33,11 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.mermaid_format
   - pymdownx.tabbed:
       alternate_style: true
   - tables
@@ -48,4 +52,4 @@ nav:
   - Cmdlet Reference:
       - Overview: reference/index.md
   - Development: module-development.md
-  - About: chate-parity.md
+  - About: feature-parity.md
