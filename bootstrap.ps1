@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
     One-line bootstrapper for Windows Maintenance Framework.
-    Usage: iex (irm https://raw.githubusercontent.com/Miguel/windows-maintenance-script/main/Bootstrap.ps1)
+    Usage: iex (irm https://raw.githubusercontent.com/CodeExplorer430/windows-maintenance-script/main/Bootstrap.ps1)
 #>
 
 $ErrorActionPreference = 'Stop'
-$Repo = "Miguel/windows-maintenance-script"
+$Repo = \"CodeExplorer430/windows-maintenance-script\"
 $Version = "v4.2.0"
 $Url = "https://github.com/$Repo/releases/download/$Version/WindowsMaintenance-$Version.zip"
 $Dest = "$env:ProgramData\WindowsMaintenance"
@@ -41,7 +41,7 @@ try {
 
     # 4. Finalize
     Write-Host "`nSUCCESS: Windows Maintenance Framework installed successfully!" -ForegroundColor Green
-    Write-Host "Documentation: https://miguel.github.io/windows-maintenance-script/`n" -ForegroundColor Yellow
+    Write-Host "Documentation: https://codeexplorer430.github.io/windows-maintenance-script/`n" -ForegroundColor Yellow
 
     # Non-interactive check for scheduling
     if ($Host.Name -ne "ConsoleHost" -or $env:WM_QUIET -eq "true") {

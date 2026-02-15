@@ -1,7 +1,7 @@
 site_name: Windows Maintenance Framework
 site_description: Enterprise-Grade Windows System Maintenance and Optimization
 site_author: Miguel Velasco
-repo_url: https://github.com/Miguel/windows-maintenance-script
+repo_url: https://github.com/CodeExplorer430/windows-maintenance-script
 theme:
   name: material
   palette:

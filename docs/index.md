@@ -11,7 +11,7 @@ Version 4.2.0 | February 2026 | PowerShell 5.1 & 7.4+
 Run the following command in an **Administrator PowerShell** terminal:
 
 ```powershell
-iex (irm https://raw.githubusercontent.com/Miguel/windows-maintenance-script/main/Bootstrap.ps1)
+iex (irm https://raw.githubusercontent.com/CodeExplorer430/windows-maintenance-script/main/Bootstrap.ps1)
 ```
 
 ---

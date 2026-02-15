@@ -2,11 +2,11 @@
 
 **Enterprise-Grade Windows System Maintenance and Optimization**
 
-[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-brightgreen)](https://miguel.github.io/windows-maintenance-script/)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-brightgreen)](https://codeexplorer430.github.io/windows-maintenance-script/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%20%7C%207.4%2B-blue.svg)](https://microsoft.com/powershell)
 
-Version 4.2.0 | February 2026 | [Official Documentation](https://miguel.github.io/windows-maintenance-script/)
+Version 4.2.0 | February 2026 | [Official Documentation](https://codeexplorer430.github.io/windows-maintenance-script/)
 
 ---
 
@@ -15,7 +15,7 @@ Version 4.2.0 | February 2026 | [Official Documentation](https://miguel.github.i
 Run the following command in an **Administrator PowerShell** terminal to download and install the latest version automatically:
 
 ```powershell
-iex (irm https://raw.githubusercontent.com/Miguel/windows-maintenance-script/main/Bootstrap.ps1)
+iex (irm https://raw.githubusercontent.com/CodeExplorer430/windows-maintenance-script/main/Bootstrap.ps1)
 ```
 
 ---

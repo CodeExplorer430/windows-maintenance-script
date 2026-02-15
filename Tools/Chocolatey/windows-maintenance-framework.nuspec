@@ -6,7 +6,7 @@
     <title>Windows Maintenance Framework</title>
     <authors>Miguel Velasco</authors>
     <owners>Miguel Velasco</authors>
-    <projectUrl>https://github.com/Miguel/windows-maintenance-script</projectUrl>
+    <projectUrl>https://github.com/CodeExplorer430/windows-maintenance-script</projectUrl>
     <tags>windows maintenance automation powershell optimization cleanup security</tags>
     <summary>Enterprise-grade Windows system maintenance and optimization framework.</summary>
     <description>

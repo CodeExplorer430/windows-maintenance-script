@@ -6,7 +6,7 @@
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
     [Parameter(Mandatory=$false)]
-    [string]$Repo = "Miguel/windows-maintenance-script",
+    [string]$Repo = \"CodeExplorer430/windows-maintenance-script\",
 
     [switch]$Force = $false
 )

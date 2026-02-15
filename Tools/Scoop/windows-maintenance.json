@@ -1,9 +1,9 @@
 {
     "version": "4.2.0",
     "description": "Enterprise-grade Windows system maintenance and optimization framework.",
-    "homepage": "https://github.com/Miguel/windows-maintenance-script",
+    "homepage": "https://github.com/CodeExplorer430/windows-maintenance-script",
     "license": "MIT",
-    "url": "https://github.com/Miguel/windows-maintenance-script/releases/download/v4.2.0/WindowsMaintenance-v4.2.0.zip",
+    "url": "https://github.com/CodeExplorer430/windows-maintenance-script/releases/download/v4.2.0/WindowsMaintenance-v4.2.0.zip",
     "hash": "sha256:placeholder_hash_replaced_by_ci",
     "bin": [
         "Run-Maintenance.ps1",
@@ -20,6 +20,6 @@
     },
     "checkver": "github",
     "autoupdate": {
-        "url": "https://github.com/Miguel/windows-maintenance-script/releases/download/v$version/WindowsMaintenance-v$version.zip"
+        "url": "https://github.com/CodeExplorer430/windows-maintenance-script/releases/download/v$version/WindowsMaintenance-v$version.zip"
     }
 }
