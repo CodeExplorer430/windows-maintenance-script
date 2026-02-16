@@ -290,6 +290,28 @@
 
     "_notes": "DNS, ARP, and NetBIOS cache clearing are safe and recommended. Winsock reset should only be enabled if experiencing persistent network issues and may require restart."
   },
+
+  "GUISettings": {
+    "_description": "GUI Appearance and Behavior Configuration",
+    "WindowTitle": "Windows Maintenance Framework v4.2.0",
+    "WindowWidth": 900,
+    "WindowHeight": 800,
+    "RefreshIntervalMS": 500,
+    "Theme": {
+      "Mode": "Light",
+      "Colors": {
+        "Background": "#F0F0F0",
+        "Foreground": "#212121",
+        "Primary": "#0078D7",
+        "Success": "#107C10",
+        "Warning": "#FFB900",
+        "Error": "#E81123",
+        "ConsoleBg": "#1E1E1E",
+        "ConsoleFg": "#CCCCCC",
+        "Accent": "#0099BC"
+      }
+    }
+  },
   
   "_notification_settings": {
     "_description": "User notification preferences",

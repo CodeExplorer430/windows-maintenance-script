@@ -209,11 +209,11 @@ $KnownTopLevelFields = @(
     'EnableFastMode', 'ParallelProcessing', 'AggressiveCleanup',
     'SystemHealthRepair', 'DiskMaintenance', 'SystemUpdates', 'SecurityScans',
     'DeveloperMaintenance', 'PerformanceOptimization', 'NetworkMaintenance',
-    'MultimediaMaintenance', 'GPUMaintenance', 'EventLogManagement',
-    'BackupOperations', 'BloatwareRemoval', 'PrivacyMaintenance', 'SystemReporting',
-    '_notification_settings', '_performance_tuning', '_safety_settings', '_scheduling'
-)
-
+        'MultimediaMaintenance', 'GPUMaintenance', 'EventLogManagement', 
+        'BackupOperations', 'BloatwareRemoval', 'PrivacyMaintenance', 'SystemReporting',
+        'GUISettings',
+        '_notification_settings', '_performance_tuning', '_safety_settings', '_scheduling'
+    )
 foreach ($Property in $Config.PSObject.Properties) {
     if ($Property.Name -notin $KnownTopLevelFields) {
         $ValidationWarnings += "Unknown or deprecated field: $($Property.Name)"

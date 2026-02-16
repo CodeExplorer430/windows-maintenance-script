@@ -187,7 +187,7 @@ function Invoke-DiskMaintenance {
                     # For simplicity in this block, we'll call the volume optimizer directly
                     # if the function isn't found, but better to ensure module availability.
                     if (Get-Command Invoke-DriveOptimization -ErrorAction SilentlyContinue) {
-                        Invoke-DriveOptimization -DriveInfo $DriveInfo -WhatIf:$LocalWhatIf
+                        Invoke-DriveOptimization -DriveInfo $DriveInfo -Config $LocalConfig -WhatIf:$LocalWhatIf
                     }
                 }
             }
@@ -255,15 +255,24 @@ function Invoke-DriveOptimization {
     [CmdletBinding(SupportsShouldProcess=$true)]
     [OutputType([hashtable])]
     param(
-        [hashtable]$DriveInfo
+        [hashtable]$DriveInfo,
+        [hashtable]$Config
     )
 
     if ($DriveInfo.MediaType -eq "SSD") {
+        if ($Config.DiskMaintenance.EnableTRIM -eq $false) {
+            Write-MaintenanceLog -Message "TRIM skipped for $($DriveInfo.DriveLetter) per configuration" -Level INFO
+            return @{ Drive = $DriveInfo.DriveLetter; Success = $true; Action = "None" }
+        }
         if ($PSCmdlet.ShouldProcess($DriveInfo.DriveLetter, "SSD TRIM")) {
             Optimize-Volume -DriveLetter $DriveInfo.DriveLetter.TrimEnd(':') -ReTrim
             return @{ Drive = $DriveInfo.DriveLetter; Success = $true; Action = "TRIM" }
         }
     } elseif ($DriveInfo.MediaType -eq "HDD") {
+        if ($Config.DiskMaintenance.DefragmentHDDs -eq $false) {
+            Write-MaintenanceLog -Message "Defragmentation skipped for $($DriveInfo.DriveLetter) per configuration" -Level INFO
+            return @{ Drive = $DriveInfo.DriveLetter; Success = $true; Action = "None" }
+        }
         if ($PSCmdlet.ShouldProcess($DriveInfo.DriveLetter, "HDD Defragmentation")) {
             Optimize-Volume -DriveLetter $DriveInfo.DriveLetter.TrimEnd(':') -Defrag
             return @{ Drive = $DriveInfo.DriveLetter; Success = $true; Action = "Defrag" }

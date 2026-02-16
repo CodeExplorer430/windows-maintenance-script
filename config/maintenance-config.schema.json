@@ -356,6 +356,37 @@
       }
     },
     
+    "GUISettings": {
+      "type": "object",
+      "properties": {
+        "_description": { "type": "string" },
+        "WindowTitle": { "type": "string" },
+        "WindowWidth": { "type": "integer", "default": 900 },
+        "WindowHeight": { "type": "integer", "default": 800 },
+        "RefreshIntervalMS": { "type": "integer", "default": 500 },
+        "Theme": {
+          "type": "object",
+          "properties": {
+            "Mode": { "type": "string", "enum": ["Light", "Dark"], "default": "Light" },
+            "Colors": {
+              "type": "object",
+              "properties": {
+                "Background": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "Foreground": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "Primary": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "Success": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "Warning": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "Error": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "ConsoleBg": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "ConsoleFg": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+                "Accent": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" }
+              }
+            }
+          }
+        }
+      }
+    },
+    
     "_notification_settings": {
       "type": "object",
       "properties": {
