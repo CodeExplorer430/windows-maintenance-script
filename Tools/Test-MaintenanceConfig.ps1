@@ -121,7 +121,9 @@ if ($Config.EnabledModules) {
     $ValidModules = @(
         'SystemUpdates', 'DiskMaintenance', 'SystemHealthRepair',
         'SecurityScans', 'DeveloperMaintenance', 'PerformanceOptimization',
-        'NetworkMaintenance', 'EventLogManagement', 'BackupOperations', 'SystemReporting'
+        'NetworkMaintenance', 'EventLogManagement', 'BackupOperations',
+        'SystemReporting', 'MultimediaMaintenance', 'GPUMaintenance',
+        'BloatwareRemoval', 'PrivacyMaintenance'
     )
 
     if ($Config.EnabledModules -is [array]) {
@@ -207,6 +209,8 @@ $KnownTopLevelFields = @(
     'EnableFastMode', 'ParallelProcessing', 'AggressiveCleanup',
     'SystemHealthRepair', 'DiskMaintenance', 'SystemUpdates', 'SecurityScans',
     'DeveloperMaintenance', 'PerformanceOptimization', 'NetworkMaintenance',
+    'MultimediaMaintenance', 'GPUMaintenance', 'EventLogManagement',
+    'BackupOperations', 'BloatwareRemoval', 'PrivacyMaintenance', 'SystemReporting',
     '_notification_settings', '_performance_tuning', '_safety_settings', '_scheduling'
 )
 

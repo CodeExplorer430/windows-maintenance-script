@@ -34,6 +34,8 @@
     "GPUMaintenance",
     "EventLogManagement",
     "BackupOperations",
+    "BloatwareRemoval",
+    "PrivacyMaintenance",
     "SystemReporting"
   ],
   
@@ -57,10 +59,13 @@
 
   "BackupOperations": {
     "_description": "System Backup and Restore Point Configuration",
+    "EnableRestorePoint": true,
+    "EnableFileBackup": false,
     "BackupMode": "RestorePoint",
     "KeepDays": 30,
     "KeepMinimum": 5,
-    "BackupPath": "C:\\Users\\Miguel\\Documents\\Backups"
+    "BackupPath": "C:\\Users\\Miguel\\Documents\\Backups",
+    "Description": "Maintenance Script Backup"
   },
 
   "SystemReporting": {
@@ -194,7 +199,7 @@
   "SecurityScans": {
     "_description": "Security Scanning Configuration",
     "EnableDefenderScan": true,
-    "ScanType": "Quick",
+    "ScanLevel": "Quick",
     "DefenderTimeout": 30,
     "EnableSecurityPolicyAudit": true,
     "EnableFirewallCheck": true,
