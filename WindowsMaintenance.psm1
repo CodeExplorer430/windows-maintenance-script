@@ -53,7 +53,19 @@ function Invoke-WindowsMaintenance {
         [string]$ConfigPath = "$ModuleRoot\Config\maintenance-config.json",
 
         [Parameter(Mandatory=$false)]
-        [switch]$SilentMode = $false
+        [switch]$SilentMode = $false,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$DetailedOutput = $false,
+
+        [Parameter(Mandatory=$false)]
+        [string]$ScanLevel = "Quick",
+
+        [Parameter(Mandatory=$false)]
+        [switch]$FastMode = $false,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$SkipExternalDrives = $false
     )
 
     # Set InformationPreference to ensure Write-Information is visible
@@ -111,7 +123,7 @@ function Invoke-WindowsMaintenance {
 
         # Configure logging system
         $EnableVerbose = if ($VerbosePreference -eq 'Continue') { $true } else { $false }
-        Set-LoggingConfig @LogFiles -EnableVerbose:$EnableVerbose -DetailedOutput:$true -SilentMode:$SilentMode
+        Set-LoggingConfig @LogFiles -EnableVerbose:$EnableVerbose -DetailedOutput:$DetailedOutput -SilentMode:$SilentMode
 
         Write-MaintenanceLog -Message "========================================" -Level INFO
         Write-MaintenanceLog -Message "Windows Maintenance Script Started" -Level INFO

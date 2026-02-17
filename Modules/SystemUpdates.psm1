@@ -27,7 +27,7 @@ function Invoke-SystemUpdate {
         [hashtable]$Config
     )
 
-    if ("SystemUpdate" -notin $Config.EnabledModules) {
+    if ("SystemUpdates" -notin $Config.EnabledModules) {
         Write-MaintenanceLog -Message 'System Update module disabled' -Level INFO
         return
     }
