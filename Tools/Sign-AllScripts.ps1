@@ -145,7 +145,7 @@ if ($CertificateThumbprint) {
     if ($certs.Count -eq 0) {
         Write-Error "No code signing certificates found!"
         Write-Information -MessageData "Please create or import a code signing certificate first." -Tags "Color:Yellow"
-        Write-Information -MessageData "See CODE-SIGNING-GUIDE.md for detailed instructions." -Tags "Color:Yellow"
+        Write-Information -MessageData "See code-signing-guide.md for detailed instructions." -Tags "Color:Yellow"
         exit 1
     }
 

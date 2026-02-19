@@ -125,6 +125,37 @@ function Invoke-SystemUpdate {
         }
     }
 
+    # Microsoft Store Updates (Explicit)
+    if ($Config.SystemUpdates.EnableMicrosoftStore) {
+        Invoke-SafeCommand -TaskName "Microsoft Store Updates" -Command {
+            if (Get-Command winget -ErrorAction SilentlyContinue) {
+                Write-MaintenanceLog -Message 'Checking for Microsoft Store updates...' -Level PROGRESS
+
+                # We specifically target the msstore source to ensure Store apps are covered
+                # This is redundant if 'upgrade --all' above caught them, but ensures intent is met
+                # and captures any that might have been skipped or requires specific agreements.
+
+                $StoreArgs = "upgrade --all --source msstore --accept-package-agreements --accept-source-agreements --include-unknown --silent --disable-interactivity"
+
+                $StoreResult = Invoke-CommandWithRealTimeOutput `
+                    -Command "winget" `
+                    -Arguments $StoreArgs `
+                    -ActivityName "Microsoft Store Updates" `
+                    -StatusMessage "Updating Store apps..." `
+                    -ShowRealTimeOutput $true `
+                    -TimeoutMinutes 45
+
+                if ($StoreResult.Success -or $StoreResult.ExitCode -eq 0) {
+                    Write-MaintenanceLog -Message "Microsoft Store apps check/update completed" -Level SUCCESS
+                } else {
+                    Write-MaintenanceLog -Message "Microsoft Store update completed with potential warnings (Exit Code: $($StoreResult.ExitCode))" -Level WARNING
+                }
+            } else {
+                 Write-MaintenanceLog -Message "WinGet not available - cannot perform Store updates via CLI" -Level WARNING
+            }
+        }
+    }
+
     # Chocolatey Package Management
     Invoke-SafeCommand -TaskName "Chocolatey Package Management" -Command {
         $ChocolateyPath = "$env:ProgramData\chocolatey\bin\choco.exe"
@@ -232,3 +263,4 @@ Export-ModuleMember -Function @(
     'Invoke-SystemUpdate',
     'Reset-WindowsUpdateComponent'
 )
+

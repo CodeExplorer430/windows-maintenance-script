@@ -26,19 +26,34 @@ graph TD
         Detection[SystemDetection.psm1]
         Drive[DriveAnalysis.psm1]
         Analytics[Analytics.psm1]
+        Memory[MemoryManagement.psm1]
+        UIHelpers[UIHelpers.psm1]
+        Database[Database.psm1]
+        Progress[RealTimeProgressOutput.psm1]
     end
 
     subgraph UI [User Interfaces]
         CLI[Launcher.ps1]
         GUI[Start-MaintenanceGUI.ps1]
-        Web[PS Universal Dashboard]
+        Web[Start-Dashboard.ps1]
     end
 
     subgraph Features [Feature Modules]
         Disk[DiskMaintenance.psm1]
         Sec[SecurityScans.psm1]
         Dev[DeveloperMaintenance.psm1]
-        ...[etc.]
+        GPU[GPUMaintenance.psm1]
+        Net[NetworkMaintenance.psm1]
+        Update[SystemUpdates.psm1]
+        Health[SystemHealthRepair.psm1]
+        Perf[PerformanceOptimization.psm1]
+        Event[EventLogMaintenance.psm1]
+        Backup[BackupMaintenance.psm1]
+        Report[SystemReporting.psm1]
+        Bloat[BloatwareRemoval.psm1]
+        Media[MultimediaMaintenance.psm1]
+        Privacy[PrivacyMaintenance.psm1]
+        Task[TaskScheduler.psm1]
     end
 
     UI --> Root

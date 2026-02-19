@@ -76,9 +76,13 @@ Control which tasks are performed by adding or removing items from this array:
     "PerformanceOptimization",
     "NetworkMaintenance",
     "GPUMaintenance",
+    "MultimediaMaintenance",
     "EventLogManagement",
     "BackupOperations",
-    "SystemReporting"
+    "PrivacyMaintenance",
+    "BloatwareRemoval",
+    "SystemReporting",
+    "TaskScheduler"
   ]
 }
 ```
@@ -96,6 +100,23 @@ Control which tasks are performed by adding or removing items from this array:
 Supports automated cleanup for 14+ tools including:
 - `EnableNPM`, `EnablePython`, `EnableDocker`, `EnableVSCode`, `EnableDotNetSDK`.
 - `NPMCacheRetentionDays`: (Default: 30) - Age of cache files to prune.
+
+### GPUMaintenance
+- `EnableNVIDIA`, `EnableAMD`, `EnableIntel`: Specific driver cache targets.
+- `CleanupShaderCaches`: (Default: true) - Clears stale GPU shader caches.
+
+### MultimediaMaintenance
+- `EnableAdobeCC`, `EnableDaVinci`, `EnableAbleton`: Specialized creative tool targets.
+- `MediaCacheRetentionDays`: (Default: 14) - Retention period for media caches.
+
+### PrivacyMaintenance
+- `HardenTelemetry`: (Default: true) - Reduces Windows telemetry levels.
+- `DisableCortana`: (Default: true) - Disables Cortana integration.
+- `PrivacyLevel`: "Standard" or "Aggressive".
+
+### BloatwareRemoval
+- `EnableSystemBloatRemoval`: (Default: false) - **Caution**: Removes pre-installed system apps.
+- `AppListSource`: "Default" or "Custom" path.
 
 ### SecurityScans
 - `ScanLevel`: "Quick" (default) or "Full".

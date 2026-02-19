@@ -17,7 +17,8 @@ Describe "WindowsMaintenance Module" {
 
         # Read manifest safely
         if (Test-Path $script:ModulePath) {
-            $script:ManifestData = Import-PowerShellDataFile -Path $script:ModulePath
+            [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '')]
+            $script:ManifestData = Invoke-Expression (Get-Content -Path $script:ModulePath -Raw)
         }
 
         try {

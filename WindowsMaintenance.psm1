@@ -56,16 +56,7 @@ function Invoke-WindowsMaintenance {
         [switch]$SilentMode = $false,
 
         [Parameter(Mandatory=$false)]
-        [switch]$DetailedOutput = $false,
-
-        [Parameter(Mandatory=$false)]
-        [string]$ScanLevel = "Quick",
-
-        [Parameter(Mandatory=$false)]
-        [switch]$FastMode = $false,
-
-        [Parameter(Mandatory=$false)]
-        [switch]$SkipExternalDrives = $false
+        [switch]$DetailedOutput = $false
     )
 
     # Set InformationPreference to ensure Write-Information is visible

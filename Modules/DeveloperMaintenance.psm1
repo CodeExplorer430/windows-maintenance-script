@@ -35,6 +35,9 @@ function Invoke-DeveloperMaintenance {
 
     Write-MaintenanceLog -Message '======== Developer Maintenance Module ========' -Level INFO
 
+    # Determine Retention Policy
+    $RetentionDays = if ($Config.DeveloperMaintenance.RetentionDays) { $Config.DeveloperMaintenance.RetentionDays } else { 30 }
+
     # NPM Task
     if ($Config.DeveloperMaintenance.EnableNPM -ne $false -and (Get-Command npm -ErrorAction SilentlyContinue)) {
         if ($PSCmdlet.ShouldProcess("NPM", "Update global packages and clear cache")) {
@@ -81,22 +84,80 @@ function Invoke-DeveloperMaintenance {
         }
     }
 
+    # Azure Data Studio Task
+    if ($Config.DeveloperMaintenance.EnableAzureDataStudio) {
+        $AdsPaths = @(
+            "$env:APPDATA\azuredatastudio\Cache",
+            "$env:APPDATA\azuredatastudio\CachedExtensions",
+            "$env:APPDATA\azuredatastudio\Code Cache",
+            "$env:APPDATA\azuredatastudio\logs"
+        )
+        foreach ($Path in $AdsPaths) {
+            if (Test-Path $Path) {
+                if ($PSCmdlet.ShouldProcess($Path, "Clear Azure Data Studio cache/logs")) {
+                    Invoke-SafeCommand -TaskName "Azure Data Studio Cleanup" -Command {
+                        Get-ChildItem -Path $Path -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+        }
+    }
+
+    # Unity Task
+    if ($Config.DeveloperMaintenance.EnableUnity) {
+        $UnityPaths = @(
+            "$env:LOCALAPPDATA\Unity\Editor\Editor.log",
+            "$env:APPDATA\Unity\Editor-5.x\Preferences\Cache"
+        )
+        foreach ($Path in $UnityPaths) {
+            if (Test-Path $Path) {
+                if ($PSCmdlet.ShouldProcess($Path, "Clear Unity Editor cache/logs")) {
+                    Invoke-SafeCommand -TaskName "Unity Cleanup" -Command {
+                        if ((Get-Item $Path).PSIsContainer) {
+                             Get-ChildItem -Path $Path -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
+                        } else {
+                             Remove-Item -Path $Path -Force -ErrorAction SilentlyContinue
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # Blender Task
+    if ($Config.DeveloperMaintenance.EnableBlender) {
+        $BlenderRoot = "$env:LOCALAPPDATA\Blender Foundation\Blender"
+        if (Test-Path $BlenderRoot) {
+            if ($PSCmdlet.ShouldProcess($BlenderRoot, "Clear Blender Cache")) {
+                Invoke-SafeCommand -TaskName "Blender Cleanup" -Command {
+                    # Iterate through versions (e.g. 3.6, 4.0)
+                    Get-ChildItem -Path $BlenderRoot -Directory | ForEach-Object {
+                        $CachePath = Join-Path $_.FullName "cache"
+                        if (Test-Path $CachePath) {
+                             Get-ChildItem -Path $CachePath -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     # JDK Task
     if (Get-Command java -ErrorAction SilentlyContinue) {
         if ($PSCmdlet.ShouldProcess("JDK", "Clean Maven and Gradle caches")) {
             Invoke-SafeCommand -TaskName "JDK Cache Cleanup" -Command {
-                # Maven local repository cleanup (older than 30 days)
+                # Maven local repository cleanup
                 $M2Path = Join-Path $env:USERPROFILE ".m2\repository"
                 if (Test-Path $M2Path) {
-                    Get-ChildItem -Path $M2Path -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
-                    Write-MaintenanceLog -Message "JDK: Maven repository cleaned (30d retention)" -Level SUCCESS
+                    Get-ChildItem -Path $M2Path -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
+                    Write-MaintenanceLog -Message "JDK: Maven repository cleaned ($RetentionDays d retention)" -Level SUCCESS
                 }
 
                 # Gradle cache cleanup
                 $GradlePath = Join-Path $env:USERPROFILE ".gradle\caches"
                 if (Test-Path $GradlePath) {
-                    Get-ChildItem -Path $GradlePath -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) } | Remove-Item -Force -ErrorAction SilentlyContinue
-                    Write-MaintenanceLog -Message "JDK: Gradle cache cleaned (30d retention)" -Level SUCCESS
+                    Get-ChildItem -Path $GradlePath -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
+                    Write-MaintenanceLog -Message "JDK: Gradle cache cleaned ($RetentionDays d retention)" -Level SUCCESS
                 }
             }
         }

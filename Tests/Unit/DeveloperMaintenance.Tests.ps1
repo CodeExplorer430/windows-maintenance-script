@@ -30,5 +30,27 @@ Describe "DeveloperMaintenance Module" {
                 Show-TestResult -Skipped
             }
         }
+
+        It "Should execute maintenance for new tools (Unity, Blender, ADS)" {
+             if (Get-Command Invoke-DeveloperMaintenance -ErrorAction SilentlyContinue) {
+                $Config = @{
+                    EnabledModules = @('DeveloperMaintenance')
+                    DeveloperMaintenance = @{
+                        EnableUnity = $true
+                        EnableBlender = $true
+                        EnableAzureDataStudio = $true
+                        RetentionDays = 30
+                    }
+                }
+
+                Mock Test-Path { return $true }
+                Mock Get-Command { return $true }
+                Mock Invoke-SafeCommand { return $true }
+
+                { Invoke-DeveloperMaintenance -Config $Config } | Should -Not -Throw
+            } else {
+                Show-TestResult -Skipped
+            }
+        }
     }
 }

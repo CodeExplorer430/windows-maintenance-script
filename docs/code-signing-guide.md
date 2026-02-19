@@ -1345,4 +1345,4 @@ Write-Host "✅ Certificate is valid for code signing" -ForegroundColor Green
 **Author:** Miguel Velasco
 **Framework Version:** 4.0.0
 
-For questions or issues with code signing, please refer to the [INSTALLATION-GUIDE.md](INSTALLATION-GUIDE.md) and [testing-plan.md](testing-plan.md).
+For questions or issues with code signing, please refer to the [installation.md](installation.md) and [testing-plan.md](testing-plan.md).

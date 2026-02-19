@@ -209,7 +209,7 @@ $KnownTopLevelFields = @(
     'EnableFastMode', 'ParallelProcessing', 'AggressiveCleanup',
     'SystemHealthRepair', 'DiskMaintenance', 'SystemUpdates', 'SecurityScans',
     'DeveloperMaintenance', 'PerformanceOptimization', 'NetworkMaintenance',
-        'MultimediaMaintenance', 'GPUMaintenance', 'EventLogManagement', 
+        'MultimediaMaintenance', 'GPUMaintenance', 'EventLogManagement',
         'BackupOperations', 'BloatwareRemoval', 'PrivacyMaintenance', 'SystemReporting',
         'GUISettings',
         '_notification_settings', '_performance_tuning', '_safety_settings', '_scheduling'

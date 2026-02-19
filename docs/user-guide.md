@@ -64,6 +64,15 @@ For a graphical interface, run the GUI launcher:
 2.  **Toggle Options**: Enable `WhatIf` for a dry run or `Silent Mode` for non-interactive execution.
 3.  **Start**: Click "Start" to begin the maintenance process. The job runs asynchronously, so you can continue to use the GUI.
 
+## Specialized Maintenance (v4.2.0+)
+
+The framework now includes specialized modules for high-performance and creative environments:
+
+- **GPU Maintenance**: Cleans shader caches (NVIDIA/AMD/Intel) and optimizes driver logs.
+- **Multimedia Maintenance**: Targets professional media caches for Adobe Creative Cloud, DaVinci Resolve, and major DAW environments (Ableton, FL Studio).
+- **Privacy & Telemetry**: Hardens Windows privacy settings and reduces telemetry overhead.
+- **Bloatware Removal**: Safely removes pre-installed system bloat and unwanted UWP applications based on customizable lists.
+
 ## Configuration
 
 Settings are managed in `Config/maintenance-config.json`.
