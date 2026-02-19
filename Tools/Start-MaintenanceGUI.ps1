@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Modularized .NET 8 GUI Launcher for the Windows Maintenance Framework.
 
@@ -15,12 +15,13 @@ param(
     [string]$ConfigPath
 )
 
-# Load required .NET assemblies
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
+# Load required .NET assemblies (WPF)
+Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName PresentationCore
+Add-Type -AssemblyName WindowsBase
 
 # Determine component paths
-$GuiDir = Join-Path (Split-Path $PSScriptRoot) "GUI"
+$GuiDir = Join-Path (Split-Path $PSScriptRoot) "..\GUI"
 $ThemePath = Join-Path $GuiDir "Theme.ps1"
 $ViewPath = Join-Path $GuiDir "View.ps1"
 $ControllerPath = Join-Path $GuiDir "Controller.ps1"
@@ -28,23 +29,16 @@ $ControllerPath = Join-Path $GuiDir "Controller.ps1"
 # Load Components
 . $ThemePath      # Loads $script:UITheme and $script:UIFonts
 . $ViewPath       # Loads Get-MaintenanceView
-. $ControllerPath # Loads event handler functions
+. $ControllerPath # Loads Initialize-MaintenanceUI, etc.
 
-# Create UI
+# Create UI (WPF View - Dumb Construction)
 $Controls = Get-MaintenanceView -Theme $script:UITheme -Fonts $script:UIFonts
 
-# Register Event Handlers
-$Controls.StartBtn.Add_Click({ Invoke-StartMaintenanceUI -Controls $Controls })
-$Controls.StopBtn.Add_Click({ Invoke-MaintenanceUIStop -Controls $Controls })
-
-# Initialize Timer for UI Updates
-$Timer = New-Object System.Windows.Forms.Timer
-$Timer.Interval = 500
-$Timer.Add_Tick({ Receive-MaintenanceTimerUIUpdate -Controls $Controls })
-$Timer.Start()
+# Initialize Controller (Logic, Events, State)
+$Timer = Initialize-MaintenanceUI -Controls $Controls -Theme $script:UITheme
 
 # Show Initial Message
-Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Modern GUI initialized successfully."
+Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Modern WPF GUI initialized successfully."
 
 if ($ConfigPath) {
     Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Using custom configuration: $ConfigPath"
@@ -53,12 +47,11 @@ if ($ConfigPath) {
 if ($PSVersionTable.PSVersion.Major -ge 7) {
     Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "PowerShell $($PSVersionTable.PSVersion) (Core) environment detected."
 } else {
-    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "PowerShell 5.1 (Desktop) environment detected. Parallel features disabled."
+    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "PowerShell 5.1 (Desktop) environment detected."
 }
 
-# Run Form
-$Controls.Form.ShowDialog() | Out-Null
+# Run Window
+$Controls.Window.ShowDialog() | Out-Null
 
 # Cleanup
 $Timer.Stop()
-$Timer.Dispose()

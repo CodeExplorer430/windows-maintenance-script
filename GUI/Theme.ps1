@@ -1,27 +1,42 @@
-﻿<#
+<#
 .SYNOPSIS
-    UI Theme and Styling for the Windows Maintenance Framework.
+    UI Theme and Styling for the Windows Maintenance Framework (WPF Edition).
 #>
 
-# Define Colors (Modern Palette)
+Add-Type -AssemblyName PresentationFramework
+
+# Helper: Create Brush from Hex
+function Get-SolidColorBrush {
+    param([string]$Hex)
+    try {
+        [System.Windows.Media.BrushConverter]$Converter = New-Object System.Windows.Media.BrushConverter
+        $Brush = $Converter.ConvertFromString($Hex)
+        $Brush.Freeze() # Performance optimization for immutable brushes
+        return $Brush
+    } catch {
+        Write-Warning "Invalid color hex: $Hex. Fallback to Black."
+        return [System.Windows.Media.Brushes]::Black
+    }
+}
+
+# Define Theme Resources (Brushes)
 $UITheme = @{
-    Background = [System.Drawing.Color]::FromArgb(240, 240, 240)
-    Foreground = [System.Drawing.Color]::FromArgb(33, 33, 33)
-    Primary    = [System.Drawing.Color]::FromArgb(0, 120, 215) # Windows Blue
-    Success    = [System.Drawing.Color]::FromArgb(16, 124, 16) # Office Green
-    Warning    = [System.Drawing.Color]::FromArgb(255, 185, 0) # Gold
-    Error      = [System.Drawing.Color]::FromArgb(232, 17, 35)  # Red
-    ConsoleBg  = [System.Drawing.Color]::FromArgb(30, 30, 30)
-    ConsoleFg  = [System.Drawing.Color]::FromArgb(204, 204, 204)
-    Accent     = [System.Drawing.Color]::FromArgb(0, 153, 188)
+    "Brush_Background" = Get-SolidColorBrush "#1E1E1E"
+    "Brush_Foreground" = Get-SolidColorBrush "#D4D4D4"
+    "Brush_Primary"    = Get-SolidColorBrush "#0078D7"
+    "Brush_Success"    = Get-SolidColorBrush "#107C10"
+    "Brush_Warning"    = Get-SolidColorBrush "#FFB900"
+    "Brush_Error"      = Get-SolidColorBrush "#E81123"
+    "Brush_Panel"      = Get-SolidColorBrush "#252526"
+    "Brush_Border"     = Get-SolidColorBrush "#3E3E42"
+    "Brush_ControlBg"  = Get-SolidColorBrush "#333333"
+    "Brush_ControlHover" = Get-SolidColorBrush "#505050"
 }
 
 # Define Fonts
 $UIFonts = @{
-    Header  = New-Object System.Drawing.Font("Segoe UI", 18, [System.Drawing.FontStyle]::Bold)
-    SubHeader = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
-    Standard = New-Object System.Drawing.Font("Segoe UI", 10)
-    Console  = New-Object System.Drawing.Font("Consolas", 10)
+    "Font_Header"  = New-Object System.Windows.Media.FontFamily("Segoe UI")
+    "Font_Console" = New-Object System.Windows.Media.FontFamily("Consolas")
 }
 
 # Export symbols to script scope
