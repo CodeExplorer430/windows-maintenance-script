@@ -21,7 +21,7 @@ Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName WindowsBase
 
 # Determine component paths
-$GuiDir = Join-Path (Split-Path $PSScriptRoot) "..\GUI"
+$GuiDir = Join-Path (Split-Path $PSScriptRoot) "GUI"
 $ThemePath = Join-Path $GuiDir "Theme.ps1"
 $ViewPath = Join-Path $GuiDir "View.ps1"
 $ControllerPath = Join-Path $GuiDir "Controller.ps1"

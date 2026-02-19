@@ -132,7 +132,7 @@ function Invoke-StartMaintenanceUI {
     }
 
     # Module root detection for job
-    $ModuleRoot = Split-Path -Parent (Split-Path $PSScriptRoot)
+    $ModuleRoot = Split-Path $PSScriptRoot
     $Manifest = Join-Path $ModuleRoot "WindowsMaintenance.psd1"
 
     $script:MaintenanceJob = Start-Job -ScriptBlock $JobScript -ArgumentList $Manifest
@@ -172,6 +172,19 @@ function Receive-MaintenanceTimerUIUpdate {
                 }
             }
         } else {
+            # Capture any remaining output
+            $Data = Receive-Job -Job $script:MaintenanceJob
+            foreach ($line in $Data) {
+                if ($line) { Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text $line }
+            }
+
+            # Check for errors
+            if ($script:MaintenanceJob.State -eq 'Failed' -or $script:MaintenanceJob.ChildJobs[0].Error) {
+                foreach ($err in $script:MaintenanceJob.ChildJobs[0].Error) {
+                    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "ERROR: $err"
+                }
+            }
+
             Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Maintenance completed with status: $($script:MaintenanceJob.State)"
             $Controls.Progress.IsIndeterminate = $false
             $Controls.Progress.Value = 100
