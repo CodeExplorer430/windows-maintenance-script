@@ -1,4 +1,4 @@
-# GUI Unit Tests
+﻿# GUI Unit Tests
 # Ensures GUI components are correctly structured and loadable.
 
 $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
@@ -54,7 +54,7 @@ Describe "Launcher Path Resolution" {
     It "Should correctly resolve the GUI path relative to the script root" {
         # Extract the path logic from Start-MaintenanceGUI.ps1 to verify it matches our expectation
         # We read the file content and check if it uses the corrected logic: Join-Path (Split-Path $PSScriptRoot) "GUI"
-        
+
         $LauncherContent = Get-Content (Join-Path $ToolsDir "Start-MaintenanceGUI.ps1") -Raw
         $LauncherContent | Should -Match 'Join-Path \(Split-Path \$PSScriptRoot\) "GUI"'
     }

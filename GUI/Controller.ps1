@@ -73,69 +73,80 @@ function Initialize-MaintenanceUI {
         $Controls.ModuleList.Children.Add($Cb) | Out-Null
     }
 
-    # 3. Wire Events
-    $Controls.StartBtn.Add_Click({
-        Invoke-StartMaintenanceUI -Controls $Controls
-    })
+        # 3. Wire Events
+        $Controls.StartBtn.Add_Click({
+            Invoke-StartMaintenanceUI -Controls $Controls
+        })
 
-    $Controls.StopBtn.Add_Click({
-        Invoke-MaintenanceUIStop -Controls $Controls
-    })
+        $Controls.StopBtn.Add_Click({
+            Invoke-MaintenanceUIStop -Controls $Controls
+        })
+        $Controls.StopBtn.IsEnabled = $false
 
-    # 4. Initialize Timer
-    $Timer = New-Object System.Windows.Threading.DispatcherTimer
-    $Timer.Interval = [TimeSpan]::FromMilliseconds(500)
-    $Timer.Add_Tick({
-        Receive-MaintenanceTimerUIUpdate -Controls $Controls
-    })
-    $Timer.Start()
+        # 4. Initialize Timer
+        $Timer = New-Object System.Windows.Threading.DispatcherTimer
+        $Timer.Interval = [TimeSpan]::FromMilliseconds(500)
+        $Timer.Add_Tick({
+            Receive-MaintenanceTimerUIUpdate -Controls $Controls
+        })
+        $Timer.Start()
 
-    return $Timer
-}
-
-<#
-.SYNOPSIS
-    Handles the Start button click event.
-#>
-function Invoke-StartMaintenanceUI {
-    [CmdletBinding()]
-    param($Controls)
-
-    if ($script:MaintenanceJob -and $script:MaintenanceJob.State -eq 'Running') {
-        [System.Windows.MessageBox]::Show("A maintenance job is already in progress.")
-        return
+        return $Timer
     }
 
-    # Gather Enabled Modules (WPF CheckBoxes)
-    $EnabledModules = @()
-    foreach ($Child in $Controls.ModuleList.Children) {
-        if ($Child.IsChecked) {
-            $EnabledModules += $Child.Content
+    <#
+    .SYNOPSIS
+        Handles the Start button click event.
+    #>
+    function Invoke-StartMaintenanceUI {
+        [CmdletBinding()]
+        param($Controls)
+
+        if ($script:MaintenanceJob -and $script:MaintenanceJob.State -eq 'Running') {
+            [System.Windows.MessageBox]::Show("A maintenance job is already in progress.")
+            return
         }
-    }
 
-    if ($EnabledModules.Count -eq 0) {
-        [System.Windows.MessageBox]::Show("Please select at least one module.")
-        return
-    }
+        # Gather Enabled Modules (WPF CheckBoxes)
+        $EnabledModules = @()
+        foreach ($Child in $Controls.ModuleList.Children) {
+            if ($Child.IsChecked) {
+                $EnabledModules += $Child.Content
+            }
+        }
 
-    Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Initializing maintenance for: $($EnabledModules -join ', ')"
+        if ($EnabledModules.Count -eq 0) {
+            [System.Windows.MessageBox]::Show("Please select at least one module.")
+            return
+        }
 
-    $Controls.StartBtn.IsEnabled = $false
-    $Controls.Progress.IsIndeterminate = $true
+        Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Initializing maintenance for: $($EnabledModules -join ', ')"
+
+        $Controls.StartBtn.IsEnabled = $false
+        $Controls.StopBtn.IsEnabled = $true
+        $Controls.Progress.IsIndeterminate = $true
+
+        # Capture Options    $WhatIf = $Controls.WhatIf.IsChecked
+    $Silent = $Controls.Silent.IsChecked
 
     # Job ScriptBlock
     $JobScript = {
-        param($ModulePath)
+        param($ModulePath, $WhatIf, $Silent)
+        $InformationPreference = 'Continue'
         Import-Module $ModulePath -Force
-        Invoke-WindowsMaintenance -SilentMode
+
+        $Params = @{}
+        if ($Silent) { $Params['SilentMode'] = $true }
+        if ($WhatIf) { $Params['WhatIf'] = $true }
+
+        Invoke-WindowsMaintenance @Params *>&1
     }
 
     # Module root detection for job
     $ModuleRoot = Split-Path $PSScriptRoot
     $Manifest = Join-Path $ModuleRoot "WindowsMaintenance.psd1"
 
-    $script:MaintenanceJob = Start-Job -ScriptBlock $JobScript -ArgumentList $Manifest
+    $script:MaintenanceJob = Start-Job -ScriptBlock $JobScript -ArgumentList $Manifest, $WhatIf, $Silent
 }
 
 <#
@@ -147,11 +158,13 @@ function Invoke-MaintenanceUIStop {
     param($Controls)
 
     if ($script:MaintenanceJob) {
-        Stop-Job $script:MaintenanceJob
-        Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Maintenance job stopped by user."
-        $Controls.StartBtn.IsEnabled = $true
-        $Controls.Progress.IsIndeterminate = $false
-        $Controls.Progress.Value = 0
+        $Controls.StopBtn.IsEnabled = $false
+        Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Stopping maintenance job..."
+
+        # Stop asynchronously to prevent UI freeze
+        [void][System.Threading.Tasks.Task]::Run({
+            Stop-Job $script:MaintenanceJob -Force
+        })
     }
 }
 
@@ -189,6 +202,7 @@ function Receive-MaintenanceTimerUIUpdate {
             $Controls.Progress.IsIndeterminate = $false
             $Controls.Progress.Value = 100
             $Controls.StartBtn.IsEnabled = $true
+            $Controls.StopBtn.IsEnabled = $false
             Remove-Job -Job $script:MaintenanceJob
             $script:MaintenanceJob = $null
         }
