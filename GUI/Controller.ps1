@@ -58,18 +58,29 @@ function Initialize-MaintenanceUI {
     }
 
     # 2. Populate Module List (Business Logic)
-    $Modules = @(
-        "SystemUpdates", "DiskMaintenance", "SystemHealthRepair", "SecurityScans",
-        "DeveloperMaintenance", "MultimediaMaintenance", "PerformanceOptimization",
-        "NetworkMaintenance", "GPUMaintenance", "EventLogManagement",
-        "BackupOperations", "PrivacyMaintenance", "BloatwareRemoval", "SystemReporting"
-    )
+    $Modules = [ordered]@{
+        "SystemUpdates"           = "System Updates"
+        "DiskMaintenance"         = "Disk Maintenance"
+        "SystemHealthRepair"      = "System Health Repair"
+        "SecurityScans"           = "Security Scans"
+        "DeveloperMaintenance"    = "Developer Maintenance"
+        "MultimediaMaintenance"   = "Multimedia Maintenance"
+        "PerformanceOptimization" = "Performance Optimization"
+        "NetworkMaintenance"      = "Network Maintenance"
+        "GPUMaintenance"          = "GPU Maintenance"
+        "EventLogManagement"      = "Event Log Management"
+        "BackupOperations"        = "Backup Operations"
+        "PrivacyMaintenance"      = "Privacy Maintenance"
+        "BloatwareRemoval"        = "Bloatware Removal"
+        "SystemReporting"         = "System Reporting"
+    }
 
-    foreach ($m in $Modules) {
+    foreach ($key in $Modules.Keys) {
         $Cb = New-Object System.Windows.Controls.CheckBox
-        $Cb.Content = $m
+        $Cb.Content = $Modules[$key]
+        $Cb.Tag = $key
         $Cb.IsChecked = $true
-        $Cb.Name = "Module_$m"
+        $Cb.Name = "Module_$key"
         $Controls.ModuleList.Children.Add($Cb) | Out-Null
     }
 
@@ -111,7 +122,7 @@ function Initialize-MaintenanceUI {
         $EnabledModules = @()
         foreach ($Child in $Controls.ModuleList.Children) {
             if ($Child.IsChecked) {
-                $EnabledModules += $Child.Content
+                $EnabledModules += $Child.Tag
             }
         }
 
@@ -126,28 +137,33 @@ function Initialize-MaintenanceUI {
         $Controls.StopBtn.IsEnabled = $true
         $Controls.Progress.IsIndeterminate = $true
 
-        # Capture Options    $WhatIf = $Controls.WhatIf.IsChecked
-    $Silent = $Controls.Silent.IsChecked
+        # Capture Options
+        $WhatIf = $Controls.WhatIf.IsChecked
+        $Silent = $Controls.Silent.IsChecked
 
-    # Job ScriptBlock
-    $JobScript = {
-        param($ModulePath, $WhatIf, $Silent)
-        $InformationPreference = 'Continue'
-        Import-Module $ModulePath -Force
+        # Job ScriptBlock
+        $JobScript = {
+            param($ModulePath, $WhatIf, $Silent)
+            $InformationPreference = 'Continue'
 
-        $Params = @{}
-        if ($Silent) { $Params['SilentMode'] = $true }
-        if ($WhatIf) { $Params['WhatIf'] = $true }
+            # Enhance visibility for WhatIf mode
+            if ($WhatIf) { $VerbosePreference = 'Continue' }
 
-        Invoke-WindowsMaintenance @Params *>&1
+            Import-Module $ModulePath -Force
+
+            $Params = @{}
+            if ($Silent) { $Params['SilentMode'] = $true }
+            if ($WhatIf) { $Params['WhatIf'] = $true }
+
+            Invoke-WindowsMaintenance @Params *>&1
+        }
+
+        # Module root detection for job
+        $ModuleRoot = Split-Path $PSScriptRoot
+        $Manifest = Join-Path $ModuleRoot "WindowsMaintenance.psd1"
+
+        $script:MaintenanceJob = Start-Job -ScriptBlock $JobScript -ArgumentList $Manifest, $WhatIf, $Silent
     }
-
-    # Module root detection for job
-    $ModuleRoot = Split-Path $PSScriptRoot
-    $Manifest = Join-Path $ModuleRoot "WindowsMaintenance.psd1"
-
-    $script:MaintenanceJob = Start-Job -ScriptBlock $JobScript -ArgumentList $Manifest, $WhatIf, $Silent
-}
 
 <#
 .SYNOPSIS
@@ -162,7 +178,7 @@ function Invoke-MaintenanceUIStop {
         Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Stopping maintenance job..."
 
         # Stop asynchronously to prevent UI freeze
-        [void][System.Threading.Tasks.Task]::Run({
+        [void][System.Threading.Tasks.Task]::Run([Action]{
             Stop-Job $script:MaintenanceJob -Force
         })
     }
