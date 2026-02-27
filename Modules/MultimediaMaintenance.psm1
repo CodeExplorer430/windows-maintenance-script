@@ -47,7 +47,7 @@ function Invoke-MultimediaMaintenance {
                 if ($PSCmdlet.ShouldProcess($Path, "Clear Adobe media cache")) {
                     Invoke-SafeCommand -TaskName "Adobe Cache Cleanup: $(Split-Path $Path -Leaf)" -Command {
                         Remove-Item -Path "$Path\*" -Recurse -Force -ErrorAction SilentlyContinue
-                    }
+                    } | Out-Null
                 }
             }
         }
@@ -65,7 +65,7 @@ function Invoke-MultimediaMaintenance {
                 if ($PSCmdlet.ShouldProcess($Path, "Clear DaVinci Resolve logs/cache")) {
                     Invoke-SafeCommand -TaskName "DaVinci Resolve Cleanup: $(Split-Path $Path -Leaf)" -Command {
                         Remove-Item -Path "$Path\*" -Recurse -Force -ErrorAction SilentlyContinue
-                    }
+                    } | Out-Null
                 }
             }
         }
@@ -78,7 +78,7 @@ function Invoke-MultimediaMaintenance {
             if ($PSCmdlet.ShouldProcess($CapCutPath, "Clear CapCut cache")) {
                 Invoke-SafeCommand -TaskName "CapCut Cache Cleanup" -Command {
                     Remove-Item -Path "$CapCutPath\*" -Recurse -Force -ErrorAction SilentlyContinue
-                }
+                } | Out-Null
             }
         }
     }
@@ -90,7 +90,7 @@ function Invoke-MultimediaMaintenance {
             if ($PSCmdlet.ShouldProcess($AudacityPath, "Clear Audacity temporary session data")) {
                 Invoke-SafeCommand -TaskName "Audacity Temp Cleanup" -Command {
                     Remove-Item -Path "$AudacityPath\*" -Recurse -Force -ErrorAction SilentlyContinue
-                }
+                } | Out-Null
             }
         }
     }
@@ -107,7 +107,7 @@ function Invoke-MultimediaMaintenance {
                     foreach ($Log in $OldLogs) {
                         Remove-Item -Path $Log.FullName -Force -ErrorAction SilentlyContinue
                     }
-                }
+                } | Out-Null
             }
         }
     }

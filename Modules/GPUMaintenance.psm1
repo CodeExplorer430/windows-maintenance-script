@@ -53,7 +53,7 @@ function Invoke-GPUMaintenance {
         if ($Config.GPUMaintenance.EnableDirectXCleanup) {
             Invoke-DirectXMaintenance -WhatIf:$PSCmdlet.MyInvocation.BoundParameters['WhatIf']
         }
-    }
+    } | Out-Null
 }
 
 function Invoke-NVIDIAMaintenance {

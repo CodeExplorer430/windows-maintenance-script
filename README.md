@@ -90,6 +90,11 @@ graph TD
    pwsh .\Run-Maintenance.ps1
    ```
 
+5. **Optional TUI (PowerShell 7+)**
+   ```powershell
+   pwsh .\Run-Maintenance.ps1 -Interactive
+   ```
+
 ### Scheduled Maintenance
 
 Set up automatic weekly maintenance:

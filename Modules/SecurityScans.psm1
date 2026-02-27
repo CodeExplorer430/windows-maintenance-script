@@ -72,6 +72,33 @@ function Invoke-SecurityScan {
             }
         }
 
+        # Malicious Software Removal Tool (MSRT)
+        if ($Config.SecurityScans.EnableMSRT) {
+            if ($PSCmdlet.ShouldProcess("System", "Run Microsoft Windows Malicious Software Removal Tool (MSRT)")) {
+                Write-ProgressBar -Activity 'Security Scanning' -PercentComplete 60 -Status 'Running MSRT scan...'
+                try {
+                    $MSRTArgs = "/Q"
+                    if ($ScanLevel -eq "Full") {
+                        $MSRTArgs = "/Q /F:Y" # Force full scan
+                    }
+
+                    $MrtPath = Join-Path $env:SystemRoot "System32\mrt.exe"
+                    if (Test-Path $MrtPath) {
+                        $MrtResult = Start-Process -FilePath $MrtPath -ArgumentList $MSRTArgs -Wait -PassThru -NoNewWindow
+                        if ($MrtResult.ExitCode -eq 0) {
+                            Write-MaintenanceLog -Message "MSRT scan completed successfully. No threats found." -Level SUCCESS
+                        } else {
+                            Write-MaintenanceLog -Message "MSRT scan completed with exit code $($MrtResult.ExitCode). Check %windir%\debug\mrt.log for details." -Level WARNING
+                        }
+                    } else {
+                        Write-MaintenanceLog -Message "MSRT (mrt.exe) not found on this system." -Level WARNING
+                    }
+                } catch {
+                    Write-MaintenanceLog -Message "MSRT scan failed: $($_.Exception.Message)" -Level ERROR
+                }
+            }
+        }
+
         # System Security Checks
         Write-ProgressBar -Activity 'Security Scanning' -PercentComplete 80 -Status 'Performing additional security checks...'
 
@@ -100,7 +127,7 @@ function Invoke-SecurityScan {
         }
 
         Write-ProgressBar -Activity 'Security Scanning' -PercentComplete 100 -Status 'Security scanning completed'
-    }
+    } | Out-Null
 }
 
 function Invoke-DefenderScan {

@@ -53,7 +53,7 @@ function Invoke-BloatwareRemoval {
         } else {
             Write-MaintenanceLog -Message "UWP removal skipped per configuration" -Level INFO
         }
-    }
+    } | Out-Null
 }
 
 Export-ModuleMember -Function Invoke-BloatwareRemoval

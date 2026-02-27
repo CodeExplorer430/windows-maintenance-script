@@ -69,7 +69,7 @@ function Invoke-RestorePointBackup {
             Remove-OldRestorePoint -KeepDays $KeepDays -KeepMinimum $KeepMin -WhatIf:$PSCmdlet.MyInvocation.BoundParameters['WhatIf']
             Write-MaintenanceLog -Message "System restore point process completed" -Level SUCCESS
         }
-    }
+    } | Out-Null
 }
 
 <#
@@ -106,7 +106,7 @@ function Invoke-FileBackup {
                 }
             }
         }
-    }
+    } | Out-Null
 }
 
 <#

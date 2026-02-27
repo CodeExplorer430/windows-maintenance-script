@@ -38,7 +38,7 @@ function Invoke-NetworkMaintenance {
             Clear-DnsClientCache
             Write-MaintenanceLog -Message "DNS cache cleared" -Level SUCCESS
         }
-    }
+    } | Out-Null
 
     # IP Refresh
     Invoke-SafeCommand -TaskName "IP Configuration Refresh" -Command {
@@ -47,7 +47,7 @@ function Invoke-NetworkMaintenance {
             & ipconfig /renew 2>$null | Out-Null
             Write-MaintenanceLog -Message "IP configuration refreshed" -Level SUCCESS
         }
-    }
+    } | Out-Null
 
     # Proxy
     Invoke-SafeCommand -TaskName "Network Proxy Reset" -Command {
@@ -55,15 +55,15 @@ function Invoke-NetworkMaintenance {
             & netsh winhttp reset proxy | Out-Null
             Write-MaintenanceLog -Message "Network proxy reset" -Level SUCCESS
         }
-    }
+    } | Out-Null
 
     # Connectivity
     Invoke-SafeCommand -TaskName "Network Connectivity Testing" -Command {
         $DNS_Target = "8.8.8.8"
         $Res = Test-Connection -ComputerName $DNS_Target -Count 1 -Quiet
         $Msg = if ($Res) { "Internet connectivity available" } else { "Internet connectivity issues detected" }
-        Write-MaintenanceLog -Message $Msg -Level (if ($Res) { "SUCCESS" } else { "WARNING" })
-    }
+        Write-MaintenanceLog -Message $Msg -Level $(if ($Res) { "SUCCESS" } else { "WARNING" })
+    } | Out-Null
 }
 
 # Export public functions

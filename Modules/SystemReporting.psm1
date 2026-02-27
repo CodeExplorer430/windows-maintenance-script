@@ -59,7 +59,7 @@ $($Storage | Format-Table -AutoSize | Out-String)
             $ReportContent | Out-File -FilePath $ReportFile
             Write-MaintenanceLog -Message "System report generated: $ReportFile" -Level SUCCESS
         }
-    }
+    } | Out-Null
 
     # Finalization
     Optimize-MemoryUsage -Force

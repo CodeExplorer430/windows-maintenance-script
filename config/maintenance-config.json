@@ -38,6 +38,14 @@
     "PrivacyMaintenance",
     "SystemReporting"
   ],
+
+  "AppCatalogPath": "Config\\app-catalog.json",
+  "AppSources": {
+    "Winget": true,
+    "Registry": true,
+    "Store": true
+  },
+  "AppSelections": {},
   
   "DriveDetection": true,
   "AutoEventLogArchival": false,

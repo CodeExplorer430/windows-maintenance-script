@@ -1,16 +1,22 @@
-﻿$HelperPath = Join-Path $PSScriptRoot "..TestHelper.ps1"
-if (Test-Path $HelperPath) { . $HelperPath }
+
 
 #Requires -Module Pester
 
 Describe "WindowsMaintenance Integration" {
     BeforeAll {
-        $script:ModuleRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+        $TestRoot = Split-Path -Parent $PSCommandPath
+        $HelperPath = Join-Path $TestRoot "..\TestHelper.ps1"
+        if (Test-Path $HelperPath) { . $HelperPath }
+
+        $script:ModuleRoot = Resolve-Path (Join-Path $(if ($PSScriptRoot) { $PSScriptRoot } elseif ($PSCommandPath) { Split-Path -Parent $PSCommandPath } else { (Get-Location).Path }) "..\\..")
         $script:ConfigPath = Join-Path $script:ModuleRoot "Config\maintenance-config.json"
 
         try {
             # Use Global scope so functions are available even if the import only partially succeeds
-            Import-Module (Join-Path $script:ModuleRoot "WindowsMaintenance.psd1") -Force -ErrorAction SilentlyContinue -Scope Global
+            $script:oldWarningPref = $global:WarningPreference
+            $global:WarningPreference = 'SilentlyContinue'
+            Import-Module (Join-Path $script:ModuleRoot "WindowsMaintenance.psd1") -Force -DisableNameChecking -ErrorAction SilentlyContinue -Scope Global
+            $global:WarningPreference = $script:oldWarningPref
         } catch {
             Write-Debug "Integration setup: Module import deferred or failed (expected if non-admin)"
         }
@@ -24,3 +30,9 @@ Describe "WindowsMaintenance Integration" {
         }
     }
 }
+
+
+
+
+
+

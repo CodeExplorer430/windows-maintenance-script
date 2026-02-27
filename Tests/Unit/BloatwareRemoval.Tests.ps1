@@ -1,13 +1,23 @@
-﻿$HelperPath = Join-Path $PSScriptRoot "..TestHelper.ps1"
-if (Test-Path $HelperPath) { . $HelperPath }
+
 
 #Requires -Module Pester
 
 Describe "BloatwareRemoval Module" {
+    BeforeAll {
+        $TestRoot = Split-Path -Parent $PSCommandPath
+        $HelperPath = Join-Path $TestRoot "..\TestHelper.ps1"
+        if (Test-Path $HelperPath) { . $HelperPath }
+    }
+
     BeforeEach {
-        $script:ModuleRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+        $script:ModuleRoot = Resolve-Path (Join-Path $(if ($PSScriptRoot) { $PSScriptRoot } elseif ($PSCommandPath) { Split-Path -Parent $PSCommandPath } else { (Get-Location).Path }) "..\\..")
         try {
-            Import-Module (Join-Path $script:ModuleRoot "WindowsMaintenance.psd1") -Force -ErrorAction SilentlyContinue -Scope Global
+
+            $script:oldWarningPref = $global:WarningPreference
+            $global:WarningPreference = 'SilentlyContinue'
+            Import-Module (Join-Path $script:ModuleRoot "WindowsMaintenance.psd1") -Force -DisableNameChecking -ErrorAction SilentlyContinue -Scope Global
+            $global:WarningPreference = $script:oldWarningPref
+
         } catch {
             Write-Debug "Module import failed: $($_.Exception.Message)"
         }
@@ -32,3 +42,9 @@ Describe "BloatwareRemoval Module" {
         }
     }
 }
+
+
+
+
+
+

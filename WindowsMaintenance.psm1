@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Windows Maintenance Script - Modular PowerShell Maintenance Framework
 
@@ -25,6 +25,7 @@ Import-Module "$ModuleRoot\Modules\Common\Database.psm1" -Force
 Import-Module "$ModuleRoot\Modules\Common\HardwareDiagnostics.psm1" -Force
 Import-Module "$ModuleRoot\Modules\Common\EmailNotifications.psm1" -Force
 Import-Module "$ModuleRoot\Modules\Common\CloudReporting.psm1" -Force
+Import-Module "$ModuleRoot\Modules\Common\AppInventory.psm1" -Force
 
 # Import Feature modules
 Import-Module "$ModuleRoot\Modules\SystemUpdates.psm1" -Force
@@ -56,8 +57,55 @@ function Invoke-WindowsMaintenance {
         [switch]$SilentMode = $false,
 
         [Parameter(Mandatory=$false)]
-        [switch]$DetailedOutput = $false
+        [switch]$DetailedOutput = $false,
+
+        [Parameter(Mandatory=$false)]
+        [string[]]$EnabledModulesOverride
     )
+
+    function ConvertTo-Hashtable {
+        param([object]$InputObject)
+
+        if ($null -eq $InputObject) { return @{} }
+        if ($InputObject -is [hashtable]) { return $InputObject }
+
+        $Table = @{}
+        $InputObject.PSObject.Properties | ForEach-Object {
+            $Table[$_.Name] = $_.Value
+        }
+        return $Table
+    }
+
+    function Read-ConfigFile {
+        param([string]$Path)
+
+        if (-not (Test-Path $Path)) { return @{} }
+        $Raw = Get-Content -Path $Path -Raw
+        if (-not $Raw) { return @{} }
+        $Obj = $Raw | ConvertFrom-Json
+        ConvertTo-Hashtable $Obj
+    }
+
+    function Merge-Config {
+        param(
+            [hashtable]$Base,
+            [hashtable]$Override
+        )
+
+        foreach ($Key in $Override.Keys) {
+            $BaseValue = $Base[$Key]
+            $OverrideValue = $Override[$Key]
+
+            if ($BaseValue -is [hashtable] -and $OverrideValue -is [hashtable]) {
+                $Base[$Key] = Merge-Config -Base $BaseValue -Override $OverrideValue
+            } elseif ($BaseValue -is [pscustomobject] -and $OverrideValue -is [pscustomobject]) {
+                $Base[$Key] = Merge-Config -Base (ConvertTo-Hashtable $BaseValue) -Override (ConvertTo-Hashtable $OverrideValue)
+            } else {
+                $Base[$Key] = $OverrideValue
+            }
+        }
+        return $Base
+    }
 
     # Set InformationPreference to ensure Write-Information is visible
     $InformationPreference = 'Continue'
@@ -68,14 +116,8 @@ function Invoke-WindowsMaintenance {
     try {
         # Load configuration
         $Config = if (Test-Path $ConfigPath) {
-            $ConfigJson = Get-Content -Path $ConfigPath -Raw | ConvertFrom-Json
-            $TempConfig = @{}
-            $ConfigJson.PSObject.Properties | ForEach-Object {
-                $TempConfig[$_.Name] = $_.Value
-            }
-            $TempConfig
-        }
-        else {
+            Read-ConfigFile -Path $ConfigPath
+        } else {
             @{
                 EnabledModules = @(
                     "SystemUpdates",
@@ -93,6 +135,26 @@ function Invoke-WindowsMaintenance {
                 ReportsPath = "$env:TEMP\WindowsMaintenance\Reports"
                 MaxEventLogSizeMB = 100
             }
+        }
+
+        $UserConfigPath = Join-Path (Split-Path $ConfigPath) "maintenance-config.user.json"
+        if (Test-Path $UserConfigPath) {
+            $UserConfig = Read-ConfigFile -Path $UserConfigPath
+            $Config = Merge-Config -Base $Config -Override $UserConfig
+        }
+
+        if (-not $Config.AppCatalogPath) {
+            $Config.AppCatalogPath = Join-Path $ModuleRoot "Config\app-catalog.json"
+        } elseif (-not [System.IO.Path]::IsPathRooted($Config.AppCatalogPath)) {
+            $Config.AppCatalogPath = Join-Path (Split-Path $ConfigPath) $Config.AppCatalogPath
+        }
+
+        if ($Config.AppSelections) {
+            $Config = Set-AppSelectionConfig -Config $Config -CatalogPath $Config.AppCatalogPath
+        }
+
+        if ($EnabledModulesOverride -and $EnabledModulesOverride.Count -gt 0) {
+            $Config.EnabledModules = $EnabledModulesOverride
         }
 
         # Ensure directories exist

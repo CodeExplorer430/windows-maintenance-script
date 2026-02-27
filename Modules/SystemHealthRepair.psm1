@@ -111,9 +111,11 @@ function Invoke-SystemHealthRepair {
         Write-MaintenanceLog -Message 'Evaluating disk health status...' -Level PROGRESS
 
         try {
-            $CHKDSKResult = Test-DiskHealth -WhatIf:$WhatIfPreference
+            $ForceCHKDSK = [bool]$Config.SystemHealthRepair.ForceCHKDSKOnRestart
+            $CHKDSKResult = Test-DiskHealth -ForceSchedule $ForceCHKDSK -WhatIf:$WhatIfPreference
             if ($CHKDSKResult.ScheduleRequired) {
-                Write-MaintenanceLog -Message "Disk errors detected - CHKDSK scheduled for next restart" -Level WARNING
+                $ReasonMsg = if ($ForceCHKDSK) { "forced by configuration" } else { "errors detected" }
+                Write-MaintenanceLog -Message "Disk $ReasonMsg - CHKDSK scheduled for next restart" -Level WARNING
                 $HealthResults.CHKDSKScheduled = $true
                 $HealthResults.RepairActions += "CHKDSK Scheduled"
             } else {
@@ -123,12 +125,26 @@ function Invoke-SystemHealthRepair {
             Write-MaintenanceLog -Message "Disk health check failed: $($_.Exception.Message)" -Level WARNING
         }
 
+        # Stage 5: Memory Diagnostic Scheduling
+        if ($Config.SystemHealthRepair.EnableMemoryDiagnostic) {
+            Write-ProgressBar -Activity 'System Health Check' -PercentComplete 95 -Status 'Scheduling Memory Diagnostic...'
+            if ($PSCmdlet.ShouldProcess("System", "Schedule Windows Memory Diagnostic (mdsched) on next restart")) {
+                try {
+                    & bcdedit /bootsequence "{memdiag}" /addlast 2>&1 | Out-Null
+                    Write-MaintenanceLog -Message "Windows Memory Diagnostic scheduled for next restart" -Level WARNING
+                    $HealthResults.RepairActions += "Memory Diagnostic Scheduled"
+                } catch {
+                    Write-MaintenanceLog -Message "Failed to schedule Memory Diagnostic: $($_.Exception.Message)" -Level ERROR
+                }
+            }
+        }
+
         # Generate report
         New-SystemHealthReport -Results $HealthResults -Config $Config
 
         Write-ProgressBar -Activity 'System Health Check' -PercentComplete 100 -Status 'Health diagnostics completed'
         Write-Progress -Activity 'System Health Check' -Completed
-    }
+    } | Out-Null
 }
 
 <#
@@ -190,15 +206,20 @@ function Invoke-SFCOperation {
 function Test-DiskHealth {
     [CmdletBinding(SupportsShouldProcess=$true)]
     [OutputType([hashtable])]
-    param()
+    param(
+        [bool]$ForceSchedule = $false
+    )
 
     $Result = @{ ScheduleRequired = $false; Drive = $env:SystemDrive }
 
     # Check dirty bit
     $FsutilOutput = & fsutil dirty query $env:SystemDrive 2>&1
-    if ($FsutilOutput -match "is dirty" -or $FsutilOutput -match "is set") {
-        if ($PSCmdlet.ShouldProcess($env:SystemDrive, "Schedule CHKDSK /F /R")) {
-            Write-Output Y | chkdsk $env:SystemDrive /F /R | Out-Null
+    $IsDirty = ($FsutilOutput -match "is dirty" -or $FsutilOutput -match "is set")
+
+    if ($IsDirty -or $ForceSchedule) {
+        $Reason = if ($ForceSchedule) { "Forced by Configuration" } else { "Disk is Dirty" }
+        if ($PSCmdlet.ShouldProcess($env:SystemDrive, "Schedule CHKDSK /F /R /X ($Reason)")) {
+            Write-Output Y | chkdsk $env:SystemDrive /F /R /X | Out-Null
             $Result.ScheduleRequired = $true
         }
     }

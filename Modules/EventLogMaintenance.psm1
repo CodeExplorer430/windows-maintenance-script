@@ -57,7 +57,7 @@ function Invoke-EventLogManagement {
         } else {
             Write-MaintenanceLog -Message "All event logs within size limits" -Level INFO
         }
-    }
+    } | Out-Null
 }
 
 # Export public functions

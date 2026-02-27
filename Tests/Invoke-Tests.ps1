@@ -59,6 +59,10 @@ if (-not $PesterModule) {
 
 $PesterVersion = $PesterModule.Version.Major
 
+# Suppress noisy warnings about restricted characters in imported command names during tests
+$PSDefaultParameterValues['Import-Module:DisableNameChecking'] = $true
+$PSDefaultParameterValues['Import-Module:WarningAction'] = 'SilentlyContinue'
+
 Write-Information -MessageData "========================================" -Tags "Color:Cyan"
 Write-Information -MessageData "  Windows Maintenance Framework Tests" -Tags "Color:Cyan"
 Write-Information -MessageData "  Environment: PS $PSVersion ($DetectedPSEdition) | Pester $PesterVersion" -Tags "Color:Cyan"
@@ -69,6 +73,9 @@ $ScriptRoot = $PSScriptRoot
 if (-not $TestPath) {
     $TestPath = $ScriptRoot
 }
+
+$RepoRoot = Split-Path -Parent $ScriptRoot
+$env:WM_REPO_ROOT = $RepoRoot
 
 if (-not (Test-Path $TestPath)) {
     Write-Error "Test path not found: $TestPath"

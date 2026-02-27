@@ -45,7 +45,7 @@ function Invoke-DeveloperMaintenance {
                 npm update --global 2>$null | Out-Null
                 npm audit fix --global 2>&1 | Out-Null
                 npm cache clean --force 2>$null | Out-Null
-            }
+            } | Out-Null
         }
     }
 
@@ -59,7 +59,7 @@ function Invoke-DeveloperMaintenance {
                         pip install --upgrade $Pkg.name --quiet 2>$null
                     }
                 }
-            }
+            } | Out-Null
         }
     }
 
@@ -68,7 +68,7 @@ function Invoke-DeveloperMaintenance {
         if ($PSCmdlet.ShouldProcess("Docker", "Prune system")) {
             Invoke-SafeCommand -TaskName "Docker Prune" -Command {
                 docker system prune -af 2>&1 | Out-Null
-            }
+            } | Out-Null
         }
     }
 
@@ -79,7 +79,7 @@ function Invoke-DeveloperMaintenance {
             if ($PSCmdlet.ShouldProcess($Path, "Clear extension cache")) {
                 Invoke-SafeCommand -TaskName "VS Code Extension Cache Cleanup" -Command {
                     Remove-Item -Path "$Path\*" -Recurse -Force -ErrorAction SilentlyContinue
-                }
+                } | Out-Null
             }
         }
     }
@@ -97,7 +97,7 @@ function Invoke-DeveloperMaintenance {
                 if ($PSCmdlet.ShouldProcess($Path, "Clear Azure Data Studio cache/logs")) {
                     Invoke-SafeCommand -TaskName "Azure Data Studio Cleanup" -Command {
                         Get-ChildItem -Path $Path -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
-                    }
+                    } | Out-Null
                 }
             }
         }
@@ -118,7 +118,7 @@ function Invoke-DeveloperMaintenance {
                         } else {
                              Remove-Item -Path $Path -Force -ErrorAction SilentlyContinue
                         }
-                    }
+                    } | Out-Null
                 }
             }
         }
@@ -137,7 +137,7 @@ function Invoke-DeveloperMaintenance {
                              Get-ChildItem -Path $CachePath -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
                         }
                     }
-                }
+                } | Out-Null
             }
         }
     }
@@ -159,7 +159,7 @@ function Invoke-DeveloperMaintenance {
                     Get-ChildItem -Path $GradlePath -Recurse -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } | Remove-Item -Force -ErrorAction SilentlyContinue
                     Write-MaintenanceLog -Message "JDK: Gradle cache cleaned ($RetentionDays d retention)" -Level SUCCESS
                 }
-            }
+            } | Out-Null
         }
     }
 
@@ -169,7 +169,7 @@ function Invoke-DeveloperMaintenance {
             Invoke-SafeCommand -TaskName ".NET SDK NuGet Cleanup" -Command {
                 & dotnet nuget locals all --clear 2>$null | Out-Null
                 Write-MaintenanceLog -Message ".NET SDK: NuGet locals cleared" -Level SUCCESS
-            }
+            } | Out-Null
         }
     }
 
@@ -183,7 +183,7 @@ function Invoke-DeveloperMaintenance {
                 }
             }
             Write-MaintenanceLog -Message "VC++ Redistributables: Installation logs cleaned" -Level SUCCESS
-        }
+        } | Out-Null
     }
 
     # Composer (PHP)
@@ -192,7 +192,7 @@ function Invoke-DeveloperMaintenance {
             Invoke-SafeCommand -TaskName "Composer Cleanup" -Command {
                 & composer clear-cache 2>$null | Out-Null
                 Write-MaintenanceLog -Message "Composer cache cleared" -Level SUCCESS
-            }
+            } | Out-Null
         }
     }
 
@@ -229,7 +229,7 @@ function Invoke-DeveloperMaintenance {
                     }
                 }
                 Write-MaintenanceLog -Message "Visual Studio caches cleaned" -Level SUCCESS
-            }
+            } | Out-Null
         }
     }
 
@@ -240,7 +240,7 @@ function Invoke-DeveloperMaintenance {
                 & git gc --auto --quiet 2>$null
                 & git credential-cache exit 2>$null
                 Write-MaintenanceLog -Message "Git: Garbage collection performed" -Level SUCCESS
-            }
+            } | Out-Null
         }
     }
 

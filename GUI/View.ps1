@@ -66,14 +66,56 @@ function Get-MaintenanceView {
 
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="{DynamicResource Brush_Panel}" BorderBrush="{DynamicResource Brush_Border}" BorderThickness="0,0,1,0">
-            <DockPanel>
-                <Label Content="Modules" FontWeight="Bold" FontSize="18" Padding="15" DockPanel.Dock="Top"/>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Name="ModuleList" Margin="10">
-                        <!-- Module Checkboxes will be added here dynamically by Controller -->
-                    </StackPanel>
-                </ScrollViewer>
-            </DockPanel>
+            <TabControl Margin="10">
+                <TabItem Header="Modules">
+                    <DockPanel>
+                        <Label Content="Maintenance Modules" FontWeight="Bold" FontSize="16" Padding="10" DockPanel.Dock="Top"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Name="ModuleList" Margin="5">
+                                <!-- Module Checkboxes will be added here dynamically by Controller -->
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </TabItem>
+                <TabItem Header="Apps">
+                    <DockPanel>
+                        <Label Content="Application Selection" FontWeight="Bold" FontSize="16" Padding="10" DockPanel.Dock="Top"/>
+                        <StackPanel Margin="5">
+                            <TextBox Name="AppSearch" Height="26" Margin="0,0,0,6" Text=""/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <CheckBox Name="AppInstalledOnly" Content="Installed Only" Margin="0,0,10,0"/>
+                                <ComboBox Name="AppTagFilter" Width="140" Margin="0,0,10,0"/>
+                                <Button Name="AppSelectAll" Content="Select All" Width="100"/>
+                                <Button Name="AppSelectNone" Content="Select None" Width="100"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ListView Name="AppList" Margin="5"
+                                      ScrollViewer.CanContentScroll="True"
+                                      VirtualizingStackPanel.IsVirtualizing="True"
+                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                <ListView.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" Margin="0,8,0,4"/>
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                    </GroupStyle>
+                                </ListView.GroupStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding Selected, Mode=TwoWay}"
+                                                  Content="{Binding DisplayName}"
+                                                  Margin="2"/>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </ScrollViewer>
+                        <Button Name="AppSave" Content="Save App Selections" Margin="5" DockPanel.Dock="Bottom"/>
+                    </DockPanel>
+                </TabItem>
+            </TabControl>
         </Border>
 
         <!-- Main Content -->
@@ -156,6 +198,13 @@ function Get-MaintenanceView {
     return @{
         Window     = $Window
         ModuleList = $Window.FindName("ModuleList")
+        AppList = $Window.FindName("AppList")
+        AppSearch = $Window.FindName("AppSearch")
+        AppInstalledOnly = $Window.FindName("AppInstalledOnly")
+        AppSelectAll = $Window.FindName("AppSelectAll")
+        AppSelectNone = $Window.FindName("AppSelectNone")
+        AppSave = $Window.FindName("AppSave")
+        AppTagFilter = $Window.FindName("AppTagFilter")
         Console    = $Window.FindName("Console")
         Progress   = $Window.FindName("Progress")
         StartBtn   = $Window.FindName("BtnStart")

@@ -38,7 +38,7 @@ function Invoke-SystemUpdate {
     if ($Config.SystemUpdates.EnableWUReset) {
         Invoke-SafeCommand -TaskName "Windows Update Reset" -Command {
             Reset-WindowsUpdateComponent -WhatIf:$PSCmdlet.MyInvocation.BoundParameters['WhatIf']
-        }
+        } | Out-Null
     }
 
     # Windows Update Management
@@ -70,7 +70,7 @@ function Invoke-SystemUpdate {
 
             if ($PSCmdlet.ShouldProcess("System", "Install $($Updates.Count) Windows Updates")) {
                 Write-ProgressBar -Activity 'System Updates' -PercentComplete 70 -Status 'Installing Windows updates...'
-                $UpdateResults = Get-WindowsUpdate -AcceptAll -Install -AutoReboot:$false -ErrorAction SilentlyContinue
+                $UpdateResults = Get-WindowsUpdate -AcceptAll -Install -ErrorAction SilentlyContinue
 
                 if ($UpdateResults) {
                     foreach ($Result in $UpdateResults) {
@@ -85,7 +85,7 @@ function Invoke-SystemUpdate {
             Write-MaintenanceLog -Message 'No Windows updates available' -Level INFO
             Write-DetailedOperation -Operation 'Update Check' -Details "System is up to date" -Result 'Current'
         }
-    }
+    } | Out-Null
 
     # WinGet Package Management
     Invoke-SafeCommand -TaskName "WinGet Package Management" -Command {
@@ -123,7 +123,7 @@ function Invoke-SystemUpdate {
                 }
             }
         }
-    }
+    } | Out-Null
 
     # Microsoft Store Updates (Explicit)
     if ($Config.SystemUpdates.EnableMicrosoftStore) {
@@ -153,7 +153,7 @@ function Invoke-SystemUpdate {
             } else {
                  Write-MaintenanceLog -Message "WinGet not available - cannot perform Store updates via CLI" -Level WARNING
             }
-        }
+        } | Out-Null
     }
 
     # Chocolatey Package Management
@@ -210,7 +210,7 @@ function Invoke-SystemUpdate {
                 }
             }
         }
-    }
+    } | Out-Null
 }
 
 <#

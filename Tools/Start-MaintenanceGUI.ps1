@@ -35,7 +35,7 @@ $ControllerPath = Join-Path $GuiDir "Controller.ps1"
 $Controls = Get-MaintenanceView -Theme $script:UITheme -Fonts $script:UIFonts
 
 # Initialize Controller (Logic, Events, State)
-$Timer = Initialize-MaintenanceUI -Controls $Controls -Theme $script:UITheme
+$Timer = Initialize-MaintenanceUI -Controls $Controls -Theme $script:UITheme -ConfigPath $ConfigPath
 
 # Show Initial Message
 Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Modern WPF GUI initialized successfully."

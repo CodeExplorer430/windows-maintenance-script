@@ -6,6 +6,16 @@
 Add-Type -AssemblyName PresentationFramework
 
 $script:MaintenanceJob = $null
+$script:AppSelectionModel = @()
+$script:AppModelById = @{}
+$script:AppItems = $null
+$script:AppView = $null
+$script:AppConfigPath = $null
+$script:UserConfigPath = $null
+$script:AppCatalogPath = $null
+
+$ModuleRoot = Split-Path $PSScriptRoot
+Import-Module "$ModuleRoot\Modules\Common\AppInventory.psm1" -Force
 
 <#
 .SYNOPSIS
@@ -44,7 +54,10 @@ function Initialize-MaintenanceUI {
         [hashtable]$Controls,
 
         [Parameter(Mandatory=$true)]
-        [hashtable]$Theme
+        [hashtable]$Theme,
+
+        [Parameter(Mandatory=$false)]
+        [string]$ConfigPath
     )
 
     # 1. Check Admin Privileges
@@ -84,7 +97,11 @@ function Initialize-MaintenanceUI {
         $Controls.ModuleList.Children.Add($Cb) | Out-Null
     }
 
-        # 3. Wire Events
+        # 3. Load Config and Initialize App Selection
+        $Config = Get-GuiConfig -ConfigPath $ConfigPath
+        Initialize-AppSelectionUI -Controls $Controls -Config $Config
+
+        # 4. Wire Events
         $Controls.StartBtn.Add_Click({
             Invoke-StartMaintenanceUI -Controls $Controls
         })
@@ -94,7 +111,15 @@ function Initialize-MaintenanceUI {
         })
         $Controls.StopBtn.IsEnabled = $false
 
-        # 4. Initialize Timer
+        $Controls.AppSearch.Add_TextChanged({ Update-AppView -Controls $Controls })
+        $Controls.AppInstalledOnly.Add_Checked({ Update-AppView -Controls $Controls })
+        $Controls.AppInstalledOnly.Add_Unchecked({ Update-AppView -Controls $Controls })
+        $Controls.AppTagFilter.Add_SelectionChanged({ Update-AppView -Controls $Controls })
+        $Controls.AppSelectAll.Add_Click({ Set-AppSelectionState -State $true })
+        $Controls.AppSelectNone.Add_Click({ Set-AppSelectionState -State $false })
+        $Controls.AppSave.Add_Click({ Save-AppSelectionSet -Controls $Controls })
+
+        # 5. Initialize Timer
         $Timer = New-Object System.Windows.Threading.DispatcherTimer
         $Timer.Interval = [TimeSpan]::FromMilliseconds(500)
         $Timer.Add_Tick({
@@ -104,6 +129,176 @@ function Initialize-MaintenanceUI {
 
         return $Timer
     }
+
+function ConvertTo-Hashtable {
+    param([object]$InputObject)
+
+    if ($null -eq $InputObject) { return @{} }
+    if ($InputObject -is [hashtable]) { return $InputObject }
+
+    $Table = @{}
+    $InputObject.PSObject.Properties | ForEach-Object {
+        $Table[$_.Name] = $_.Value
+    }
+    return $Table
+}
+
+function Read-ConfigFile {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) { return @{} }
+    $Raw = Get-Content -Path $Path -Raw
+    if (-not $Raw) { return @{} }
+    $Obj = $Raw | ConvertFrom-Json
+    ConvertTo-Hashtable $Obj
+}
+
+function Merge-Config {
+    param(
+        [hashtable]$Base,
+        [hashtable]$Override
+    )
+
+    foreach ($Key in $Override.Keys) {
+        $BaseValue = $Base[$Key]
+        $OverrideValue = $Override[$Key]
+
+        if ($BaseValue -is [hashtable] -and $OverrideValue -is [hashtable]) {
+            $Base[$Key] = Merge-Config -Base $BaseValue -Override $OverrideValue
+        } elseif ($BaseValue -is [pscustomobject] -and $OverrideValue -is [pscustomobject]) {
+            $Base[$Key] = Merge-Config -Base (ConvertTo-Hashtable $BaseValue) -Override (ConvertTo-Hashtable $OverrideValue)
+        } else {
+            $Base[$Key] = $OverrideValue
+        }
+    }
+    return $Base
+}
+
+function Get-GuiConfig {
+    param([string]$ConfigPath)
+
+    if (-not $ConfigPath) {
+        $ConfigPath = Join-Path $ModuleRoot "Config\maintenance-config.json"
+    }
+
+    $script:AppConfigPath = $ConfigPath
+    $script:UserConfigPath = Join-Path (Split-Path $ConfigPath) "maintenance-config.user.json"
+
+    $Config = Read-ConfigFile -Path $ConfigPath
+    if (Test-Path $script:UserConfigPath) {
+        $UserConfig = Read-ConfigFile -Path $script:UserConfigPath
+        $Config = Merge-Config -Base $Config -Override $UserConfig
+    }
+
+    if (-not $Config.AppCatalogPath) {
+        $Config.AppCatalogPath = Join-Path $ModuleRoot "Config\app-catalog.json"
+    } elseif (-not [System.IO.Path]::IsPathRooted($Config.AppCatalogPath)) {
+        $Config.AppCatalogPath = Join-Path (Split-Path $ConfigPath) $Config.AppCatalogPath
+    }
+    $script:AppCatalogPath = $Config.AppCatalogPath
+
+    return $Config
+}
+
+function Initialize-AppSelectionUI {
+    [CmdletBinding()]
+    param(
+        [hashtable]$Controls,
+        [hashtable]$Config
+    )
+
+    $Sources = if ($Config.AppSources) { ConvertTo-Hashtable $Config.AppSources } else { @{ Winget = $true; Registry = $true; Store = $true } }
+    $script:AppSelectionModel = Get-AppSelectionModel -Config $Config -CatalogPath $Config.AppCatalogPath -Sources $Sources
+    $script:AppModelById = @{}
+    foreach ($Entry in $script:AppSelectionModel) {
+        $script:AppModelById[$Entry.Id] = $Entry
+    }
+
+    $script:AppItems = New-Object System.Collections.ObjectModel.ObservableCollection[object]
+    $Tags = New-Object System.Collections.Generic.HashSet[string]
+
+    foreach ($Entry in $script:AppSelectionModel) {
+        $PrimaryTag = if ($Entry.Tags -and $Entry.Tags.Count -gt 0) { $Entry.Tags[0] } else { "Other" }
+        [void]$Tags.Add($PrimaryTag)
+
+        $script:AppItems.Add([pscustomobject]@{
+            Id = $Entry.Id
+            DisplayName = if ($Entry.IsInstalled) { "$($Entry.DisplayName) (Installed)" } else { $Entry.DisplayName }
+            IsInstalled = [bool]$Entry.IsInstalled
+            Selected = [bool]$Entry.Selected
+            PrimaryTag = $PrimaryTag
+            Tags = $Entry.Tags
+            ModuleMappings = $Entry.ModuleMappings
+        })
+    }
+
+    $Controls.AppList.ItemsSource = $script:AppItems
+    $script:AppView = [System.Windows.Data.CollectionViewSource]::GetDefaultView($script:AppItems)
+    $script:AppView.GroupDescriptions.Clear()
+    $script:AppView.GroupDescriptions.Add((New-Object System.Windows.Data.PropertyGroupDescription "PrimaryTag"))
+
+    $Controls.AppTagFilter.Items.Clear()
+    [void]$Controls.AppTagFilter.Items.Add("All")
+    foreach ($Tag in ($Tags.ToArray() | Sort-Object)) {
+        [void]$Controls.AppTagFilter.Items.Add($Tag)
+    }
+    $Controls.AppTagFilter.SelectedIndex = 0
+
+    Update-AppView -Controls $Controls
+}
+
+function Update-AppView {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Justification = "Updates in-memory UI state only.")]
+    param([hashtable]$Controls)
+
+    $Search = $Controls.AppSearch.Text
+    $InstalledOnly = $Controls.AppInstalledOnly.IsChecked
+    $SelectedTag = $Controls.AppTagFilter.SelectedItem
+
+    if (-not $script:AppView) { return }
+
+    $script:AppView.Filter = {
+        param($Item)
+        if ($InstalledOnly -and -not $Item.IsInstalled) { return $false }
+        if ($SelectedTag -and $SelectedTag -ne "All" -and $Item.PrimaryTag -ne $SelectedTag) { return $false }
+        if ($Search -and ($Item.DisplayName -notmatch [regex]::Escape($Search))) { return $false }
+        return $true
+    }
+    $script:AppView.Refresh()
+}
+
+function Set-AppSelectionState {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Justification = "Updates in-memory UI state only.")]
+    param(
+        [bool]$State
+    )
+
+    if (-not $script:AppView) { return }
+    foreach ($Entry in $script:AppView) {
+        $Entry.Selected = $State
+    }
+    $script:AppView.Refresh()
+}
+
+function Save-AppSelectionSet {
+    param([hashtable]$Controls)
+
+    $Selections = @{}
+    foreach ($Entry in $script:AppItems) {
+        if (-not $Entry.Selected) { continue }
+        foreach ($Map in ($Entry.ModuleMappings | ForEach-Object { $_ })) {
+            $Module = $Map.Module
+            if (-not $Module) { continue }
+            if (-not $Selections.ContainsKey($Module)) { $Selections[$Module] = @() }
+            $Selections[$Module] += $Entry.Id
+        }
+    }
+
+    if ($script:UserConfigPath) {
+        Write-AppSelectionOverride -Path $script:UserConfigPath -Selections $Selections
+        Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "App selections saved to: $script:UserConfigPath"
+    }
+}
 
     <#
     .SYNOPSIS
@@ -130,6 +325,8 @@ function Initialize-MaintenanceUI {
             [System.Windows.MessageBox]::Show("Please select at least one module.")
             return
         }
+
+        Save-AppSelectionSet -Controls $Controls
 
         Show-UIConsoleUpdate -ConsoleControl $Controls.Console -Text "Initializing maintenance for: $($EnabledModules -join ', ')"
 

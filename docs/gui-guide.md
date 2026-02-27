@@ -43,6 +43,14 @@ Check the modules you wish to run. New in v4.2.0:
 - **Parallel Optimization**: Automatically enabled if running on PowerShell 7.
 - **Tool Selection**: Choose from 13 different maintenance areas.
 
+### 2b. Application Selection
+Use the **Apps** tab to enable or disable maintenance toggles for detected software:
+- **Search + Filter**: Quickly locate apps and show only installed items.
+- **Select All / None**: Bulk selection for large lists.
+- **Save App Selections**: Persists overrides to `config/maintenance-config.user.json`.
+
+Selections map to module-specific toggles (e.g., Developer and Multimedia apps) and do not uninstall software.
+
 ### 3. Execution Options
 - **Simulation Mode (WhatIf)**: **HIGHLY RECOMMENDED.** Shows what will happen without making changes.
 - **Silent Mode**: Suppresses all pop-ups and message boxes.

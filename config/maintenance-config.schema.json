@@ -106,6 +106,28 @@
       "uniqueItems": true,
       "minItems": 1
     },
+    "AppCatalogPath": {
+      "type": "string",
+      "description": "Path to the local app catalog JSON"
+    },
+    "AppSources": {
+      "type": "object",
+      "description": "Installed application discovery sources",
+      "properties": {
+        "Winget": { "type": "boolean", "default": true },
+        "Registry": { "type": "boolean", "default": true },
+        "Store": { "type": "boolean", "default": true }
+      }
+    },
+    "AppSelections": {
+      "type": "object",
+      "description": "Per-module app selections used for maintenance toggles",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" },
+        "uniqueItems": true
+      }
+    },
     "DriveDetection": { "type": "boolean", "default": true },
     "AutoEventLogArchival": { "type": "boolean", "default": false },
     "Reporting": { "type": "boolean", "default": true },
@@ -123,6 +145,8 @@
         "EnableDISM": { "type": "boolean", "default": true },
         "EnableSFC": { "type": "boolean", "default": true },
         "EnableCHKDSK": { "type": "boolean", "default": false },
+        "ForceCHKDSKOnRestart": { "type": "boolean", "default": false },
+        "EnableMemoryDiagnostic": { "type": "boolean", "default": false },
         "DISMTimeout": { "type": "integer", "default": 30 },
         "SFCTimeout": { "type": "integer", "default": 20 },
         "AutoRepair": { "type": "boolean", "default": true },
@@ -199,6 +223,7 @@
       "properties": {
         "_description": { "type": "string" },
         "EnableDefenderScan": { "type": "boolean", "default": true },
+        "EnableMSRT": { "type": "boolean", "default": false },
         "ScanLevel": { "type": "string", "enum": ["Quick", "Full", "Custom"], "default": "Quick" },
         "DefenderTimeout": { "type": "integer", "default": 30 },
         "EnableSecurityPolicyAudit": { "type": "boolean", "default": false },

@@ -1,0 +1,242 @@
+[
+  {
+    "Id": "vscode",
+    "DisplayName": "Visual Studio Code",
+    "Tags": ["Developer", "Editor"],
+    "SourceHints": ["Microsoft.VisualStudioCode", "VSCode"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableVSCode" }
+    ]
+  },
+  {
+    "Id": "dotnet-sdk",
+    "DisplayName": ".NET SDK",
+    "Tags": ["Developer", "SDK"],
+    "SourceHints": [".NET SDK", "Microsoft .NET SDK"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableDotNetSDK" }
+    ]
+  },
+  {
+    "Id": "java-jdk",
+    "DisplayName": "Java JDK",
+    "Tags": ["Developer", "SDK"],
+    "SourceHints": ["JDK", "Java", "Adoptium", "OpenJDK"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableJDK" }
+    ]
+  },
+  {
+    "Id": "windows-sdk",
+    "DisplayName": "Windows SDK",
+    "Tags": ["Developer", "SDK"],
+    "SourceHints": ["Windows SDK"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableWindowsSDK" }
+    ]
+  },
+  {
+    "Id": "mingw",
+    "DisplayName": "MinGW",
+    "Tags": ["Developer", "SDK"],
+    "SourceHints": ["MinGW"],
+    "DefaultEnabled": false,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableMinGW" }
+    ]
+  },
+  {
+    "Id": "vcredist",
+    "DisplayName": "Visual C++ Redistributables",
+    "Tags": ["Developer", "Runtime"],
+    "SourceHints": ["Visual C++", "vcredist"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableVCRedist" }
+    ]
+  },
+  {
+    "Id": "composer",
+    "DisplayName": "Composer (PHP)",
+    "Tags": ["Developer", "PackageManager"],
+    "SourceHints": ["Composer"],
+    "DefaultEnabled": false,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableComposer" }
+    ]
+  },
+  {
+    "Id": "postgresql",
+    "DisplayName": "PostgreSQL",
+    "Tags": ["Developer", "Database"],
+    "SourceHints": ["PostgreSQL"],
+    "DefaultEnabled": false,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnablePostgreSQL" }
+    ]
+  },
+  {
+    "Id": "ssms",
+    "DisplayName": "SQL Server Management Studio",
+    "Tags": ["Developer", "Database"],
+    "SourceHints": ["SQL Server Management Studio", "SSMS"],
+    "DefaultEnabled": false,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableSSMS" }
+    ]
+  },
+  {
+    "Id": "databasetools",
+    "DisplayName": "Database Tools",
+    "Tags": ["Developer", "Database"],
+    "SourceHints": ["Database"],
+    "DefaultEnabled": false,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableDatabaseTools" }
+    ]
+  },
+  {
+    "Id": "git",
+    "DisplayName": "Git",
+    "Tags": ["Developer", "VersionControl"],
+    "SourceHints": ["Git"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableVersionControl" }
+    ]
+  },
+  {
+    "Id": "azuredatastudio",
+    "DisplayName": "Azure Data Studio",
+    "Tags": ["Developer", "Database"],
+    "SourceHints": ["Microsoft.AzureDataStudio"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableAzureDataStudio" }
+    ]
+  },
+  {
+    "Id": "visualstudio",
+    "DisplayName": "Visual Studio",
+    "Tags": ["Developer", "IDE"],
+    "SourceHints": ["Microsoft Visual Studio"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableVisualStudio" }
+    ]
+  },
+  {
+    "Id": "jetbrains",
+    "DisplayName": "JetBrains IDEs",
+    "Tags": ["Developer", "IDE"],
+    "SourceHints": ["JetBrains"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableJetBrainsIDEs" }
+    ]
+  },
+  {
+    "Id": "docker",
+    "DisplayName": "Docker",
+    "Tags": ["Developer", "Containers"],
+    "SourceHints": ["Docker Desktop", "docker"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableDocker" }
+    ]
+  },
+  {
+    "Id": "python",
+    "DisplayName": "Python",
+    "Tags": ["Developer", "Language"],
+    "SourceHints": ["Python", "pip"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnablePython" }
+    ]
+  },
+  {
+    "Id": "nodejs",
+    "DisplayName": "Node.js / npm",
+    "Tags": ["Developer", "Language"],
+    "SourceHints": ["Node.js", "npm"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableNPM" }
+    ]
+  },
+  {
+    "Id": "unity",
+    "DisplayName": "Unity",
+    "Tags": ["Developer", "GameDev"],
+    "SourceHints": ["Unity"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableUnity" }
+    ]
+  },
+  {
+    "Id": "blender",
+    "DisplayName": "Blender",
+    "Tags": ["Developer", "3D"],
+    "SourceHints": ["Blender"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "DeveloperMaintenance", "ConfigKey": "EnableBlender" }
+    ]
+  },
+  {
+    "Id": "obsstudio",
+    "DisplayName": "OBS Studio",
+    "Tags": ["Multimedia"],
+    "SourceHints": ["OBS Studio"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "MultimediaMaintenance", "ConfigKey": "EnableOBSStudio" }
+    ]
+  },
+  {
+    "Id": "davinci",
+    "DisplayName": "DaVinci Resolve",
+    "Tags": ["Multimedia"],
+    "SourceHints": ["DaVinci Resolve"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "MultimediaMaintenance", "ConfigKey": "EnableDaVinciResolve" }
+    ]
+  },
+  {
+    "Id": "capcut",
+    "DisplayName": "CapCut",
+    "Tags": ["Multimedia"],
+    "SourceHints": ["CapCut"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "MultimediaMaintenance", "ConfigKey": "EnableCapCut" }
+    ]
+  },
+  {
+    "Id": "audacity",
+    "DisplayName": "Audacity",
+    "Tags": ["Multimedia"],
+    "SourceHints": ["Audacity"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "MultimediaMaintenance", "ConfigKey": "EnableAudacity" }
+    ]
+  },
+  {
+    "Id": "adobe",
+    "DisplayName": "Adobe Creative Cloud",
+    "Tags": ["Multimedia"],
+    "SourceHints": ["Adobe", "Creative Cloud"],
+    "DefaultEnabled": true,
+    "ModuleMappings": [
+      { "Module": "MultimediaMaintenance", "ConfigKey": "EnableAdobeSuite" }
+    ]
+  }
+]

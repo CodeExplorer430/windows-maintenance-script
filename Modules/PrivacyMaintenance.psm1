@@ -53,7 +53,7 @@ function Invoke-PrivacyMaintenance {
                 }
             }
         }
-    }
+    } | Out-Null
 }
 
 Export-ModuleMember -Function Invoke-PrivacyMaintenance

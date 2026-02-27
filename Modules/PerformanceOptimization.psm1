@@ -54,7 +54,7 @@ function Invoke-PerformanceOptimization {
                 Write-Debug "Error analyzing event log $($Log.LogName): $($_.Exception.Message)"
             }
         }
-    }
+    } | Out-Null
 
     # Startup Performance
     Invoke-SafeCommand -TaskName 'Advanced Startup Performance Analysis' -Command {
@@ -64,13 +64,13 @@ function Invoke-PerformanceOptimization {
         foreach ($Item in $StartupItems) {
             Write-MaintenanceLog -Message "Startup Item: $($Item.Name) [$($Item.Command)]" -Level DETAIL
         }
-    }
+    } | Out-Null
 
     # Startup Cleanup
     Invoke-SafeCommand -TaskName "Invalid Startup Items Cleanup" -Command {
         $Res = Remove-InvalidStartupItem -WhatIf:$PSCmdlet.MyInvocation.BoundParameters['WhatIf']
         Write-MaintenanceLog -Message "Startup cleanup removed $($Res.RemovedCount) items" -Level SUCCESS
-    }
+    } | Out-Null
 
     # Resource Analysis
     Invoke-SafeCommand -TaskName "System Resource Analysis" -Command {
@@ -94,7 +94,7 @@ function Invoke-PerformanceOptimization {
 
         if ($CPU -gt 80) { Write-MaintenanceLog -Message "High CPU usage detected" -Level WARNING }
         if ($UsedPercent -gt 85) { Write-MaintenanceLog -Message "High memory pressure detected" -Level WARNING }
-    }
+    } | Out-Null
 
     # Final cleanup
     Optimize-MemoryUsage

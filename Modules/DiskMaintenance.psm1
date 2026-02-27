@@ -139,7 +139,7 @@ function Invoke-DiskMaintenance {
                 Invoke-SQLiteQuery -Query "INSERT INTO SystemMetrics (MetricName, MetricValue, Unit) VALUES ('DiskSpaceRecoveredMB', $TotalCleanedMB, 'MB');"
             }
         }
-    }
+    } | Out-Null
 
     # Windows Disk Cleanup
     if ($Config.DiskCleanup.EnableWindowsCleanup) {
@@ -150,7 +150,7 @@ function Invoke-DiskMaintenance {
             }
 
             Invoke-WindowsDiskCleanup -StateFlag $Config.DiskCleanup.StateFlag
-        }
+        } | Out-Null
     }
 
     # Drive Optimization
@@ -193,8 +193,8 @@ function Invoke-DiskMaintenance {
             }
         }
 
-        Invoke-Parallel @ParallelParams
-    }
+        Invoke-Parallel @ParallelParams | Out-Null
+    } | Out-Null
 }
 
 <#

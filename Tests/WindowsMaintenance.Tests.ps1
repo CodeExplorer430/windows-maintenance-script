@@ -1,4 +1,5 @@
-﻿$HelperPath = Join-Path $PSScriptRoot "TestHelper.ps1"
+$TestRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($PSCommandPath) { Split-Path -Parent $PSCommandPath } else { (Get-Location).Path }
+$HelperPath = Join-Path $TestRoot "TestHelper.ps1"
 if (Test-Path $HelperPath) { . $HelperPath }
 
 <#
@@ -95,3 +96,5 @@ Describe "WindowsMaintenance Module" {
         }
     }
 }
+
+
