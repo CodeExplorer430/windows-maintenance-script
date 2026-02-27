@@ -134,6 +134,11 @@ function Read-MultiSelection {
 function Read-YesNo {
     param([string]$Prompt, [bool]$Default = $false)
 
+    $Cmd = Get-Command -Name "Read-SpectreConfirm" -ErrorAction SilentlyContinue
+    if ($Cmd) {
+        return & $Cmd -Message $Prompt -Default $Default
+    }
+
     $Suffix = if ($Default) { "Y/n" } else { "y/N" }
     $UserInput = Read-Host "$Prompt [$Suffix]"
     if (-not $UserInput) { return $Default }
@@ -143,6 +148,8 @@ function Read-YesNo {
 $SpectreModule = Get-Module -ListAvailable -Name "PwshSpectreConsole"
 if ($PSVersionTable.PSVersion.Major -ge 7 -and $SpectreModule) {
     Import-Module PwshSpectreConsole -Force
+    Write-SpectreFiglet -Text "Win Maintenance" -Color Cyan
+    Write-SpectreHost ""
 }
 
 $ConfigState = Get-TuiConfig -ConfigPath $ConfigPath

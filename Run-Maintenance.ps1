@@ -19,10 +19,17 @@ param(
 # Set InformationPreference to ensure visibility of modern output
 $InformationPreference = 'Continue'
 
-Write-Output "========================================"
-Write-Output "  Windows Maintenance Framework v4.0.0"
-Write-Output "  PowerShell: $($PSVersionTable.PSVersion) ($($PSVersionTable.PSEdition))"
-Write-Output "========================================"
+$SpectreModule = Get-Module -ListAvailable -Name "PwshSpectreConsole"
+if ($PSVersionTable.PSVersion.Major -ge 7 -and $SpectreModule) {
+    Import-Module PwshSpectreConsole -Force
+    Write-SpectreFiglet -Text "Win Maintenance" -Color Default
+    Write-SpectrePanel -Header "Windows Maintenance Framework v4.0.0" -Data "PowerShell: $($PSVersionTable.PSVersion) ($($PSVersionTable.PSEdition))" -BorderColor Cyan
+} else {
+    Write-Output "========================================"
+    Write-Output "  Windows Maintenance Framework v4.0.0"
+    Write-Output "  PowerShell: $($PSVersionTable.PSVersion) ($($PSVersionTable.PSEdition))"
+    Write-Output "========================================"
+}
 
 # Performance Tip: Suggest PowerShell 7
 if ($PSVersionTable.PSVersion.Major -lt 7 -and (Get-Command pwsh -ErrorAction SilentlyContinue)) {
