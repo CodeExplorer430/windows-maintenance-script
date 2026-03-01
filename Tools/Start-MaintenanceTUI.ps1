@@ -6,6 +6,7 @@
 #Requires -Version 5.1
 
 [CmdletBinding()]
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '')]
 param(
     [Parameter(Mandatory=$false)]
     [string]$ConfigPath
@@ -146,10 +147,44 @@ function Read-YesNo {
 }
 
 $SpectreModule = Get-Module -ListAvailable -Name "PwshSpectreConsole"
+
+if (-not $SpectreModule -and $PSVersionTable.PSVersion.Major -ge 7) {
+    $installPrompt = Read-Host "PwshSpectreConsole is recommended for the TUI. Install it now? [Y/n]"
+    if ([string]::IsNullOrWhiteSpace($installPrompt) -or $installPrompt.ToLower().StartsWith('y')) {
+        Write-Host "Installing PwshSpectreConsole from PSGallery..." -ForegroundColor Cyan
+        Install-Module -Name PwshSpectreConsole -Scope CurrentUser -Force -AllowClobber -ErrorAction SilentlyContinue
+        $SpectreModule = Get-Module -ListAvailable -Name "PwshSpectreConsole"
+    }
+}
+
 if ($PSVersionTable.PSVersion.Major -ge 7 -and $SpectreModule) {
     Import-Module PwshSpectreConsole -Force
+    Clear-Host
+
+    $ManifestPath = Join-Path $ScriptRoot "WindowsMaintenance.psd1"
+    if (Test-Path $ManifestPath) {
+        $Manifest = Import-PowerShellDataFile -Path $ManifestPath
+        $Version = $Manifest.ModuleVersion
+        $Author = $Manifest.Author
+        $Desc = $Manifest.Description
+    } else {
+        $Version = "Unknown"
+        $Author = "Unknown"
+        $Desc = "Windows Maintenance Framework"
+    }
+
     Write-SpectreFiglet -Text "Win Maintenance" -Color Cyan
+    $InfoText = "[grey]v$Version[/] | [grey]By $Author[/]"
+    Write-SpectreRule -Title $InfoText -Color DarkGray
     Write-SpectreHost ""
+    Write-SpectreHost "  [white]$Desc[/]"
+    Write-SpectreHost ""
+} else {
+    Clear-Host
+    Write-Host "=============================" -ForegroundColor Cyan
+    Write-Host "   Windows Maintenance TUI" -ForegroundColor Cyan
+    Write-Host "=============================" -ForegroundColor Cyan
+    Write-Host ""
 }
 
 $ConfigState = Get-TuiConfig -ConfigPath $ConfigPath

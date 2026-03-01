@@ -6,6 +6,7 @@
 #Requires -Version 5.1
 
 [CmdletBinding()]
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '')]
 param(
     [Parameter(Mandatory=$false)]
     [string]$ConfigPath,
@@ -20,15 +21,45 @@ param(
 $InformationPreference = 'Continue'
 
 $SpectreModule = Get-Module -ListAvailable -Name "PwshSpectreConsole"
+
+if (-not $SpectreModule -and $PSVersionTable.PSVersion.Major -ge 7) {
+    $installPrompt = Read-Host "PwshSpectreConsole is recommended for the CLI. Install it now? [Y/n]"
+    if ([string]::IsNullOrWhiteSpace($installPrompt) -or $installPrompt.ToLower().StartsWith('y')) {
+        Write-Host "Installing PwshSpectreConsole from PSGallery..." -ForegroundColor Cyan
+        Install-Module -Name PwshSpectreConsole -Scope CurrentUser -Force -AllowClobber -ErrorAction SilentlyContinue
+        $SpectreModule = Get-Module -ListAvailable -Name "PwshSpectreConsole"
+    }
+}
+
 if ($PSVersionTable.PSVersion.Major -ge 7 -and $SpectreModule) {
     Import-Module PwshSpectreConsole -Force
-    Write-SpectreFiglet -Text "Win Maintenance" -Color Default
-    Write-SpectrePanel -Header "Windows Maintenance Framework v4.0.0" -Data "PowerShell: $($PSVersionTable.PSVersion) ($($PSVersionTable.PSEdition))" -BorderColor Cyan
+    Clear-Host
+
+    $ManifestPath = Join-Path $PSScriptRoot "WindowsMaintenance.psd1"
+    if (Test-Path $ManifestPath) {
+        $Manifest = Import-PowerShellDataFile -Path $ManifestPath
+        $Version = $Manifest.ModuleVersion
+        $Author = $Manifest.Author
+        $Desc = $Manifest.Description
+    } else {
+        $Version = "Unknown"
+        $Author = "Unknown"
+        $Desc = "Windows Maintenance Framework"
+    }
+
+    Write-SpectreFiglet -Text "Win Maintenance" -Color Cyan
+    $InfoText = "[grey]v$Version[/] | [grey]By $Author[/] | [grey]CLI Mode[/]"
+    Write-SpectreRule -Title $InfoText -Color DarkGray
+    Write-SpectreHost ""
+    Write-SpectreHost "  [white]$Desc[/]"
+    Write-SpectreHost ""
 } else {
-    Write-Output "========================================"
-    Write-Output "  Windows Maintenance Framework v4.0.0"
-    Write-Output "  PowerShell: $($PSVersionTable.PSVersion) ($($PSVersionTable.PSEdition))"
-    Write-Output "========================================"
+    Clear-Host
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host "  Windows Maintenance Framework" -ForegroundColor Cyan
+    Write-Host "  PowerShell: $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) ($($PSVersionTable.PSEdition))" -ForegroundColor DarkGray
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host ""
 }
 
 # Performance Tip: Suggest PowerShell 7

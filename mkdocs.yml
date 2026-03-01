@@ -51,6 +51,7 @@ nav:
   - Architecture: architecture.md
   - Testing: testing-plan.md
   - GUI Guide: gui-guide.md
+  - Documentation Guide: documentation-guide.md
   - Code Signing: code-signing-guide.md
   - Cmdlet Reference:
       - Overview: Reference/index.md
