@@ -37,7 +37,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.mermaid_format
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - tables
@@ -53,7 +53,8 @@ nav:
   - GUI Guide: gui-guide.md
   - Documentation Guide: documentation-guide.md
   - Code Signing: code-signing-guide.md
+  - Configuration: config.md
   - Cmdlet Reference:
-      - Overview: Reference/index.md
+      - Overview: reference/index.md
   - Development: module-development.md
   - About: feature-parity.md

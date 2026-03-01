@@ -30,7 +30,7 @@ graph TD
     Orchestrator --> Config[(JSON Config)]
     Orchestrator --> Common[Common Modules<br/>Logging, SafeExec, etc.]
     Orchestrator --> Features{Feature Modules}
-    
+
     subgraph Features
         F1[System Updates]
         F2[Disk Maintenance]
@@ -38,7 +38,7 @@ graph TD
         F4[Dev Tools]
         F5[...]
     end
-    
+
     Common -.-> Features
     Features --> Reports[/Audit Logs & Reports/]
 ```
@@ -219,8 +219,8 @@ MIT License - See **[LICENSE](LICENSE)** file for details
 
 ---
 
-**Last Updated:** February 2026
-**Version:** 4.2.0
-**Author:** Miguel Velasco
-**PowerShell Version:** 5.1 / 7.4+
-**Platform:** Windows 10/11
+- **Last Updated:** February 2026
+- **Version:** 4.2.0
+- **Author:** Miguel Velasco
+- **PowerShell Version:** 5.1 / 7.4+
+- **Platform:** Windows 10/11

@@ -203,8 +203,8 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Last Updated:** February 2026
-**Version:** 4.2.0
-**Author:** Miguel Velasco
-**PowerShell Version:** 5.1 / 7.4+
-**Platform:** Windows 10/11
+- **Last Updated:** February 2026
+- **Version:** 4.2.0
+- **Author:** Miguel Velasco
+- **PowerShell Version:** 5.1 / 7.4+
+- **Platform:** Windows 10/11
