@@ -24,3 +24,9 @@
 ## Documentation
 - Maintain `docs/` (MkDocs) alongside code changes.
 - Update `testing-plan.md` if test strategies evolve.
+
+## FOSS & Repository Standards
+1. **Issue Management**: Utilize the YAML forms (`bug_report.yml`, `feature_request.yml`) for standardization. Always link Pull Requests to an existing issue (`Fixes #<issue_number>`).
+2. **Pull Requests**: Every PR must fill out `.github/PULL_REQUEST_TEMPLATE.md` thoroughly, ensuring tests pass and docs are updated.
+3. **Branching & Commits**: Use standard branching (`feature/*`, `fix/*`, `docs/*`) and Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`) to generate a clear history and Semantic Versioning.
+4. **Pre-Commit Verification**: Before committing or pushing any changes, you **MUST** ensure that `Invoke-ScriptAnalyzer` and Pester (`.\Tests\Invoke-Tests.ps1`) have been executed with zero warnings and zero errors across the entire codebase.

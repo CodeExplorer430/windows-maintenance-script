@@ -1,0 +1,70 @@
+name: Bug Report
+description: Create a report to help us improve the Windows Maintenance Framework
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees:
+  - CodeExplorer430
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please ensure you have searched existing issues before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: Module Version
+      description: What version of the Windows Maintenance Framework are you using? (e.g., 4.2.0)
+      placeholder: "4.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: ps-version
+    attributes:
+      label: PowerShell Version
+      description: Are you running this in Windows PowerShell 5.1 or PowerShell Core 7+?
+      options:
+        - Windows PowerShell 5.1
+        - PowerShell 7.4+
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS Version
+      description: What version of Windows are you running? (e.g., Windows 11 23H2)
+      placeholder: "Windows 11 23H2"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Run command '...'
+        2. With config '...'
+        3. See error '...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Output
+      description: Please paste the relevant terminal output or log file contents here.
+      render: shell
+    validations:
+      required: false
