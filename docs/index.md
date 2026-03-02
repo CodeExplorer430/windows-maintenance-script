@@ -189,6 +189,7 @@ For testing documentation, see: **[testing-plan.md](testing-plan.md)**
 ## Security
 
 The framework implements security best practices:
+
 - ✅ **CIM-Based** - Replaced legacy WMI with modern, secure CIM queries.
 - ✅ **Validation** - Input sanitization and parameter-driven architecture.
 - ✅ **Audit Trails** - Detailed, structured logging for all operations.
