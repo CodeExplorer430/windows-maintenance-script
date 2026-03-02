@@ -239,7 +239,7 @@ function Initialize-AppSelectionUI {
 
     $Controls.AppTagFilter.Items.Clear()
     [void]$Controls.AppTagFilter.Items.Add("All")
-    foreach ($Tag in ($Tags.ToArray() | Sort-Object)) {
+    foreach ($Tag in ($Tags | Sort-Object)) {
         [void]$Controls.AppTagFilter.Items.Add($Tag)
     }
     $Controls.AppTagFilter.SelectedIndex = 0
